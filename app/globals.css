@@ -1,0 +1,124 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-size: 16px;
+
+  /* Encanto Color Palette (OKLCH format) */
+  --primary: #aa9083;           /* Marrón principal */
+  --primary-hover: #b58574;     /* Marrón oscuro (hover) */
+  --secondary: #f2d0c5;         /* Rosa pastel claro */
+  --accent: #f9e4e4;            /* Rosa pastel muy claro */
+
+  --background: #ffffff;        /* Blanco puro */
+  --background-alt: #faebe7;    /* Rosa pastel muy claro (secciones) */
+  --warm-white: #fafaf8;        /* Blanco cálido */
+
+  --foreground: #333333;        /* Texto principal */
+  --foreground-secondary: #6d6d6d;  /* Texto secundario */
+  --foreground-muted: #404040;  /* Texto terciario */
+
+  --border: #f2cec3;            /* Bordes rosa pastel */
+  --border-neutral: rgba(0, 0, 0, 0.08);
+
+  --input-background: #f8f8f8;  /* Input backgrounds */
+
+  --destructive: #d4183d;       /* Rojo (errores) */
+  --success: #2ea869;           /* Verde (éxito) */
+
+  --logo-primary: #B07B8F;      /* Rosa malva para logo */
+  --logo-gold: #C9A961;         /* Dorado versión premium */
+
+  --radius: 0.75rem;            /* 12px - border radius */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-background-alt: var(--background-alt);
+  --color-warm-white: var(--warm-white);
+  --color-foreground-secondary: var(--foreground-secondary);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-border: var(--border);
+  --color-border-neutral: var(--border-neutral);
+  --color-input-background: var(--input-background);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-logo-primary: var(--logo-primary);
+  --color-logo-gold: var(--logo-gold);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Poppins', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3 {
+    font-family: 'DM Serif Display', serif;
+    color: var(--foreground);
+  }
+
+  h1 {
+    font-size: 3rem;
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-size: 2.25rem;
+    font-weight: 400;
+    line-height: 1.3;
+  }
+
+  h3 {
+    font-size: 1.75rem;
+    font-weight: 400;
+    line-height: 1.4;
+  }
+
+  h4 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  p {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.6;
+  }
+}
+
+html {
+  font-size: var(--font-size);
+  scroll-behavior: smooth;
+}
+
+/* Utility classes for Encanto theme */
+.glow-effect {
+  transition: box-shadow 0.3s ease;
+}
+
+.glow-effect:hover {
+  box-shadow: 0 0 20px rgba(170, 144, 131, 0.4);
+}
