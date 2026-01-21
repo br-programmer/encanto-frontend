@@ -189,10 +189,10 @@ For high-demand dates (Valentine's, Mother's Day):
 
 ## 📦 Status
 
-### Current
+### Current (November 2025)
 - ✅ Basic Next.js setup
 - ✅ Tailwind CSS 4 configured
-- ⏳ No features implemented yet
+- ⏳ No features implemented yet (focus on backend and backoffice first)
 
 ### Roadmap
 - [ ] Product catalog
