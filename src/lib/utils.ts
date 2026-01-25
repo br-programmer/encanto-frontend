@@ -28,3 +28,39 @@ export function slugify(text: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "");
 }
+
+/**
+ * Calculate discount percentage between original and current price
+ * @param priceCents - Current price in cents
+ * @param comparePriceCents - Original price in cents (optional)
+ * @returns Discount percentage (e.g., 18 for 18%) or null if no discount
+ */
+export function calculateDiscount(
+  priceCents: number,
+  comparePriceCents?: number | null
+): number | null {
+  if (!comparePriceCents || comparePriceCents <= priceCents) return null;
+  return Math.round(((comparePriceCents - priceCents) / comparePriceCents) * 100);
+}
+
+/**
+ * Check if a product is in stock
+ * @param stock - Stock quantity (from product.stock or product.inventory?.quantity)
+ * @returns true if stock > 0
+ */
+export function isInStock(stock?: number | null): boolean {
+  return (stock ?? 0) > 0;
+}
+
+/**
+ * Get the primary image URL from a product's images array
+ * @param images - Array of product images
+ * @returns URL of the primary image, or the first image, or null
+ */
+export function getPrimaryImage(
+  images?: { url: string; isPrimary: boolean }[]
+): string | null {
+  if (!images || images.length === 0) return null;
+  const primary = images.find((img) => img.isPrimary);
+  return primary?.url ?? images[0]?.url ?? null;
+}

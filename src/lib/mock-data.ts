@@ -101,7 +101,7 @@ export const MOCK_PRODUCTS: Product[] = [
         createdAt: new Date().toISOString(),
       },
     ],
-    inventory: { quantity: 10, lowStockThreshold: 3 },
+    inventory: { id: "inv1", productId: "1", quantity: 10, lowStockThreshold: 3 },
   },
   {
     id: "2",
@@ -127,7 +127,7 @@ export const MOCK_PRODUCTS: Product[] = [
         createdAt: new Date().toISOString(),
       },
     ],
-    inventory: { quantity: 5, lowStockThreshold: 3 },
+    inventory: { id: "inv2", productId: "2", quantity: 5, lowStockThreshold: 3 },
   },
   {
     id: "3",
@@ -153,7 +153,7 @@ export const MOCK_PRODUCTS: Product[] = [
         createdAt: new Date().toISOString(),
       },
     ],
-    inventory: { quantity: 8, lowStockThreshold: 3 },
+    inventory: { id: "inv3", productId: "3", quantity: 8, lowStockThreshold: 3 },
   },
   {
     id: "4",
@@ -179,7 +179,7 @@ export const MOCK_PRODUCTS: Product[] = [
         createdAt: new Date().toISOString(),
       },
     ],
-    inventory: { quantity: 3, lowStockThreshold: 3 },
+    inventory: { id: "inv4", productId: "4", quantity: 3, lowStockThreshold: 3 },
   },
   {
     id: "5",
@@ -205,7 +205,7 @@ export const MOCK_PRODUCTS: Product[] = [
         createdAt: new Date().toISOString(),
       },
     ],
-    inventory: { quantity: 6, lowStockThreshold: 3 },
+    inventory: { id: "inv5", productId: "5", quantity: 6, lowStockThreshold: 3 },
   },
   {
     id: "6",
@@ -231,7 +231,7 @@ export const MOCK_PRODUCTS: Product[] = [
         createdAt: new Date().toISOString(),
       },
     ],
-    inventory: { quantity: 4, lowStockThreshold: 3 },
+    inventory: { id: "inv6", productId: "6", quantity: 4, lowStockThreshold: 3 },
   },
   {
     id: "7",
@@ -257,7 +257,7 @@ export const MOCK_PRODUCTS: Product[] = [
         createdAt: new Date().toISOString(),
       },
     ],
-    inventory: { quantity: 12, lowStockThreshold: 3 },
+    inventory: { id: "inv7", productId: "7", quantity: 12, lowStockThreshold: 3 },
   },
   {
     id: "8",
@@ -283,6 +283,6 @@ export const MOCK_PRODUCTS: Product[] = [
         createdAt: new Date().toISOString(),
       },
     ],
-    inventory: { quantity: 7, lowStockThreshold: 3 },
+    inventory: { id: "inv8", productId: "8", quantity: 7, lowStockThreshold: 3 },
   },
 ];

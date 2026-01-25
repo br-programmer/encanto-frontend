@@ -6,6 +6,7 @@ import { ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCartStore } from "@/stores/cart-store";
+import { useToast } from "@/components/ui/toast";
 import { formatPrice } from "@/lib/utils";
 import type { Product } from "@/types";
 
@@ -15,6 +16,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { addItem, openCart } = useCartStore();
+  const { addToast } = useToast();
 
   const primaryImage = product.images?.find((img) => img.isPrimary) || product.images?.[0];
   const hasDiscount = product.comparePriceCents && product.comparePriceCents > product.priceCents;
@@ -32,6 +34,7 @@ export function ProductCard({ product }: ProductCardProps) {
       priceCents: product.priceCents,
       image: primaryImage?.url || null,
     });
+    addToast(`${product.name} agregado al carrito`, "cart");
     openCart();
   };
 
@@ -54,46 +57,45 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
 
         {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-2">
+        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1 sm:gap-2">
           {hasDiscount && (
-            <Badge variant="destructive">-{discountPercent}%</Badge>
+            <Badge variant="destructive" className="text-xs">-{discountPercent}%</Badge>
           )}
           {product.isFeatured && (
-            <Badge variant="default">Destacado</Badge>
+            <Badge variant="default" className="text-xs">Destacado</Badge>
           )}
           {isOutOfStock && (
-            <Badge variant="secondary">Agotado</Badge>
+            <Badge variant="secondary" className="text-xs">Agotado</Badge>
           )}
         </div>
       </Link>
 
       {/* Info */}
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         <Link href={`/productos/${product.slug}`}>
-          <h3 className="font-medium text-foreground line-clamp-2 hover:text-primary transition-colors">
+          <h3 className="font-medium text-sm sm:text-base text-foreground line-clamp-2 hover:text-primary transition-colors">
             {product.name}
           </h3>
         </Link>
 
-        <div className="mt-2 flex items-center gap-2">
-          <span className="text-lg font-semibold text-primary">
+        <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5 sm:gap-2">
+          <span className="text-base sm:text-lg font-semibold text-primary">
             {formatPrice(product.priceCents)}
           </span>
           {hasDiscount && (
-            <span className="text-sm text-foreground-muted line-through">
+            <span className="text-xs sm:text-sm text-foreground-muted line-through">
               {formatPrice(product.comparePriceCents!)}
             </span>
           )}
         </div>
 
         <Button
-          className="w-full mt-4"
-          size="sm"
+          className="w-full mt-3 sm:mt-4 h-10 sm:h-11"
           disabled={isOutOfStock}
           onClick={handleAddToCart}
         >
           <ShoppingBag className="h-4 w-4 mr-2" />
-          {isOutOfStock ? "Agotado" : "Agregar"}
+          <span className="text-sm">{isOutOfStock ? "Agotado" : "Agregar"}</span>
         </Button>
       </div>
     </div>

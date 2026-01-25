@@ -1,0 +1,85 @@
+import { notFound } from "next/navigation";
+import { api } from "@/lib/api";
+import { Breadcrumb } from "@/components/breadcrumb";
+import { ProductGallery } from "@/components/product-gallery";
+import { ProductInfo } from "@/components/product-info";
+import { ProductCard } from "@/components/product-card";
+
+interface ProductPageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: ProductPageProps) {
+  const { slug } = await params;
+
+  try {
+    const product = await api.products.getBySlug(slug);
+    return {
+      title: `${product.name} | Encanto Florería`,
+      description: product.description || `Compra ${product.name} en Encanto Florería.`,
+    };
+  } catch {
+    return {
+      title: "Producto no encontrado | Encanto Florería",
+    };
+  }
+}
+
+export default async function ProductPage({ params }: ProductPageProps) {
+  const { slug } = await params;
+
+  let product;
+  try {
+    product = await api.products.getBySlug(slug);
+  } catch {
+    notFound();
+  }
+
+  // Fetch related products from same category
+  let relatedProducts: typeof product[] = [];
+  if (product.categoryId) {
+    const { result } = await api.products.byCategory(product.categoryId, {
+      limit: 4,
+    });
+    relatedProducts = result.filter((p) => p.id !== product.id).slice(0, 4);
+  }
+
+  const breadcrumbItems = [
+    { label: "Productos", href: "/productos" },
+    ...(product.category
+      ? [{ label: product.category.name, href: `/categorias/${product.category.slug}` }]
+      : []),
+    { label: product.name },
+  ];
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Breadcrumb items={breadcrumbItems} />
+
+      {/* Product Detail */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+          {/* Gallery */}
+          <ProductGallery images={product.images} productName={product.name} />
+
+          {/* Product Info */}
+          <ProductInfo product={product} />
+        </div>
+      </div>
+
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <section className="bg-background-alt py-12">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <h2 className="text-2xl font-serif mb-6">Productos Relacionados</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+              {relatedProducts.map((relatedProduct) => (
+                <ProductCard key={relatedProduct.id} product={relatedProduct} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
