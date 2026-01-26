@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, Lock } from "lucide-react";
 
 export function CheckoutHeader() {
@@ -19,9 +20,14 @@ export function CheckoutHeader() {
 
           {/* Logo */}
           <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-            <span className="text-2xl font-serif text-logo-primary">
-              Encanto
-            </span>
+            <Image
+              src="/logo.svg"
+              alt="Encanto"
+              width={100}
+              height={32}
+              className="h-7 sm:h-8 w-auto"
+              priority
+            />
           </Link>
 
           {/* Secure checkout indicator */}

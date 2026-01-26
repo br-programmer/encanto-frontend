@@ -90,10 +90,15 @@ export function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="text-2xl font-serif text-logo-primary">
-                Encanto
-              </span>
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/logo.svg"
+                alt="Encanto"
+                width={120}
+                height={40}
+                className="h-8 sm:h-10 w-auto"
+                priority
+              />
             </Link>
           </div>
 
