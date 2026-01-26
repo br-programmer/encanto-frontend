@@ -81,7 +81,7 @@ export default async function Home() {
           {featuredProducts.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
               {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} hideFeaturedBadge />
               ))}
             </div>
           ) : (

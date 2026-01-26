@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingBag, Menu, X, Search, User, LogOut, LogIn, UserPlus } from "lucide-react";
+import Image from "next/image";
+import { ShoppingBag, Menu, X, Search, User, LogOut, LogIn, UserPlus, UserCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cart-store";
@@ -132,22 +133,57 @@ export function Header() {
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     className="relative"
                   >
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm font-medium text-primary">
-                        {displayUser.name.charAt(0).toUpperCase()}
-                      </span>
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                      {displayUser.avatarUrl ? (
+                        <Image
+                          src={displayUser.avatarUrl}
+                          alt={displayUser.fullName}
+                          width={32}
+                          height={32}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-sm font-medium text-primary">
+                          {displayUser.fullName.charAt(0).toUpperCase()}
+                        </span>
+                      )}
                     </div>
                   </Button>
 
                   {/* User dropdown menu */}
                   {userMenuOpen && (
                     <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-border py-1 z-50">
-                      <div className="px-4 py-3 border-b border-border">
-                        <p className="text-sm font-medium truncate">{displayUser.name}</p>
-                        <p className="text-xs text-foreground-secondary truncate">
-                          {displayUser.email}
-                        </p>
+                      <div className="px-4 py-3 border-b border-border flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {displayUser.avatarUrl ? (
+                            <Image
+                              src={displayUser.avatarUrl}
+                              alt={displayUser.fullName}
+                              width={40}
+                              height={40}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-sm font-medium text-primary">
+                              {displayUser.fullName.charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{displayUser.fullName}</p>
+                          <p className="text-xs text-foreground-secondary truncate">
+                            {displayUser.email}
+                          </p>
+                        </div>
                       </div>
+                      <Link
+                        href="/perfil"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
+                      >
+                        <UserCircle className="h-4 w-4" />
+                        Mi Perfil
+                      </Link>
                       <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-2 px-4 py-2 text-sm text-foreground-secondary hover:text-destructive hover:bg-destructive/5 transition-colors"
@@ -262,10 +298,35 @@ export function Header() {
             {/* Mobile User Section */}
             {displayUser ? (
               <>
-                <div className="px-3 py-2">
-                  <p className="text-sm font-medium">{displayUser.name}</p>
-                  <p className="text-xs text-foreground-secondary">{displayUser.email}</p>
+                <div className="px-3 py-2 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {displayUser.avatarUrl ? (
+                      <Image
+                        src={displayUser.avatarUrl}
+                        alt={displayUser.fullName}
+                        width={40}
+                        height={40}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-sm font-medium text-primary">
+                        {displayUser.fullName.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{displayUser.fullName}</p>
+                    <p className="text-xs text-foreground-secondary">{displayUser.email}</p>
+                  </div>
                 </div>
+                <Link
+                  href="/perfil"
+                  className="w-full flex items-center gap-3 px-3 py-2 text-base font-medium text-foreground-secondary hover:text-primary hover:bg-secondary rounded-lg transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <UserCircle className="h-5 w-5" />
+                  Mi Perfil
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center gap-3 px-3 py-2 text-base font-medium text-destructive hover:bg-destructive/5 rounded-lg transition-colors"

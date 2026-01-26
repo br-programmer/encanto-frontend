@@ -142,8 +142,159 @@ export interface ProductFilters {
   maxPrice?: number;
 }
 
+// Auth Types
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface SignUpRequest {
+  email: string;
+  password: string;
+  fullName: string;
+  phone: string;
+}
+
+export interface SignInRequest {
+  email: string;
+  password: string;
+}
+
+export interface UserRole {
+  id: string;
+  name: string;
+  description: string;
+  permissions: {
+    id: string;
+    code: string;
+    name: string;
+    resource: string;
+    action: string;
+    description: string;
+  }[];
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  fullName: string;
+  phone: string;
+  avatarUrl: string | null;
+  emailVerified: boolean;
+  isActive: boolean;
+  roles: UserRole[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Helper to get auth header
+function getAuthHeader(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+
+  // First try the dedicated tokens storage
+  let tokens = localStorage.getItem("encanto-tokens");
+  if (tokens) {
+    try {
+      const { accessToken } = JSON.parse(tokens);
+      if (accessToken) {
+        return { Authorization: `Bearer ${accessToken}` };
+      }
+    } catch {
+      // Continue to try zustand store
+    }
+  }
+
+  // Fallback: try the zustand persist store
+  const authStore = localStorage.getItem("encanto-auth");
+  if (authStore) {
+    try {
+      const parsed = JSON.parse(authStore);
+      const accessToken = parsed?.state?.tokens?.accessToken;
+      if (accessToken) {
+        return { Authorization: `Bearer ${accessToken}` };
+      }
+    } catch {
+      // No valid token found
+    }
+  }
+
+  return {};
+}
+
+// Authenticated fetch
+async function fetchApiAuth<T>(
+  endpoint: string,
+  options: FetchOptions = {}
+): Promise<T> {
+  const authHeader = getAuthHeader();
+  return fetchApi<T>(endpoint, {
+    ...options,
+    headers: {
+      ...authHeader,
+      ...options.headers,
+    },
+  });
+}
+
 // API Functions
 export const api = {
+  // Auth
+  auth: {
+    signUp: (data: SignUpRequest) =>
+      fetchApi<{ message: string }>("/auth/sign-up", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+
+    signIn: (data: SignInRequest) =>
+      fetchApi<AuthTokens>("/auth/sign-in", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+
+    refreshToken: (refreshToken: string) =>
+      fetchApi<AuthTokens>("/auth/refresh-token", {
+        method: "POST",
+        body: JSON.stringify({ refreshToken }),
+      }),
+
+    me: () => fetchApiAuth<UserProfile>("/users/me"),
+
+    verifyEmail: (token: string) =>
+      fetchApi<{ message: string }>("/auth/verify-email", {
+        params: { token },
+      }),
+
+    resendVerification: () =>
+      fetchApiAuth<{ message: string }>("/auth/resend-verification", {
+        method: "POST",
+      }),
+
+    uploadAvatar: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const authHeader = getAuthHeader();
+      const response = await fetch(`${API_URL}/users/me/avatar`, {
+        method: "POST",
+        headers: authHeader,
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new ApiError(response.status, response.statusText, data);
+      }
+
+      return response.json() as Promise<{ avatarUrl: string }>;
+    },
+
+    deleteAvatar: () =>
+      fetchApiAuth<void>("/users/me/avatar", {
+        method: "DELETE",
+      }),
+  },
+
   // Categories
   categories: {
     list: (filters?: CategoryFilters) =>

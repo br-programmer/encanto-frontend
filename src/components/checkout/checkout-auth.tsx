@@ -43,12 +43,12 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
       return;
     }
 
-    const success = await login(loginEmail, loginPassword);
-    if (success) {
+    const result = await login(loginEmail, loginPassword);
+    if (result.success) {
       const user = useAuthStore.getState().user;
       if (user) onAuthenticated(user);
     } else {
-      setError("Credenciales incorrectas");
+      setError(result.error || "Credenciales incorrectas");
     }
   };
 
@@ -66,23 +66,23 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
       return;
     }
 
-    if (registerData.password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres");
+    if (registerData.password.length < 10) {
+      setError("La contraseña debe tener al menos 10 caracteres");
       return;
     }
 
-    const success = await register({
-      name: registerData.name,
+    const result = await register({
+      fullName: registerData.name,
       email: registerData.email,
       phone: registerData.phone,
       password: registerData.password,
     });
 
-    if (success) {
+    if (result.success) {
       const user = useAuthStore.getState().user;
       if (user) onAuthenticated(user);
     } else {
-      setError("Error al crear la cuenta");
+      setError(result.error || "Error al crear la cuenta");
     }
   };
 

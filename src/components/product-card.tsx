@@ -12,9 +12,10 @@ import type { Product } from "@/types";
 
 interface ProductCardProps {
   product: Product;
+  hideFeaturedBadge?: boolean;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, hideFeaturedBadge = false }: ProductCardProps) {
   const { addItem, openCart } = useCartStore();
   const { addToast } = useToast();
 
@@ -61,7 +62,7 @@ export function ProductCard({ product }: ProductCardProps) {
           {hasDiscount && (
             <Badge variant="destructive" className="text-xs">-{discountPercent}%</Badge>
           )}
-          {product.isFeatured && (
+          {product.isFeatured && !hideFeaturedBadge && (
             <Badge variant="default" className="text-xs">Destacado</Badge>
           )}
           {isOutOfStock && (

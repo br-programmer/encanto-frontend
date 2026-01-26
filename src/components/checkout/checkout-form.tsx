@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, CreditCard, Banknote, Building2, Gift, User, LogOut, Check, LogIn, UserPlus, ChevronRight } from "lucide-react";
+import { Loader2, CreditCard, Banknote, Building2, Gift, User, LogOut, Check, LogIn, UserPlus, ChevronRight, MapPin, Plus, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OrderSummary } from "./order-summary";
 import { CheckoutSuccess } from "./checkout-success";
 import { AuthModal } from "@/components/auth-modal";
 import { useCartStore } from "@/stores/cart-store";
 import { useAuthStore } from "@/stores/auth-store";
+import { useAddressesStore, type DeliveryAddress } from "@/stores/addresses-store";
 import { cn } from "@/lib/utils";
 
 interface FormData {
@@ -101,6 +102,9 @@ export function CheckoutForm() {
   const [isGuestCheckout, setIsGuestCheckout] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<"login" | "register">("login");
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [saveAddress, setSaveAddress] = useState(false);
+  const [addressLabel, setAddressLabel] = useState("Casa");
   const [submittedData, setSubmittedData] = useState<{
     items: typeof items;
     subtotal: number;
@@ -110,24 +114,36 @@ export function CheckoutForm() {
 
   const { items, totalPrice, clearCart } = useCartStore();
   const { user, logout } = useAuthStore();
+  const { addresses, addAddress, getDefaultAddress } = useAddressesStore();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Pre-fill form with user data when logged in
+  // Pre-fill form with user data and default address
   useEffect(() => {
-    if (mounted && user) {
+    if (mounted) {
+      const defaultAddress = getDefaultAddress();
+
       setFormData((prev) => ({
         ...prev,
-        recipientEmail: user.email || prev.recipientEmail,
-        // If user has saved address, use it
-        address: user.address || prev.address,
-        city: user.city || prev.city,
-        zone: user.zone || prev.zone,
+        recipientEmail: user?.email || prev.recipientEmail,
+        // Pre-fill with default address if available
+        ...(defaultAddress ? {
+          recipientName: defaultAddress.recipientName,
+          recipientPhone: defaultAddress.recipientPhone,
+          address: defaultAddress.address,
+          city: defaultAddress.city,
+          zone: defaultAddress.zone,
+          notes: defaultAddress.notes || "",
+        } : {}),
       }));
+
+      if (defaultAddress) {
+        setSelectedAddressId(defaultAddress.id);
+      }
     }
-  }, [mounted, user]);
+  }, [mounted, user, getDefaultAddress]);
 
   // Redirect to products if cart is empty
   useEffect(() => {
@@ -230,6 +246,33 @@ export function CheckoutForm() {
     return true;
   };
 
+  const handleSelectAddress = (address: DeliveryAddress) => {
+    setSelectedAddressId(address.id);
+    setFormData((prev) => ({
+      ...prev,
+      recipientName: address.recipientName,
+      recipientPhone: address.recipientPhone,
+      address: address.address,
+      city: address.city,
+      zone: address.zone,
+      notes: address.notes || "",
+    }));
+  };
+
+  const handleNewAddress = () => {
+    setSelectedAddressId(null);
+    setFormData((prev) => ({
+      ...prev,
+      recipientName: "",
+      recipientPhone: "",
+      address: "",
+      city: "manta",
+      zone: "",
+      notes: "",
+    }));
+    setSaveAddress(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -241,6 +284,20 @@ export function CheckoutForm() {
     try {
       // Simulate form submission
       await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // Save address if checkbox is checked and it's a new address
+      if (saveAddress && !selectedAddressId) {
+        addAddress({
+          label: addressLabel,
+          recipientName: formData.recipientName,
+          recipientPhone: formData.recipientPhone,
+          address: formData.address,
+          city: formData.city,
+          zone: formData.zone,
+          notes: formData.notes || undefined,
+          isDefault: addresses.length === 0, // Make default if first address
+        });
+      }
 
       // Store submitted data before clearing cart
       setSubmittedData({
@@ -415,7 +472,7 @@ export function CheckoutForm() {
                         <Check className="h-5 w-5 text-green-600" />
                       </div>
                       <div>
-                        <p className="font-medium">Conectado como {user.name}</p>
+                        <p className="font-medium">Conectado como {user.fullName}</p>
                         <p className="text-sm text-foreground-secondary">{user.email}</p>
                       </div>
                     </div>
@@ -463,6 +520,58 @@ export function CheckoutForm() {
               <form onSubmit={handleSubmit} className="space-y-8" id="checkout-form">
                 <div className="bg-white rounded-xl border border-border p-6">
                   <h2 className="text-xl font-semibold mb-6">Información de entrega</h2>
+
+                  {/* Saved Addresses */}
+                  {addresses.length > 0 && (
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-medium text-foreground-secondary">Direcciones guardadas</h3>
+                        <button
+                          type="button"
+                          onClick={handleNewAddress}
+                          className="text-sm text-primary hover:underline flex items-center gap-1"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Nueva dirección
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {addresses.map((addr) => (
+                          <button
+                            key={addr.id}
+                            type="button"
+                            onClick={() => handleSelectAddress(addr)}
+                            className={cn(
+                              "text-left p-3 border rounded-lg transition-all",
+                              selectedAddressId === addr.id
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:border-primary/50"
+                            )}
+                          >
+                            <div className="flex items-start gap-2">
+                              <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-sm">{addr.label}</span>
+                                  {addr.isDefault && (
+                                    <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                                      Predeterminada
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-foreground-secondary truncate">
+                                  {addr.recipientName}
+                                </p>
+                                <p className="text-xs text-foreground-muted truncate">
+                                  {addr.address}
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="space-y-6">
                     {/* Recipient info */}
@@ -622,6 +731,48 @@ export function CheckoutForm() {
                         placeholder="Instrucciones especiales, dedicatoria, referencias de ubicación..."
                       />
                     </div>
+
+                    {/* Save Address Option - only show for new addresses */}
+                    {!selectedAddressId && (
+                      <div className="p-4 bg-secondary/30 rounded-lg space-y-3">
+                        <label className="flex items-start gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={saveAddress}
+                            onChange={(e) => setSaveAddress(e.target.checked)}
+                            className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                          />
+                          <div className="flex items-center gap-2">
+                            <Bookmark className="h-4 w-4 text-primary" />
+                            <div>
+                              <span className="text-sm font-medium">Guardar esta dirección</span>
+                              <p className="text-xs text-foreground-secondary">
+                                Para futuros pedidos
+                              </p>
+                            </div>
+                          </div>
+                        </label>
+
+                        {saveAddress && (
+                          <div>
+                            <label htmlFor="addressLabel" className="block text-sm font-medium mb-2">
+                              Etiqueta de la dirección
+                            </label>
+                            <select
+                              id="addressLabel"
+                              value={addressLabel}
+                              onChange={(e) => setAddressLabel(e.target.value)}
+                              className={inputClassName}
+                            >
+                              <option value="Casa">Casa</option>
+                              <option value="Trabajo">Trabajo</option>
+                              <option value="Oficina">Oficina</option>
+                              <option value="Otro">Otro</option>
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Checkboxes */}
                     <div className="space-y-3">

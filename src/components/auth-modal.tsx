@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { X, User, Mail, Lock, Phone, Loader2, LogIn, UserPlus } from "lucide-react";
+import { X, User, Mail, Lock, Phone, Loader2, LogIn, UserPlus, CheckCircle2, MailOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,9 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
-  const { login, register, isLoading } = useAuthStore();
+  const [showVerificationReminder, setShowVerificationReminder] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const { login, register, isLoading, user } = useAuthStore();
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -42,6 +44,8 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
     if (isOpen) {
       setMode(initialMode);
       setError(null);
+      setShowVerificationReminder(false);
+      setRegisteredEmail("");
       setLoginEmail("");
       setLoginPassword("");
       setRegisterData({
@@ -83,11 +87,11 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
       return;
     }
 
-    const success = await login(loginEmail, loginPassword);
-    if (success) {
+    const result = await login(loginEmail, loginPassword);
+    if (result.success) {
       onClose();
     } else {
-      setError("Credenciales incorrectas");
+      setError(result.error || "Credenciales incorrectas");
     }
   };
 
@@ -105,22 +109,29 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
       return;
     }
 
-    if (registerData.password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres");
+    if (registerData.password.length < 10) {
+      setError("La contraseña debe tener al menos 10 caracteres");
       return;
     }
 
-    const success = await register({
-      name: registerData.name,
+    const result = await register({
+      fullName: registerData.name,
       email: registerData.email,
       phone: registerData.phone,
       password: registerData.password,
     });
 
-    if (success) {
-      onClose();
+    if (result.success) {
+      // Check if email verification is needed
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser && !currentUser.emailVerified) {
+        setRegisteredEmail(registerData.email);
+        setShowVerificationReminder(true);
+      } else {
+        onClose();
+      }
     } else {
-      setError("Error al crear la cuenta");
+      setError(result.error || "Error al crear la cuenta");
     }
   };
 
@@ -150,22 +161,48 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
             <X className="h-5 w-5" />
           </button>
 
-          {/* Header */}
-          <div className="text-center pt-8 pb-6 px-6">
-            <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
-              {mode === "login" ? (
-                <LogIn className="h-8 w-8 text-primary" />
-              ) : (
-                <UserPlus className="h-8 w-8 text-primary" />
-              )}
+          {/* Verification Reminder Screen */}
+          {showVerificationReminder ? (
+            <div className="p-8 text-center">
+              <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <MailOpen className="h-10 w-10 text-amber-600" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">¡Cuenta creada!</h2>
+              <p className="text-foreground-secondary mb-4">
+                Hemos enviado un correo de verificación a:
+              </p>
+              <p className="font-medium text-primary mb-6">{registeredEmail}</p>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 text-left">
+                <p className="text-sm text-amber-800">
+                  <strong>Importante:</strong> Revisa tu bandeja de entrada y haz clic en el enlace de verificación para activar tu cuenta completamente.
+                </p>
+              </div>
+              <Button onClick={onClose} className="w-full" size="lg">
+                <CheckCircle2 className="h-5 w-5 mr-2" />
+                Entendido
+              </Button>
+              <p className="text-xs text-foreground-muted mt-4">
+                ¿No recibiste el correo? Revisa tu carpeta de spam.
+              </p>
             </div>
-            <h2 className="text-xl font-semibold">
-              {mode === "login" ? "Iniciar sesión" : "Crear cuenta"}
-            </h2>
-            <p className="text-sm text-foreground-secondary mt-1">
-              {mode === "login"
-                ? "Ingresa tus credenciales para continuar"
-                : "Completa tus datos para registrarte"}
+          ) : (
+            <>
+              {/* Header */}
+              <div className="text-center pt-8 pb-6 px-6">
+                <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+                  {mode === "login" ? (
+                    <LogIn className="h-8 w-8 text-primary" />
+                  ) : (
+                    <UserPlus className="h-8 w-8 text-primary" />
+                  )}
+                </div>
+                <h2 className="text-xl font-semibold">
+                  {mode === "login" ? "Iniciar sesión" : "Crear cuenta"}
+                </h2>
+                <p className="text-sm text-foreground-secondary mt-1">
+                  {mode === "login"
+                    ? "Ingresa tus credenciales para continuar"
+                    : "Completa tus datos para registrarte"}
             </p>
           </div>
 
@@ -309,7 +346,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
                         value={registerData.password}
                         onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                         className={cn(inputClassName, "pl-10")}
-                        placeholder="Min. 6"
+                        placeholder="Min. 10"
                         autoComplete="new-password"
                       />
                     </div>
@@ -367,6 +404,8 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
               </form>
             )}
           </div>
+          </>
+          )}
         </div>
       </div>
     </div>
