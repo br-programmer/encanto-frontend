@@ -25,7 +25,7 @@ export function FaqAccordion({ questions }: FaqAccordionProps) {
       {questions.map((item, index) => (
         <div
           key={index}
-          className="border border-border rounded-lg overflow-hidden bg-white"
+          className="border border-border rounded-lg overflow-hidden bg-background"
         >
           <button
             onClick={() => toggleQuestion(index)}

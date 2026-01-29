@@ -87,10 +87,10 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   };
 
   const bgColors = {
-    success: "bg-green-50 border-green-200",
-    error: "bg-red-50 border-red-200",
-    info: "bg-blue-50 border-blue-200",
-    cart: "bg-white border-primary/20",
+    success: "bg-toast-success-bg border-toast-success-border",
+    error: "bg-toast-error-bg border-toast-error-border",
+    info: "bg-toast-info-bg border-toast-info-border",
+    cart: "bg-toast-cart-bg border-toast-cart-border",
   };
 
   return (

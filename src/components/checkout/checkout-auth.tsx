@@ -89,7 +89,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
   // Options view
   if (mode === "options") {
     return (
-      <div className="bg-white rounded-xl border border-border p-6">
+      <div className="bg-background rounded-xl border border-border p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
             <User className="h-5 w-5 text-primary" />
@@ -161,7 +161,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
   // Login view
   if (mode === "login") {
     return (
-      <div className="bg-white rounded-xl border border-border p-6">
+      <div className="bg-background rounded-xl border border-border p-6">
         <div className="flex items-center gap-3 mb-6">
           <button
             onClick={() => setMode("options")}
@@ -250,7 +250,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
 
   // Register view
   return (
-    <div className="bg-white rounded-xl border border-border p-6">
+    <div className="bg-background rounded-xl border border-border p-6">
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => setMode("options")}

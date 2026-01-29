@@ -38,7 +38,7 @@ export function CartSidebar() {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed right-0 top-0 h-full w-full max-w-[100vw] sm:max-w-md bg-white z-50 shadow-xl transition-transform duration-300 ease-in-out",
+          "fixed right-0 top-0 h-full w-full max-w-[100vw] sm:max-w-md bg-background z-50 shadow-xl transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
       >

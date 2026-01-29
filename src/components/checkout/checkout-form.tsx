@@ -395,7 +395,7 @@ export function CheckoutForm() {
         <div className="space-y-8">
           {/* Auth Section */}
           {showAuthSection ? (
-            <div className="bg-white rounded-xl border border-border p-6">
+            <div className="bg-background rounded-xl border border-border p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
                   <User className="h-5 w-5 text-primary" />
@@ -465,7 +465,7 @@ export function CheckoutForm() {
             <>
               {/* Logged in user info */}
               {user && (
-                <div className="bg-white rounded-xl border border-border p-6">
+                <div className="bg-background rounded-xl border border-border p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
@@ -491,7 +491,7 @@ export function CheckoutForm() {
 
               {/* Guest checkout info */}
               {isGuestCheckout && !user && (
-                <div className="bg-white rounded-xl border border-border p-6">
+                <div className="bg-background rounded-xl border border-border p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
@@ -518,7 +518,7 @@ export function CheckoutForm() {
 
               {/* Shipping Form */}
               <form onSubmit={handleSubmit} className="space-y-8" id="checkout-form">
-                <div className="bg-white rounded-xl border border-border p-6">
+                <div className="bg-background rounded-xl border border-border p-6">
                   <h2 className="text-xl font-semibold mb-6">Información de entrega</h2>
 
                   {/* Saved Addresses */}
@@ -852,7 +852,7 @@ export function CheckoutForm() {
                 </div>
 
                 {/* Payment Method */}
-                <div className="bg-white rounded-xl border border-border p-6">
+                <div className="bg-background rounded-xl border border-border p-6">
                   <h2 className="text-xl font-semibold mb-6">Método de pago</h2>
 
                   <div className="space-y-3">

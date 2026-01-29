@@ -219,7 +219,7 @@ export default function PerfilPage() {
         {/* Left Column - User Info */}
         <div className="lg:col-span-1 space-y-6">
           {/* User Card */}
-          <div className="bg-white rounded-xl border border-border p-6">
+          <div className="bg-background rounded-xl border border-border p-6">
             <div className="flex flex-col items-center mb-6">
               {/* Avatar */}
               <div className="relative group mb-4">
@@ -336,7 +336,7 @@ export default function PerfilPage() {
 
         {/* Right Column - Addresses */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl border border-border p-6">
+          <div className="bg-background rounded-xl border border-border p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">

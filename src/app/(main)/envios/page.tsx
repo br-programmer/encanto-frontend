@@ -26,7 +26,7 @@ export default function EnviosPage() {
       {/* Quick Info Cards */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-xl border border-border text-center">
+          <div className="bg-background p-6 rounded-xl border border-border text-center">
             <div className="w-14 h-14 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
               <Truck className="h-7 w-7 text-primary" />
             </div>
@@ -36,7 +36,7 @@ export default function EnviosPage() {
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-xl border border-border text-center">
+          <div className="bg-background p-6 rounded-xl border border-border text-center">
             <div className="w-14 h-14 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
               <Clock className="h-7 w-7 text-primary" />
             </div>
@@ -46,7 +46,7 @@ export default function EnviosPage() {
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-xl border border-border text-center">
+          <div className="bg-background p-6 rounded-xl border border-border text-center">
             <div className="w-14 h-14 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
               <MapPin className="h-7 w-7 text-primary" />
             </div>

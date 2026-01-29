@@ -9,6 +9,7 @@ import { useCartStore } from "@/stores/cart-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { SearchDialog } from "@/components/search-dialog";
 import { AuthModal } from "@/components/auth-modal";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -85,7 +86,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border">
+    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -128,6 +129,11 @@ export function Header() {
               <span className="sr-only">Buscar</span>
             </Button>
 
+            {/* Theme toggle */}
+            <div className="hidden sm:block">
+              <ThemeToggle />
+            </div>
+
             {/* User button / dropdown */}
             <div className="relative hidden sm:block" ref={userMenuRef}>
               {displayUser ? (
@@ -157,7 +163,7 @@ export function Header() {
 
                   {/* User dropdown menu */}
                   {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-border py-1 z-50">
+                    <div className="absolute right-0 mt-2 w-56 bg-background rounded-lg shadow-lg border border-border py-1 z-50">
                       <div className="px-4 py-3 border-b border-border flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0">
                           {displayUser.avatarUrl ? (
@@ -212,7 +218,7 @@ export function Header() {
 
                   {/* Guest dropdown menu */}
                   {userMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-border py-1 z-50">
+                    <div className="absolute right-0 mt-2 w-48 bg-background rounded-lg shadow-lg border border-border py-1 z-50">
                       <button
                         onClick={handleOpenLogin}
                         className="w-full flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-secondary transition-colors"

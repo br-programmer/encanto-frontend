@@ -78,7 +78,7 @@ export function CheckoutSuccess({
         </div>
 
         {/* Order summary card */}
-        <div className="bg-white rounded-xl border border-border overflow-hidden mb-6">
+        <div className="bg-background rounded-xl border border-border overflow-hidden mb-6">
           {/* Header */}
           <div className="p-6 border-b border-border">
             <div className="flex items-center gap-2 mb-2">

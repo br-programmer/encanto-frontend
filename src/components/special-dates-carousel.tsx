@@ -100,7 +100,7 @@ export function SpecialDatesCarousel({
   const nextSlide = slides[nextIndex];
 
   return (
-    <section className="relative w-full bg-[#1a1a1a] overflow-hidden">
+    <section className="relative w-full bg-section-dark overflow-hidden">
       <div className="relative min-h-[500px] md:min-h-[600px] lg:min-h-[700px]">
         {/* Background Number */}
         <div className="absolute left-8 md:left-16 lg:left-24 top-1/2 -translate-y-1/2 pointer-events-none select-none">

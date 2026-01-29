@@ -40,7 +40,7 @@ export default function HomeLoading() {
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
-                className="bg-white rounded-xl border border-border overflow-hidden"
+                className="bg-background rounded-xl border border-border overflow-hidden"
               >
                 <Skeleton className="aspect-square w-full" />
                 <div className="p-4">

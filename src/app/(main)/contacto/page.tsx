@@ -115,7 +115,7 @@ export default function ContactoPage() {
 
           {/* Contact Form */}
           <div className="lg:col-span-2">
-            <div className="bg-white p-8 rounded-2xl border border-border">
+            <div className="bg-background p-8 rounded-2xl border border-border">
               <h2 className="text-2xl font-serif mb-6">Envíanos un mensaje</h2>
               <ContactForm />
             </div>

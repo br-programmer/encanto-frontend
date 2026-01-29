@@ -44,7 +44,7 @@ export default function ProductosLoading() {
               {Array.from({ length: 9 }).map((_, i) => (
                 <div
                   key={i}
-                  className="bg-white rounded-xl border border-border overflow-hidden"
+                  className="bg-background rounded-xl border border-border overflow-hidden"
                 >
                   <Skeleton className="aspect-square w-full" />
                   <div className="p-4">

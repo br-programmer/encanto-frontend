@@ -150,7 +150,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
       <div className="absolute inset-0 flex items-center justify-center p-4 overflow-y-auto">
         {/* Modal */}
         <div
-          className="relative w-full max-w-md bg-white rounded-xl shadow-xl my-auto"
+          className="relative w-full max-w-md bg-background rounded-xl shadow-xl my-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close button */}

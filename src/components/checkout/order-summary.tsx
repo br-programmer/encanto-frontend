@@ -18,7 +18,7 @@ export function OrderSummary({ items, subtotal, shippingCost }: OrderSummaryProp
   const total = subtotal + shippingCost;
 
   return (
-    <div className="bg-white rounded-xl border border-border overflow-hidden">
+    <div className="bg-background rounded-xl border border-border overflow-hidden">
       {/* Mobile toggle header */}
       <button
         className="w-full flex items-center justify-between p-4 lg:hidden"

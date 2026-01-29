@@ -40,7 +40,7 @@ export function ProductCard({ product, hideFeaturedBadge = false }: ProductCardP
   };
 
   return (
-    <div className="group relative bg-white rounded-xl border border-border overflow-hidden transition-shadow hover:shadow-lg">
+    <div className="group relative bg-background rounded-xl border border-border overflow-hidden transition-shadow hover:shadow-lg">
       {/* Image */}
       <Link href={`/productos/${product.slug}`} className="block relative aspect-square overflow-hidden bg-secondary">
         {primaryImage ? (

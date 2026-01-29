@@ -115,7 +115,7 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
 
       {/* Dialog */}
       <div className="fixed inset-x-2 top-4 sm:inset-x-4 sm:top-20 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-2xl z-50 animate-in fade-in slide-in-from-top-4 duration-200">
-        <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
+        <div className="bg-background rounded-xl shadow-2xl overflow-hidden">
           {/* Search Input */}
           <form onSubmit={handleSubmit} className="relative">
             <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground-muted" />

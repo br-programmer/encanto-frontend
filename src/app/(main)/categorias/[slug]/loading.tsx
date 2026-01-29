@@ -21,7 +21,7 @@ export default function CategoryLoading() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-xl border border-border overflow-hidden">
+            <div key={i} className="bg-background rounded-xl border border-border overflow-hidden">
               <Skeleton className="aspect-square w-full" />
               <div className="p-4">
                 <Skeleton className="h-5 w-full" />

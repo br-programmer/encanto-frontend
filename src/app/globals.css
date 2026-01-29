@@ -12,7 +12,7 @@
 :root {
   --font-size: 16px;
 
-  /* Encanto Color Palette (OKLCH format) */
+  /* Encanto Color Palette - Light Mode */
   --primary: #aa9083;           /* Marrón principal */
   --primary-hover: #b58574;     /* Marrón oscuro (hover) */
   --secondary: #f2d0c5;         /* Rosa pastel claro */
@@ -37,7 +37,60 @@
   --logo-primary: #B07B8F;      /* Rosa malva para logo */
   --logo-gold: #C9A961;         /* Dorado versión premium */
 
+  /* Secciones oscuras (carruseles, banners destacados) */
+  --section-dark: #1a1a1a;      /* Fondo oscuro para contraste */
+  --section-dark-text: #ffffff; /* Texto en secciones oscuras */
+
   --radius: 0.75rem;            /* 12px - border radius */
+
+  /* Toast semantic colors */
+  --toast-success-bg: #f0fdf4;
+  --toast-success-border: #bbf7d0;
+  --toast-error-bg: #fef2f2;
+  --toast-error-border: #fecaca;
+  --toast-info-bg: #eff6ff;
+  --toast-info-border: #bfdbfe;
+  --toast-cart-bg: #ffffff;
+  --toast-cart-border: rgba(170, 144, 131, 0.2);
+}
+
+/* Dark Mode Color Palette - Warm Encanto Tones */
+.dark {
+  --background: #1c1917;           /* Warm dark (stone-900) */
+  --background-alt: #292524;       /* Lighter warm dark */
+  --warm-white: #1c1917;
+
+  --primary: #d4a99a;              /* Marrón más claro */
+  --primary-hover: #e5bdb0;
+  --secondary: #3d3230;            /* Rosa oscuro */
+  --accent: #2a2321;
+
+  --foreground: #fafaf9;           /* Warm white (stone-50) */
+  --foreground-secondary: #a8a29e;
+  --foreground-muted: #78716c;
+
+  --border: #44403c;               /* stone-700 */
+  --border-neutral: rgba(255, 255, 255, 0.08);
+  --input-background: #292524;
+
+  --destructive: #ef4444;
+  --success: #22c55e;
+
+  --logo-primary: #c89aa8;
+  --logo-gold: #d4b872;
+
+  --section-dark: #fafaf9;         /* Invertido */
+  --section-dark-text: #1c1917;
+
+  /* Toast semantic colors - Dark mode */
+  --toast-success-bg: #14532d;
+  --toast-success-border: #166534;
+  --toast-error-bg: #450a0a;
+  --toast-error-border: #7f1d1d;
+  --toast-info-bg: #1e3a5f;
+  --toast-info-border: #1e40af;
+  --toast-cart-bg: #292524;
+  --toast-cart-border: rgba(212, 169, 154, 0.2);
 }
 
 @theme inline {
@@ -58,6 +111,18 @@
   --color-success: var(--success);
   --color-logo-primary: var(--logo-primary);
   --color-logo-gold: var(--logo-gold);
+  --color-section-dark: var(--section-dark);
+  --color-section-dark-text: var(--section-dark-text);
+
+  /* Toast semantic colors */
+  --color-toast-success-bg: var(--toast-success-bg);
+  --color-toast-success-border: var(--toast-success-border);
+  --color-toast-error-bg: var(--toast-error-bg);
+  --color-toast-error-border: var(--toast-error-border);
+  --color-toast-info-bg: var(--toast-info-bg);
+  --color-toast-info-border: var(--toast-info-border);
+  --color-toast-cart-bg: var(--toast-cart-bg);
+  --color-toast-cart-border: var(--toast-cart-border);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -136,6 +201,14 @@
 html {
   font-size: var(--font-size);
   scroll-behavior: smooth;
+}
+
+/* Smooth theme transitions */
+html.transitioning,
+html.transitioning *,
+html.transitioning *::before,
+html.transitioning *::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease !important;
 }
 
 /* Utility classes for Encanto theme */
