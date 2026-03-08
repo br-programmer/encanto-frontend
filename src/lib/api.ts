@@ -1,7 +1,9 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
+type QueryParams = Record<string, string | number | boolean | undefined>;
+
 type FetchOptions = RequestInit & {
-  params?: Record<string, string | number | boolean | undefined>;
+  params?: QueryParams;
 };
 
 class ApiError extends Error {
@@ -53,16 +55,21 @@ async function fetchApi<T>(
 }
 
 // Types
-export interface PaginatedResponse<T> {
-  result: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+
+// Pagination
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }
 
+export interface PaginatedResponse<T> {
+  result: T[];
+  meta: PaginationMeta;
+}
+
+// Category
 export interface Category {
   id: string;
   name: string;
@@ -74,8 +81,19 @@ export interface Category {
   displayOrder: number;
   createdAt: string;
   updatedAt: string;
+  children?: Category[];
 }
 
+export interface CategoryFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  isActive?: boolean;
+  rootOnly?: boolean;
+  parentId?: string;
+}
+
+// Product
 export interface ProductImage {
   id: string;
   productId: string;
@@ -86,6 +104,13 @@ export interface ProductImage {
   createdAt: string;
 }
 
+export interface Inventory {
+  id: string;
+  productId: string;
+  quantity: number;
+  lowStockThreshold: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -94,52 +119,202 @@ export interface Product {
   priceCents: number;
   comparePriceCents: number | null;
   sku: string | null;
-  categoryId: string;
+  categoryId: string | null;
   isActive: boolean;
   isFeatured: boolean;
   createdAt: string;
   updatedAt: string;
   images: ProductImage[];
-  inventory: {
-    quantity: number;
-    lowStockThreshold: number;
-  } | null;
+  inventory: Inventory | null;
   category?: Category;
+  stock?: number;
+}
+
+export interface ProductFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  categoryId?: string;
+  isActive?: boolean;
+  isFeatured?: boolean;
+  inStock?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+}
+
+// Auth Types
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface SignUpRequest {
+  email: string;
+  password: string;
+  fullName: string;
+  phone: string;
+}
+
+export interface SignInRequest {
+  email: string;
+  password: string;
+}
+
+export interface UserRole {
+  id: string;
+  name: string;
+  description: string;
+  permissions: {
+    id: string;
+    code: string;
+    name: string;
+    resource: string;
+    action: string;
+    description: string;
+  }[];
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  fullName: string;
+  phone: string;
+  avatarUrl: string | null;
+  emailVerified: boolean;
+  isActive: boolean;
+  roles: UserRole[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Helper to get auth header
+function getAuthHeader(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+
+  // First try the dedicated tokens storage
+  let tokens = localStorage.getItem("encanto-tokens");
+  if (tokens) {
+    try {
+      const { accessToken } = JSON.parse(tokens);
+      if (accessToken) {
+        return { Authorization: `Bearer ${accessToken}` };
+      }
+    } catch {
+      // Continue to try zustand store
+    }
+  }
+
+  // Fallback: try the zustand persist store
+  const authStore = localStorage.getItem("encanto-auth");
+  if (authStore) {
+    try {
+      const parsed = JSON.parse(authStore);
+      const accessToken = parsed?.state?.tokens?.accessToken;
+      if (accessToken) {
+        return { Authorization: `Bearer ${accessToken}` };
+      }
+    } catch {
+      // No valid token found
+    }
+  }
+
+  return {};
+}
+
+// Authenticated fetch
+async function fetchApiAuth<T>(
+  endpoint: string,
+  options: FetchOptions = {}
+): Promise<T> {
+  const authHeader = getAuthHeader();
+  return fetchApi<T>(endpoint, {
+    ...options,
+    headers: {
+      ...authHeader,
+      ...options.headers,
+    },
+  });
 }
 
 // API Functions
 export const api = {
+  // Auth
+  auth: {
+    signUp: (data: SignUpRequest) =>
+      fetchApi<{ message: string }>("/auth/sign-up", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+
+    signIn: (data: SignInRequest) =>
+      fetchApi<AuthTokens>("/auth/sign-in", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+
+    refreshToken: (refreshToken: string) =>
+      fetchApi<AuthTokens>("/auth/refresh-token", {
+        method: "POST",
+        body: JSON.stringify({ refreshToken }),
+      }),
+
+    me: () => fetchApiAuth<UserProfile>("/users/me"),
+
+    verifyEmail: (token: string) =>
+      fetchApi<{ message: string }>("/auth/verify-email", {
+        params: { token },
+      }),
+
+    resendVerification: () =>
+      fetchApiAuth<{ message: string }>("/auth/resend-verification", {
+        method: "POST",
+      }),
+
+    uploadAvatar: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const authHeader = getAuthHeader();
+      const response = await fetch(`${API_URL}/users/me/avatar`, {
+        method: "POST",
+        headers: authHeader,
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new ApiError(response.status, response.statusText, data);
+      }
+
+      return response.json() as Promise<{ avatarUrl: string }>;
+    },
+
+    deleteAvatar: () =>
+      fetchApiAuth<void>("/users/me/avatar", {
+        method: "DELETE",
+      }),
+  },
+
   // Categories
   categories: {
-    list: (params?: {
-      page?: number;
-      limit?: number;
-      search?: string;
-      isActive?: boolean;
-      rootOnly?: boolean;
-      parentId?: string;
-    }) =>
-      fetchApi<PaginatedResponse<Category>>("/categories", { params }),
+    list: (filters?: CategoryFilters) =>
+      fetchApi<PaginatedResponse<Category>>("/categories", {
+        params: filters as QueryParams,
+      }),
 
-    getById: (id: string) => fetchApi<Category>(`/categories/${id}`),
+    getById: (id: string) =>
+      fetchApi<Category & { children: Category[] }>(`/categories/${id}`),
 
-    getBySlug: (slug: string) => fetchApi<Category>(`/categories/slug/${slug}`),
+    getBySlug: (slug: string) =>
+      fetchApi<Category & { children: Category[] }>(`/categories/slug/${slug}`),
   },
 
   // Products
   products: {
-    list: (params?: {
-      page?: number;
-      limit?: number;
-      search?: string;
-      categoryId?: string;
-      isActive?: boolean;
-      isFeatured?: boolean;
-      minPrice?: number;
-      maxPrice?: number;
-      inStock?: boolean;
-    }) =>
-      fetchApi<PaginatedResponse<Product>>("/products", { params }),
+    list: (filters?: ProductFilters) =>
+      fetchApi<PaginatedResponse<Product>>("/products", {
+        params: filters as QueryParams,
+      }),
 
     getById: (id: string) => fetchApi<Product>(`/products/${id}`),
 
@@ -148,6 +323,14 @@ export const api = {
     featured: (limit = 8) =>
       fetchApi<PaginatedResponse<Product>>("/products", {
         params: { isFeatured: true, isActive: true, limit },
+      }),
+
+    byCategory: (
+      categoryId: string,
+      filters?: Omit<ProductFilters, "categoryId">
+    ) =>
+      fetchApi<PaginatedResponse<Product>>("/products", {
+        params: { ...filters, categoryId, isActive: true } as QueryParams,
       }),
   },
 };
