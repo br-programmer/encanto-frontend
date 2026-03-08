@@ -1,13 +1,14 @@
 .page {
-  --background: #fafafa;
-  --foreground: #fff;
+  /* Encanto Color Palette */
+  --background: #ffffff;        /* Blanco puro */
+  --foreground: #ffffff;        /* Fondo de contenido */
 
-  --text-primary: #000;
-  --text-secondary: #666;
+  --text-primary: #333333;      /* Texto principal */
+  --text-secondary: #6d6d6d;    /* Texto secundario */
 
-  --button-primary-hover: #383838;
-  --button-secondary-hover: #f2f2f2;
-  --button-secondary-border: #ebebeb;
+  --button-primary-hover: #b58574;  /* Primary hover (marrón oscuro) */
+  --button-secondary-hover: #faebe7; /* Background alt (rosa pastel) */
+  --button-secondary-border: #f2cec3; /* Border rosa pastel */
 
   display: flex;
   min-height: 100vh;
@@ -128,14 +129,15 @@ a.secondary {
   }
 
   .page {
-    --background: #000;
-    --foreground: #000;
+    /* Encanto Dark Mode - usando colores de sección oscura */
+    --background: #1a1a1a;      /* Section dark */
+    --foreground: #1a1a1a;
 
-    --text-primary: #ededed;
-    --text-secondary: #999;
+    --text-primary: #ffffff;    /* Texto claro */
+    --text-secondary: #a0a0a0;  /* Texto secundario claro */
 
-    --button-primary-hover: #ccc;
-    --button-secondary-hover: #1a1a1a;
-    --button-secondary-border: #1a1a1a;
+    --button-primary-hover: #aa9083; /* Primary color */
+    --button-secondary-hover: #2a2a2a;
+    --button-secondary-border: #404040;
   }
 }
