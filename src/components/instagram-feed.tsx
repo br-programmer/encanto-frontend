@@ -1,52 +1,19 @@
 import Image from "next/image";
 import { Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-// Mock data - will be replaced with real Instagram API later
-const MOCK_POSTS = [
-  {
-    id: "1",
-    imageUrl: "https://picsum.photos/seed/ig-roses/400/400",
-    permalink: "https://instagram.com",
-    caption: "Ramo de rosas rojas",
-  },
-  {
-    id: "2",
-    imageUrl: "https://picsum.photos/seed/ig-sunflowers/400/400",
-    permalink: "https://instagram.com",
-    caption: "Girasoles brillantes",
-  },
-  {
-    id: "3",
-    imageUrl: "https://picsum.photos/seed/ig-tulips/400/400",
-    permalink: "https://instagram.com",
-    caption: "Tulipanes de colores",
-  },
-  {
-    id: "4",
-    imageUrl: "https://picsum.photos/seed/ig-mixed/400/400",
-    permalink: "https://instagram.com",
-    caption: "Arreglo mixto",
-  },
-  {
-    id: "5",
-    imageUrl: "https://picsum.photos/seed/ig-orchids/400/400",
-    permalink: "https://instagram.com",
-    caption: "Orquídeas elegantes",
-  },
-  {
-    id: "6",
-    imageUrl: "https://picsum.photos/seed/ig-pinkroses/400/400",
-    permalink: "https://instagram.com",
-    caption: "Rosas rosadas",
-  },
-];
+import type { InstagramPost } from "@/lib/api";
 
 interface InstagramFeedProps {
+  posts: InstagramPost[];
   instagramUrl?: string;
 }
 
-export function InstagramFeed({ instagramUrl = "https://instagram.com/encanto.floreria" }: InstagramFeedProps) {
+export function InstagramFeed({
+  posts,
+  instagramUrl = "https://www.instagram.com/encantofloristeria_ecu",
+}: InstagramFeedProps) {
+  if (posts.length === 0) return null;
+
   return (
     <section className="py-16 bg-warm-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -60,7 +27,7 @@ export function InstagramFeed({ instagramUrl = "https://instagram.com/encanto.fl
 
         {/* Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {MOCK_POSTS.map((post) => (
+          {posts.map((post) => (
             <a
               key={post.id}
               href={post.permalink}
@@ -69,8 +36,8 @@ export function InstagramFeed({ instagramUrl = "https://instagram.com/encanto.fl
               className="group relative aspect-square rounded-lg overflow-hidden bg-secondary"
             >
               <Image
-                src={post.imageUrl}
-                alt={post.caption}
+                src={post.mediaType === "VIDEO" ? (post.thumbnailUrl || post.mediaUrl) : post.mediaUrl}
+                alt={post.caption || "Instagram post"}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-110"
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
@@ -92,7 +59,7 @@ export function InstagramFeed({ instagramUrl = "https://instagram.com/encanto.fl
               rel="noopener noreferrer"
             >
               <Instagram className="h-5 w-5 mr-2" />
-              @encanto.floreria
+              @encantofloristeria_ecu
             </a>
           </Button>
         </div>
