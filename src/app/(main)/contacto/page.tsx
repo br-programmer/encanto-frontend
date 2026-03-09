@@ -68,12 +68,12 @@ export default function ContactoPage() {
               <div>
                 <h3 className="font-semibold mb-1">Instagram</h3>
                 <a
-                  href="https://www.instagram.com/encanto_ecu"
+                  href="https://www.instagram.com/encantofloristeria_ecu"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-foreground-secondary text-sm hover:text-primary transition-colors"
                 >
-                  @encanto_ecu
+                  @encantofloristeria_ecu
                 </a>
               </div>
             </div>
