@@ -8,14 +8,16 @@ import { HeroCarousel } from "@/components/hero-carousel";
 import { api } from "@/lib/api";
 
 export default async function Home() {
-  // Fetch categories and featured products in parallel
-  const [categoriesResponse, productsResponse] = await Promise.all([
+  // Fetch categories, featured products, and Instagram feed in parallel
+  const [categoriesResponse, productsResponse, instagramResponse] = await Promise.all([
     api.categories.list({ isActive: true, rootOnly: true, limit: 6 }),
     api.products.featured(8),
+    api.instagram.feed(6).catch(() => ({ result: [], meta: { total: 0, cachedAt: "", expiresAt: "" } })),
   ]);
 
   const categories = categoriesResponse.result;
   const featuredProducts = productsResponse.result;
+  const instagramPosts = instagramResponse.result;
 
   return (
     <div className="flex flex-col">
@@ -143,7 +145,7 @@ export default async function Home() {
       </section>
 
       {/* Instagram Feed */}
-      <InstagramFeed instagramUrl="https://www.instagram.com/encanto_ecu" />
+      <InstagramFeed posts={instagramPosts} instagramUrl="https://www.instagram.com/encantofloristeria_ecu" />
 
       {/* WhatsApp CTA */}
       <section className="py-12 sm:py-20 bg-secondary">
