@@ -5,6 +5,8 @@ const cdnHostname = process.env.NEXT_PUBLIC_CDN_HOSTNAME;
 const remotePatterns = [
   { protocol: "https" as const, hostname: "images.unsplash.com" },
   { protocol: "https" as const, hostname: "picsum.photos" },
+  { protocol: "https" as const, hostname: "**.cdninstagram.com" },
+  { protocol: "https" as const, hostname: "**.fbcdn.net" },
 ];
 
 if (cdnHostname) {
