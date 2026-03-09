@@ -142,6 +142,34 @@ export interface ProductFilters {
   maxPrice?: number;
 }
 
+// Instagram Types
+export type InstagramMediaType = "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
+
+export interface InstagramPost {
+  id: string;
+  mediaType: InstagramMediaType;
+  mediaUrl: string;
+  thumbnailUrl: string | null;
+  caption: string | null;
+  permalink: string;
+  timestamp: string;
+}
+
+export interface InstagramFeedMeta {
+  total: number;
+  cachedAt: string;
+  expiresAt: string;
+}
+
+export interface InstagramFeedResponse {
+  result: InstagramPost[];
+  meta: InstagramFeedMeta;
+}
+
+export interface InstagramFeedFilters {
+  limit?: number;
+}
+
 // Auth Types
 export interface AuthTokens {
   accessToken: string;
@@ -331,6 +359,14 @@ export const api = {
     ) =>
       fetchApi<PaginatedResponse<Product>>("/products", {
         params: { ...filters, categoryId, isActive: true } as QueryParams,
+      }),
+  },
+
+  // Instagram
+  instagram: {
+    feed: (filters?: InstagramFeedFilters) =>
+      fetchApi<InstagramFeedResponse>("/instagram/feed", {
+        params: filters as QueryParams,
       }),
   },
 };

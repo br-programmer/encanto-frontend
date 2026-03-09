@@ -5,6 +5,9 @@ import { ProductCard } from "@/components/product-card";
 import { CategoryCard } from "@/components/category-card";
 import { InstagramFeed } from "@/components/instagram-feed";
 import { HeroCarousel } from "@/components/hero-carousel";
+import { NextSpecialDate } from "@/components/next-special-date";
+import { ScrollRevealSection } from "@/components/scroll-reveal-section";
+import { StackedCardsSection } from "@/components/stacked-cards-section";
 import { api } from "@/lib/api";
 
 export default async function Home() {
@@ -98,6 +101,9 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Next Special Date Parallax */}
+      <NextSpecialDate />
+
       {/* Features Section */}
       <section className="py-10 sm:py-16 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -142,8 +148,14 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Stacked Cards Section - Apple AirPods Style */}
+      <StackedCardsSection />
+
       {/* Instagram Feed */}
       <InstagramFeed instagramUrl="https://www.instagram.com/encanto_ecu" />
+
+      {/* Scroll Reveal Section - Apple Style */}
+      <ScrollRevealSection />
 
       {/* WhatsApp CTA */}
       <section className="py-12 sm:py-20 bg-secondary">
