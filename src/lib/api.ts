@@ -236,6 +236,26 @@ async function fetchApiAuth<T>(
   });
 }
 
+// Instagram
+export interface InstagramPost {
+  id: string;
+  mediaType: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
+  mediaUrl: string;
+  thumbnailUrl: string | null;
+  caption: string | null;
+  permalink: string;
+  timestamp: string;
+}
+
+export interface InstagramFeedResponse {
+  result: InstagramPost[];
+  meta: {
+    total: number;
+    cachedAt: string;
+    expiresAt: string;
+  };
+}
+
 // API Functions
 export const api = {
   // Auth
@@ -332,6 +352,15 @@ export const api = {
       fetchApi<PaginatedResponse<Product>>("/products", {
         params: { ...filters, categoryId, isActive: true } as QueryParams,
       }),
+  },
+
+  // Instagram
+  instagram: {
+    feed: (limit = 6) =>
+      fetchApi<InstagramFeedResponse>("/instagram/feed", {
+        params: { limit },
+        next: { revalidate: 3600 },
+      } as FetchOptions),
   },
 };
 
