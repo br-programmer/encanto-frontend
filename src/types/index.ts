@@ -11,6 +11,12 @@ export type {
   // Filters
   CategoryFilters,
   ProductFilters,
+  // Instagram
+  InstagramPost,
+  InstagramMediaType,
+  InstagramFeedResponse,
+  InstagramFeedMeta,
+  InstagramFeedFilters,
 } from "@/lib/api";
 
 // Cart types

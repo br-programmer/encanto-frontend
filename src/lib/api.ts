@@ -142,6 +142,34 @@ export interface ProductFilters {
   maxPrice?: number;
 }
 
+// Instagram Types
+export type InstagramMediaType = "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
+
+export interface InstagramPost {
+  id: string;
+  mediaType: InstagramMediaType;
+  mediaUrl: string;
+  thumbnailUrl: string | null;
+  caption: string | null;
+  permalink: string;
+  timestamp: string;
+}
+
+export interface InstagramFeedMeta {
+  total: number;
+  cachedAt: string;
+  expiresAt: string;
+}
+
+export interface InstagramFeedResponse {
+  result: InstagramPost[];
+  meta: InstagramFeedMeta;
+}
+
+export interface InstagramFeedFilters {
+  limit?: number;
+}
+
 // Auth Types
 export interface AuthTokens {
   accessToken: string;
@@ -192,7 +220,7 @@ function getAuthHeader(): Record<string, string> {
   if (typeof window === "undefined") return {};
 
   // First try the dedicated tokens storage
-  let tokens = localStorage.getItem("encanto-tokens");
+  const tokens = localStorage.getItem("encanto-tokens");
   if (tokens) {
     try {
       const { accessToken } = JSON.parse(tokens);
@@ -356,11 +384,10 @@ export const api = {
 
   // Instagram
   instagram: {
-    feed: (limit = 6) =>
+    feed: (filters?: InstagramFeedFilters) =>
       fetchApi<InstagramFeedResponse>("/instagram/feed", {
-        params: { limit },
-        next: { revalidate: 3600 },
-      } as FetchOptions),
+        params: filters as QueryParams,
+      }),
   },
 };
 
