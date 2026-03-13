@@ -204,7 +204,7 @@ export default function EnviosPage() {
             </p>
             <ul className="list-disc pl-6 text-foreground-secondary space-y-2 mb-4">
               <li>WhatsApp: 098 274 2191</li>
-              <li>Instagram: @encanto_ecu</li>
+              <li>Instagram: @encantofloristeria_ecu</li>
             </ul>
           </section>
 

@@ -36,7 +36,7 @@ export function Footer() {
             </p>
             <div className="flex gap-4">
               <a
-                href="https://www.instagram.com/encanto_ecu"
+                href="https://www.instagram.com/encantofloristeria_ecu"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-foreground-secondary hover:text-primary transition-colors"
@@ -106,13 +106,13 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="https://www.instagram.com/encanto_ecu"
+                  href="https://www.instagram.com/encantofloristeria_ecu"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm text-foreground-secondary hover:text-primary transition-colors"
                 >
                   <Instagram className="h-4 w-4 flex-shrink-0" />
-                  <span>@encanto_ecu</span>
+                  <span>@encantofloristeria_ecu</span>
                 </a>
               </li>
             </ul>

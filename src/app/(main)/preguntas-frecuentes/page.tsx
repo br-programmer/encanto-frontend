@@ -89,7 +89,7 @@ const faqs = [
       },
       {
         question: "¿Tienen promociones para fechas especiales?",
-        answer: "Sí, en fechas como San Valentín, Día de la Madre y otras ocasiones especiales ofrecemos promociones y productos exclusivos. Síguenos en Instagram @encanto_ecu para enterarte de todas nuestras ofertas."
+        answer: "Sí, en fechas como San Valentín, Día de la Madre y otras ocasiones especiales ofrecemos promociones y productos exclusivos. Síguenos en Instagram @encantofloristeria_ecu para enterarte de todas nuestras ofertas."
       },
       {
         question: "¿Puedo incluir una tarjeta con mensaje?",

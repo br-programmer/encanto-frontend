@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import type { InstagramPost } from "@/types";
 
 interface InstagramFeedProps {
+  posts: InstagramPost[];
   instagramUrl?: string;
   limit?: number;
 }

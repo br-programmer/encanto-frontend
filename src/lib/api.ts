@@ -264,6 +264,26 @@ async function fetchApiAuth<T>(
   });
 }
 
+// Instagram
+export interface InstagramPost {
+  id: string;
+  mediaType: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
+  mediaUrl: string;
+  thumbnailUrl: string | null;
+  caption: string | null;
+  permalink: string;
+  timestamp: string;
+}
+
+export interface InstagramFeedResponse {
+  result: InstagramPost[];
+  meta: {
+    total: number;
+    cachedAt: string;
+    expiresAt: string;
+  };
+}
+
 // API Functions
 export const api = {
   // Auth
