@@ -252,14 +252,14 @@ export default function PerfilPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl md:text-3xl font-bold mb-8">Mi Perfil</h1>
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 sm:mb-8">Mi Perfil</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         {/* Left Column - User Info */}
         <div className="lg:col-span-1 space-y-6">
           {/* User Card */}
-          <div className="bg-background rounded-xl border border-border p-6">
+          <div className="bg-background rounded-xl border border-border p-4 sm:p-6">
             <div className="flex flex-col items-center mb-6">
               {/* Avatar */}
               <div className="relative group mb-4">
@@ -310,10 +310,10 @@ export default function PerfilPage() {
 
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-foreground-muted" />
+                <Mail className="h-5 w-5 text-foreground-muted flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-foreground-secondary">Correo</p>
-                  <p className="truncate">{user.email}</p>
+                  <p className="truncate text-sm sm:text-base">{user.email}</p>
                 </div>
                 {user.emailVerified ? (
                   <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
@@ -323,17 +323,17 @@ export default function PerfilPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <Phone className="h-5 w-5 text-foreground-muted" />
-                <div>
+                <Phone className="h-5 w-5 text-foreground-muted flex-shrink-0" />
+                <div className="min-w-0">
                   <p className="text-sm text-foreground-secondary">Teléfono</p>
-                  <p>{user.phone}</p>
+                  <p className="text-sm sm:text-base">{user.phone}</p>
                 </div>
               </div>
             </div>
 
             {/* Email verification warning */}
             {!user.emailVerified && (
-              <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-lg">
                 <p className="text-sm text-amber-800 mb-3">
                   Tu correo electrónico no está verificado. Verifica tu cuenta para acceder a todas las funcionalidades.
                 </p>
@@ -362,7 +362,7 @@ export default function PerfilPage() {
             )}
 
             {/* Quick Links */}
-            <div className="mt-6 pt-6 border-t border-border space-y-2">
+            <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border space-y-2">
               <Link
                 href="/perfil/pedidos"
                 className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 transition-colors"
@@ -417,7 +417,7 @@ export default function PerfilPage() {
             <div className="mt-4 pt-4 border-t border-border">
               <Button
                 variant="outline"
-                className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="w-full border-destructive text-destructive hover:bg-destructive hover:text-white"
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4 mr-2" />
@@ -429,14 +429,14 @@ export default function PerfilPage() {
 
         {/* Right Column - Addresses */}
         <div className="lg:col-span-2">
-          <div className="bg-background rounded-xl border border-border p-6">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-background rounded-xl border border-border p-4 sm:p-6">
+            <div className="flex items-start sm:items-center justify-between gap-3 mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center flex-shrink-0">
                   <MapPin className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold">Direcciones de entrega</h2>
+                  <h2 className="text-lg sm:text-xl font-semibold">Direcciones de entrega</h2>
                   <p className="text-sm text-foreground-secondary">
                     {addresses.length} {addresses.length === 1 ? "dirección guardada" : "direcciones guardadas"}
                   </p>
@@ -444,6 +444,8 @@ export default function PerfilPage() {
               </div>
               {!showAddressForm && (
                 <Button
+                  size="sm"
+                  className="flex-shrink-0"
                   onClick={() => {
                     resetAddressForm();
                     setAddressFormData(prev => ({
@@ -455,15 +457,15 @@ export default function PerfilPage() {
                     setShowAddressForm(true);
                   }}
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Agregar
+                  <Plus className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Agregar</span>
                 </Button>
               )}
             </div>
 
             {/* Address Form */}
             {showAddressForm && (
-              <div className="mb-6 p-4 bg-secondary/30 rounded-lg border border-border">
+              <div className="mb-6 p-3 sm:p-4 bg-secondary/30 rounded-lg border border-border">
                 <h3 className="font-medium mb-4">
                   {editingAddress ? "Editar dirección" : "Nueva dirección"}
                 </h3>
@@ -573,11 +575,11 @@ export default function PerfilPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-3 mt-4">
-                  <Button onClick={handleSaveAddress}>
+                <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                  <Button onClick={handleSaveAddress} className="w-full sm:w-auto">
                     {editingAddress ? "Guardar cambios" : "Agregar dirección"}
                   </Button>
-                  <Button variant="outline" onClick={resetAddressForm}>
+                  <Button variant="outline" onClick={resetAddressForm} className="w-full sm:w-auto">
                     Cancelar
                   </Button>
                 </div>
@@ -615,15 +617,15 @@ export default function PerfilPage() {
                   <div
                     key={address.id}
                     className={cn(
-                      "p-4 rounded-lg border transition-colors",
+                      "p-3 sm:p-4 rounded-lg border transition-colors",
                       address.isDefault
                         ? "border-primary bg-primary/5"
                         : "border-border hover:border-primary/50"
                     )}
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-start justify-between gap-2 sm:gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
                           {getLabelIcon(address.label)}
                           <span className="font-medium">{address.label}</span>
                           {address.isDefault && (
@@ -633,24 +635,25 @@ export default function PerfilPage() {
                             </span>
                           )}
                         </div>
-                        <p className="text-foreground-secondary text-sm mb-1">
+                        <p className="text-foreground-secondary text-sm mb-1 truncate">
                           {address.recipientName} - {address.recipientPhone}
                         </p>
-                        <p className="text-sm">{address.address}</p>
+                        <p className="text-sm truncate">{address.address}</p>
                         <p className="text-sm text-foreground-secondary">
                           {address.zone}, {address.city}
                         </p>
                         {address.notes && (
-                          <p className="text-sm text-foreground-muted mt-1">
+                          <p className="text-sm text-foreground-muted mt-1 truncate">
                             Nota: {address.notes}
                           </p>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         {!address.isDefault && (
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
+                            className="h-8 w-8"
                             onClick={() => setDefaultAddress(address.id)}
                             title="Establecer como predeterminada"
                           >
@@ -659,15 +662,16 @@ export default function PerfilPage() {
                         )}
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
+                          className="h-8 w-8"
                           onClick={() => handleEditAddress(address)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
                           onClick={() => handleDeleteAddress(address.id)}
                         >
                           <Trash2 className="h-4 w-4" />

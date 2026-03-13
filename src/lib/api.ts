@@ -471,6 +471,7 @@ export interface OrderItemAddOnResponse {
   quantity: number;
   priceCentsSnapshot: number;
   addOnNameSnapshot: string;
+  imageUrl: string | null;
   lineTotalCents: number;
 }
 
@@ -481,6 +482,7 @@ export interface OrderItemResponse {
   quantity: number;
   priceAtPurchaseCents: number;
   productNameSnapshot: string;
+  primaryImageUrl: string | null;
   preparationMinutesSnapshot: number;
   cardMessage: string | null;
   cardMessageFeeCents: number;

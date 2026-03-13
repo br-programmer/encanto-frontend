@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { Loader2, Package, ChevronLeft, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -164,7 +165,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <div className="max-w-3xl mx-auto">
+      <div>
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/perfil/pedidos">
@@ -199,14 +200,52 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         {/* Timeline */}
         {order.orderStatus !== "cancelled" && (
           <div className="bg-background rounded-xl border border-border p-6 mb-6">
-            <h2 className="font-semibold mb-4">Estado del pedido</h2>
-            <div className="flex items-center justify-between">
+            <h2 className="font-semibold mb-6">Estado del pedido</h2>
+
+            {/* Mobile: vertical */}
+            <div className="flex flex-col gap-0 sm:hidden">
               {timelineSteps.map((step, index) => (
-                <div key={step.key} className="flex items-center flex-1">
+                <div key={step.key} className="flex items-start gap-3">
                   <div className="flex flex-col items-center">
                     <div
                       className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium",
+                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0",
+                        step.active
+                          ? "bg-primary text-white"
+                          : "bg-secondary text-foreground-muted"
+                      )}
+                    >
+                      {index + 1}
+                    </div>
+                    {index < timelineSteps.length - 1 && (
+                      <div
+                        className={cn(
+                          "w-0.5 h-8",
+                          step.active ? "bg-primary" : "bg-secondary"
+                        )}
+                      />
+                    )}
+                  </div>
+                  <div className="pt-1">
+                    <p className={cn(
+                      "text-sm",
+                      step.active ? "text-foreground font-medium" : "text-foreground-muted"
+                    )}>
+                      {step.label}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: horizontal */}
+            <div className="hidden sm:flex items-start w-full">
+              {timelineSteps.map((step, index) => (
+                <div key={step.key} className={cn("flex items-start", index < timelineSteps.length - 1 ? "flex-1" : "")}>
+                  <div className="flex flex-col items-center flex-shrink-0">
+                    <div
+                      className={cn(
+                        "w-9 h-9 rounded-full flex items-center justify-center text-xs font-medium",
                         step.active
                           ? "bg-primary text-white"
                           : "bg-secondary text-foreground-muted"
@@ -215,7 +254,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                       {index + 1}
                     </div>
                     <p className={cn(
-                      "text-xs mt-2 text-center max-w-[80px]",
+                      "text-xs mt-2 text-center w-24",
                       step.active ? "text-foreground font-medium" : "text-foreground-muted"
                     )}>
                       {step.label}
@@ -224,7 +263,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   {index < timelineSteps.length - 1 && (
                     <div
                       className={cn(
-                        "flex-1 h-0.5 mx-2",
+                        "flex-1 h-0.5 mt-[18px]",
                         step.active ? "bg-primary" : "bg-secondary"
                       )}
                     />
@@ -280,9 +319,27 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <h2 className="font-semibold mb-4">Productos</h2>
           <div className="space-y-4">
             {order.items.map((item) => (
-              <div key={item.id} className="flex justify-between">
-                <div>
-                  <p className="font-medium text-sm">{item.productNameSnapshot}</p>
+              <div key={item.id} className="flex items-start gap-4">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-secondary/30 flex-shrink-0">
+                  {item.primaryImageUrl ? (
+                    <Image
+                      src={item.primaryImageUrl}
+                      alt={item.productNameSnapshot}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package className="h-6 w-6 text-foreground-muted" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between gap-2">
+                    <p className="font-medium text-sm">{item.productNameSnapshot}</p>
+                    <p className="font-medium text-sm flex-shrink-0">{formatPrice(item.lineTotalCents)}</p>
+                  </div>
                   <p className="text-xs text-foreground-secondary">Cantidad: {item.quantity}</p>
                   {item.addOns.length > 0 && (
                     <div className="mt-1">
@@ -299,7 +356,6 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                     </p>
                   )}
                 </div>
-                <p className="font-medium text-sm">{formatPrice(item.lineTotalCents)}</p>
               </div>
             ))}
           </div>

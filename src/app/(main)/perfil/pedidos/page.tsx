@@ -122,38 +122,36 @@ export default function MisPedidosPage() {
                 <Link
                   key={order.id}
                   href={`/pedidos/${order.orderNumber}`}
-                  className="block bg-background rounded-xl border border-border p-6 hover:border-primary/50 transition-colors"
+                  className="block bg-background rounded-xl border border-border p-4 sm:p-6 hover:border-primary/50 transition-colors"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <p className="font-semibold">{order.orderNumber}</p>
-                        <span className={cn("text-xs px-2 py-1 rounded-full font-medium", orderStatus.color)}>
-                          {orderStatus.label}
-                        </span>
-                        <span className={cn("text-xs px-2 py-1 rounded-full font-medium", paymentStatus.color)}>
-                          {paymentStatus.label}
-                        </span>
-                      </div>
-                      <p className="text-sm text-foreground-secondary">
-                        {order.recipientName} — {order.deliveryAddress}, {order.deliveryCity}
-                      </p>
-                      <p className="text-sm text-foreground-secondary">
-                        Entrega: {new Date(order.deliveryDate + "T00:00:00").toLocaleDateString("es-EC", {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        })}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-lg text-primary">
-                        {formatPrice(order.totalCents)}
-                      </p>
-                      <p className="text-xs text-foreground-secondary">
-                        {order.items?.length ?? 0} {(order.items?.length ?? 0) === 1 ? "producto" : "productos"}
-                      </p>
-                    </div>
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <p className="font-semibold text-sm sm:text-base">{order.orderNumber}</p>
+                    <p className="font-semibold text-base sm:text-lg text-primary flex-shrink-0">
+                      {formatPrice(order.totalCents)}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <span className={cn("text-xs px-2 py-1 rounded-full font-medium", orderStatus.color)}>
+                      {orderStatus.label}
+                    </span>
+                    <span className={cn("text-xs px-2 py-1 rounded-full font-medium", paymentStatus.color)}>
+                      {paymentStatus.label}
+                    </span>
+                  </div>
+                  <p className="text-sm text-foreground-secondary truncate">
+                    {order.recipientName} — {order.deliveryAddress}, {order.deliveryCity}
+                  </p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-sm text-foreground-secondary">
+                      Entrega: {new Date(order.deliveryDate + "T00:00:00").toLocaleDateString("es-EC", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </p>
+                    <p className="text-xs text-foreground-secondary">
+                      {order.items?.length ?? 0} {(order.items?.length ?? 0) === 1 ? "producto" : "productos"}
+                    </p>
                   </div>
                 </Link>
               );
