@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Loader2, Package, ChevronLeft, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TransferProofUpload } from "@/components/orders/transfer-proof-upload";
-import { api, ApiError } from "@/lib/api";
+import { getOrderByIdAction, cancelOrderAction, getOrderPageDataAction } from "@/actions/order-actions";
 import { formatPrice, cn } from "@/lib/utils";
 import type { Order, BankAccount, DeliveryTimeSlot } from "@/lib/api";
 
@@ -40,26 +40,35 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       setIsLoading(true);
       setError(null);
 
-      // If there's a guest token in the URL, store it
+      // If there's a guest token in the URL, store it and use it directly
       const urlToken = searchParams.get("token");
       if (urlToken) {
         localStorage.setItem("encanto-guest-token", urlToken);
       }
 
       try {
-        const [orderData, bankAccountsData, timeSlotsData] = await Promise.all([
-          api.orders.getById(id),
-          api.bankAccounts.active().catch(() => []),
-          api.timeSlots.active().catch(() => []),
+        const accessToken = (() => {
+          try {
+            const tokens = localStorage.getItem("encanto-tokens");
+            if (tokens) return JSON.parse(tokens).accessToken;
+          } catch { /* ignore */ }
+          return undefined;
+        })();
+        // Prefer URL token (direct access) over stored token
+        const guestToken = urlToken || localStorage.getItem("encanto-guest-token") || undefined;
+
+        const [orderData, pageData] = await Promise.all([
+          getOrderByIdAction(id, accessToken, guestToken),
+          getOrderPageDataAction(),
         ]);
         setOrder(orderData);
-        setBankAccounts(bankAccountsData);
-        setTimeSlots(timeSlotsData);
+        setBankAccounts(pageData.bankAccounts);
+        setTimeSlots(pageData.timeSlots);
       } catch (err) {
-        if (err instanceof ApiError) {
-          if (err.status === 404) {
+        if (err instanceof Error) {
+          if (err.message.includes("404")) {
             setError("Pedido no encontrado");
-          } else if (err.status === 403) {
+          } else if (err.message.includes("403")) {
             setError("No tienes permiso para ver este pedido");
           } else {
             setError("Error al cargar el pedido");
@@ -80,12 +89,19 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
     setIsCancelling(true);
     try {
-      const updated = await api.orders.cancel(order.id);
+      const accessToken = (() => {
+        try {
+          const tokens = localStorage.getItem("encanto-tokens");
+          if (tokens) return JSON.parse(tokens).accessToken;
+        } catch { /* ignore */ }
+        return undefined;
+      })();
+      const guestToken = localStorage.getItem("encanto-guest-token") || undefined;
+      const updated = await cancelOrderAction(order.id, accessToken, guestToken);
       setOrder(updated);
     } catch (err) {
-      if (err instanceof ApiError) {
-        const errorData = err.data as { message?: string } | null;
-        alert(errorData?.message || "Error al cancelar el pedido");
+      if (err instanceof Error) {
+        alert(err.message || "Error al cancelar el pedido");
       }
     } finally {
       setIsCancelling(false);
@@ -111,7 +127,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-16 flex items-center justify-center">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -119,7 +135,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
   if (error || !order) {
     return (
-      <div className="container mx-auto px-4 py-16">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
         <div className="max-w-md mx-auto text-center">
           <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-2">Error</h1>
@@ -147,7 +163,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   ];
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" size="sm" asChild>

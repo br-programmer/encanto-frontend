@@ -12,7 +12,7 @@ import { api } from "@/lib/api";
 
 export default async function Home() {
   // Fetch categories, featured products, Instagram feed, and special dates in parallel
-  const [categoriesResponse, productsResponse, instagramResponse, specialDatesResponse] = await Promise.all([
+  const [categoriesResponse, productsResponse, specialDatesResponse, instagramResponse] = await Promise.all([
     api.categories.list({ isActive: true, rootOnly: true, limit: 6 }),
     api.products.featured(8),
     api.specialDates.list({ isActive: true, limit: 20 }).catch(() => ({ result: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } })),

@@ -26,20 +26,26 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuthStore } from "@/stores/auth-store";
 import { useAddressesStore, type DeliveryAddress } from "@/stores/addresses-store";
-import { api, ApiError } from "@/lib/api";
+import { resendVerificationAction, uploadAvatarAction, deleteAvatarAction } from "@/actions/auth-actions";
+import { claimGuestOrdersAction } from "@/actions/order-actions";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
 export default function PerfilPage() {
   const router = useRouter();
-  const { user, logout, refreshToken, fetchUser, isLoading: authLoading } = useAuthStore();
+  const { user, tokens, logout, refreshToken, fetchUser, isLoading: authLoading } = useAuthStore();
   const { addresses, addAddress, updateAddress, deleteAddress, setDefaultAddress } = useAddressesStore();
 
   const [mounted, setMounted] = useState(false);
   const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isClaimingOrders, setIsClaimingOrders] = useState(false);
+  const [claimResult, setClaimResult] = useState<{ claimedCount: number } | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState<DeliveryAddress | null>(null);
   const [addressFormData, setAddressFormData] = useState({
@@ -66,19 +72,23 @@ export default function PerfilPage() {
   }, [mounted, authLoading, user, router]);
 
   const handleResendVerification = async () => {
+    if (!tokens?.accessToken) return;
     setIsResendingVerification(true);
     try {
-      await api.auth.resendVerification();
+      await resendVerificationAction(tokens.accessToken);
       setVerificationSent(true);
     } catch (error) {
       // If 401, try refreshing token and retry
-      if (error instanceof ApiError && error.status === 401) {
+      if (error instanceof Error && error.message.includes("401")) {
         const refreshed = await refreshToken();
         if (refreshed) {
           try {
-            await api.auth.resendVerification();
-            setVerificationSent(true);
-            return;
+            const newTokens = useAuthStore.getState().tokens;
+            if (newTokens?.accessToken) {
+              await resendVerificationAction(newTokens.accessToken);
+              setVerificationSent(true);
+              return;
+            }
           } catch (retryError) {
             console.error("Error resending verification after refresh:", retryError);
           }
@@ -93,6 +103,34 @@ export default function PerfilPage() {
   const handleLogout = () => {
     logout();
     router.push("/");
+  };
+
+  const handleClaimGuestOrders = async () => {
+    if (!tokens?.accessToken) return;
+    setIsClaimingOrders(true);
+    try {
+      const result = await claimGuestOrdersAction(tokens.accessToken);
+      setClaimResult(result);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("401")) {
+        const refreshed = await refreshToken();
+        if (refreshed) {
+          try {
+            const newTokens = useAuthStore.getState().tokens;
+            if (newTokens?.accessToken) {
+              const result = await claimGuestOrdersAction(newTokens.accessToken);
+              setClaimResult(result);
+              return;
+            }
+          } catch {
+            // ignore retry error
+          }
+        }
+      }
+      console.error("Error claiming guest orders:", error);
+    } finally {
+      setIsClaimingOrders(false);
+    }
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,14 +152,15 @@ export default function PerfilPage() {
 
     setIsUploadingAvatar(true);
     try {
-      await api.auth.uploadAvatar(file);
-      await fetchUser(); // Refresh user data to get new avatar URL
+      const formData = new FormData();
+      formData.append("file", file);
+      await uploadAvatarAction(formData, tokens!.accessToken);
+      await fetchUser();
     } catch (error) {
       console.error("Error uploading avatar:", error);
       alert("Error al subir la imagen. Intenta de nuevo.");
     } finally {
       setIsUploadingAvatar(false);
-      // Reset file input
       e.target.value = "";
     }
   };
@@ -131,8 +170,8 @@ export default function PerfilPage() {
 
     setIsUploadingAvatar(true);
     try {
-      await api.auth.deleteAvatar();
-      await fetchUser(); // Refresh user data
+      await deleteAvatarAction(tokens!.accessToken);
+      await fetchUser();
     } catch (error) {
       console.error("Error deleting avatar:", error);
     } finally {
@@ -200,12 +239,9 @@ export default function PerfilPage() {
     }
   };
 
-  const inputClassName =
-    "w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors";
-
   if (!mounted || authLoading) {
     return (
-      <div className="container mx-auto px-4 py-16 flex items-center justify-center">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -216,7 +252,7 @@ export default function PerfilPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-2xl md:text-3xl font-bold mb-8">Mi Perfil</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -339,6 +375,45 @@ export default function PerfilPage() {
               </Link>
             </div>
 
+            {/* Claim guest orders */}
+            {user.emailVerified && (
+              <div className="mt-4 pt-4 border-t border-border">
+                {claimResult ? (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800">
+                      {claimResult.claimedCount > 0
+                        ? `Se asociaron ${claimResult.claimedCount} pedido${claimResult.claimedCount > 1 ? "s" : ""} a tu cuenta.`
+                        : "No se encontraron pedidos de invitado con tu correo."}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800 mb-2">
+                      ¿Hiciste compras como invitado? Asocia esos pedidos a tu cuenta.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleClaimGuestOrders}
+                      disabled={isClaimingOrders}
+                    >
+                      {isClaimingOrders ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Buscando...
+                        </>
+                      ) : (
+                        <>
+                          <Package className="h-4 w-4 mr-2" />
+                          Asociar pedidos
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="mt-4 pt-4 border-t border-border">
               <Button
                 variant="outline"
@@ -396,15 +471,16 @@ export default function PerfilPage() {
                   {/* Label */}
                   <div>
                     <label className="block text-sm font-medium mb-2">Etiqueta</label>
-                    <select
-                      value={addressFormData.label}
-                      onChange={(e) => setAddressFormData({ ...addressFormData, label: e.target.value })}
-                      className={inputClassName}
-                    >
-                      <option value="Casa">Casa</option>
-                      <option value="Trabajo">Trabajo</option>
-                      <option value="Otro">Otro</option>
-                    </select>
+                    <Select value={addressFormData.label} onValueChange={(value) => setAddressFormData({ ...addressFormData, label: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Casa">Casa</SelectItem>
+                        <SelectItem value="Trabajo">Trabajo</SelectItem>
+                        <SelectItem value="Otro">Otro</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Recipient Name */}
@@ -412,11 +488,10 @@ export default function PerfilPage() {
                     <label className="block text-sm font-medium mb-2">
                       Nombre del destinatario <span className="text-destructive">*</span>
                     </label>
-                    <input
+                    <Input
                       type="text"
                       value={addressFormData.recipientName}
                       onChange={(e) => setAddressFormData({ ...addressFormData, recipientName: e.target.value })}
-                      className={inputClassName}
                       placeholder="Nombre completo"
                     />
                   </div>
@@ -426,11 +501,10 @@ export default function PerfilPage() {
                     <label className="block text-sm font-medium mb-2">
                       Teléfono <span className="text-destructive">*</span>
                     </label>
-                    <input
+                    <Input
                       type="tel"
                       value={addressFormData.recipientPhone}
                       onChange={(e) => setAddressFormData({ ...addressFormData, recipientPhone: e.target.value })}
-                      className={inputClassName}
                       placeholder="+593 99 999 9999"
                     />
                   </div>
@@ -438,15 +512,16 @@ export default function PerfilPage() {
                   {/* City */}
                   <div>
                     <label className="block text-sm font-medium mb-2">Ciudad</label>
-                    <select
-                      value={addressFormData.city}
-                      onChange={(e) => setAddressFormData({ ...addressFormData, city: e.target.value })}
-                      className={inputClassName}
-                    >
-                      <option value="Manta">Manta</option>
-                      <option value="Portoviejo">Portoviejo</option>
-                      <option value="Montecristi">Montecristi</option>
-                    </select>
+                    <Select value={addressFormData.city} onValueChange={(value) => setAddressFormData({ ...addressFormData, city: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Manta">Manta</SelectItem>
+                        <SelectItem value="Portoviejo">Portoviejo</SelectItem>
+                        <SelectItem value="Montecristi">Montecristi</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Address */}
@@ -454,11 +529,10 @@ export default function PerfilPage() {
                     <label className="block text-sm font-medium mb-2">
                       Dirección <span className="text-destructive">*</span>
                     </label>
-                    <input
+                    <Input
                       type="text"
                       value={addressFormData.address}
                       onChange={(e) => setAddressFormData({ ...addressFormData, address: e.target.value })}
-                      className={inputClassName}
                       placeholder="Calle principal, número, referencias"
                     />
                   </div>
@@ -468,11 +542,10 @@ export default function PerfilPage() {
                     <label className="block text-sm font-medium mb-2">
                       Zona/Sector <span className="text-destructive">*</span>
                     </label>
-                    <input
+                    <Input
                       type="text"
                       value={addressFormData.zone}
                       onChange={(e) => setAddressFormData({ ...addressFormData, zone: e.target.value })}
-                      className={inputClassName}
                       placeholder="Ej: Barrio Américas"
                     />
                   </div>
@@ -480,11 +553,10 @@ export default function PerfilPage() {
                   {/* Notes */}
                   <div>
                     <label className="block text-sm font-medium mb-2">Notas adicionales</label>
-                    <input
+                    <Input
                       type="text"
                       value={addressFormData.notes}
                       onChange={(e) => setAddressFormData({ ...addressFormData, notes: e.target.value })}
-                      className={inputClassName}
                       placeholder="Ej: Casa color azul"
                     />
                   </div>
@@ -492,11 +564,9 @@ export default function PerfilPage() {
                   {/* Default checkbox */}
                   <div className="md:col-span-2">
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={addressFormData.isDefault}
-                        onChange={(e) => setAddressFormData({ ...addressFormData, isDefault: e.target.checked })}
-                        className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                        onCheckedChange={(checked) => setAddressFormData({ ...addressFormData, isDefault: checked === true })}
                       />
                       <span className="text-sm">Establecer como dirección predeterminada</span>
                     </label>

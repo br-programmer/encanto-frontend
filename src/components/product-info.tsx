@@ -118,7 +118,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
       {inStock && (
         <div className="mt-6 space-y-4">
           {/* Quantity */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <span className="text-sm font-medium">Cantidad:</span>
             <div className="flex items-center border border-border rounded-lg">
               <button

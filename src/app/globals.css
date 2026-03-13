@@ -219,3 +219,14 @@ html.transitioning *::after {
 .glow-effect:hover {
   box-shadow: 0 0 20px rgba(170, 144, 131, 0.4);
 }
+
+.zone-tooltip {
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border-color: var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}

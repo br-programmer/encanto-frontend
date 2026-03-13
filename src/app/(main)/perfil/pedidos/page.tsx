@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import { Loader2, Package, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth-store";
-import { api } from "@/lib/api";
+import { getMyOrdersAction } from "@/actions/order-actions";
 import { formatPrice } from "@/lib/utils";
-import type { Order, PaginatedResponse } from "@/lib/api";
+import type { Order } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const ORDER_STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -29,7 +29,7 @@ const PAYMENT_STATUS_LABELS: Record<string, { label: string; color: string }> = 
 
 export default function MisPedidosPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuthStore();
+  const { user, tokens, isLoading: authLoading, refreshToken } = useAuthStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [meta, setMeta] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
@@ -42,15 +42,32 @@ export default function MisPedidosPage() {
   }, [authLoading, user, router]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !tokens?.accessToken) return;
 
     async function fetchOrders() {
       setIsLoading(true);
       try {
-        const response = await api.orders.my({ page, limit: 10 });
+        const response = await getMyOrdersAction({ page, limit: 10 }, tokens!.accessToken);
         setOrders(response.result);
         setMeta(response.meta);
       } catch (err) {
+        // If 401, try refreshing token and retry
+        if (err instanceof Error && err.message.includes("401")) {
+          const refreshed = await refreshToken();
+          if (refreshed) {
+            const newTokens = useAuthStore.getState().tokens;
+            if (newTokens?.accessToken) {
+              try {
+                const response = await getMyOrdersAction({ page, limit: 10 }, newTokens.accessToken);
+                setOrders(response.result);
+                setMeta(response.meta);
+                return;
+              } catch {
+                // Refresh didn't help
+              }
+            }
+          }
+        }
         console.error("Error fetching orders:", err);
       } finally {
         setIsLoading(false);
@@ -58,26 +75,26 @@ export default function MisPedidosPage() {
     }
 
     fetchOrders();
-  }, [user, page]);
+  }, [user, tokens, page]);
 
   if (authLoading || !user) {
     return (
-      <div className="container mx-auto px-4 py-16 flex items-center justify-center">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center gap-4 mb-8">
-        <Button variant="ghost" size="sm" asChild>
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8">
+        <Button variant="ghost" size="sm" asChild className="mb-4">
           <Link href="/perfil">
             <ChevronLeft className="h-4 w-4 mr-1" />
             Volver al perfil
           </Link>
         </Button>
-        <h1 className="text-2xl md:text-3xl font-bold">Mis Pedidos</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-center">Mis Pedidos</h1>
       </div>
 
       {isLoading ? (
@@ -104,7 +121,7 @@ export default function MisPedidosPage() {
               return (
                 <Link
                   key={order.id}
-                  href={`/pedidos/${order.id}`}
+                  href={`/pedidos/${order.orderNumber}`}
                   className="block bg-background rounded-xl border border-border p-6 hover:border-primary/50 transition-colors"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -134,7 +151,7 @@ export default function MisPedidosPage() {
                         {formatPrice(order.totalCents)}
                       </p>
                       <p className="text-xs text-foreground-secondary">
-                        {order.items.length} {order.items.length === 1 ? "producto" : "productos"}
+                        {order.items?.length ?? 0} {(order.items?.length ?? 0) === 1 ? "producto" : "productos"}
                       </p>
                     </div>
                   </div>

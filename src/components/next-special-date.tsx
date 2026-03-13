@@ -159,7 +159,7 @@ export function NextSpecialDate({ specialDates }: NextSpecialDateProps) {
 
             {/* Countdown */}
             <div className="mb-4 flex items-baseline gap-3">
-              <span className="text-7xl sm:text-8xl md:text-9xl font-bold text-white font-serif leading-none">
+              <span className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold text-white font-serif leading-none">
                 {daysUntil}
               </span>
               <span className="text-2xl sm:text-3xl text-white/80 font-light">

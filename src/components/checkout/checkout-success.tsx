@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Check, Package, ArrowRight, Upload, Loader2, Building2, Copy, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
-import { api, ApiError } from "@/lib/api";
+import { uploadTransferProofAction } from "@/actions/order-actions";
 import type { Order, BankAccount, OrderSettings, DeliveryTimeSlot } from "@/lib/api";
 
 interface CheckoutSuccessProps {
@@ -58,15 +58,23 @@ export function CheckoutSuccess({
     setUploadError(null);
 
     try {
-      await api.orders.uploadTransferProof(order.id, file);
+      const accessToken = (() => {
+        try {
+          const tokens = localStorage.getItem("encanto-tokens");
+          if (tokens) return JSON.parse(tokens).accessToken;
+        } catch { /* ignore */ }
+        return undefined;
+      })();
+      const guestToken = localStorage.getItem("encanto-guest-token") || undefined;
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      await uploadTransferProofAction(order.id, formData, accessToken, guestToken);
       setUploadSuccess(true);
     } catch (err) {
-      if (err instanceof ApiError) {
-        const errorData = err.data as { message?: string } | null;
-        setUploadError(errorData?.message || "Error al subir el comprobante");
-      } else {
-        setUploadError("Error al subir el comprobante");
-      }
+      const message = err instanceof Error ? err.message : "Error al subir el comprobante";
+      setUploadError(message);
     } finally {
       setIsUploading(false);
       e.target.value = "";

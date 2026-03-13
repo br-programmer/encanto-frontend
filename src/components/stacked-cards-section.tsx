@@ -136,7 +136,7 @@ export function StackedCardsSection() {
                     </p>
 
                     {/* Title */}
-                    <h3 className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-white mb-4">
+                    <h3 className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-white mb-4">
                       {card.title}
                     </h3>
 
@@ -158,7 +158,7 @@ export function StackedCardsSection() {
                   </div>
 
                   {/* Card Number - positioned absolutely */}
-                  <span className="absolute bottom-20 sm:bottom-24 md:bottom-32 right-4 sm:right-8 lg:right-16 text-[8rem] sm:text-[10rem] md:text-[14rem] font-bold font-serif text-white/[0.05] leading-none pointer-events-none">
+                  <span className="absolute bottom-20 sm:bottom-24 md:bottom-32 right-4 sm:right-8 lg:right-16 text-[5rem] sm:text-[8rem] md:text-[10rem] lg:text-[14rem] font-bold font-serif text-white/[0.05] leading-none pointer-events-none">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                 </div>

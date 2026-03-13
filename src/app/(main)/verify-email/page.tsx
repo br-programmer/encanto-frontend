@@ -5,7 +5,8 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, XCircle, Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { api, ApiError } from "@/lib/api";
+
+import { verifyEmailAction } from "@/actions/auth-actions";
 
 type VerificationStatus = "loading" | "success" | "error";
 
@@ -24,21 +25,14 @@ export default function VerifyEmailPage() {
       }
 
       try {
-        await api.auth.verifyEmail(token);
+        await verifyEmailAction(token);
         setStatus("success");
       } catch (error) {
         setStatus("error");
-        if (error instanceof ApiError) {
-          const data = error.data as { message?: string } | undefined;
-          if (data?.message) {
-            setErrorMessage(data.message);
-          } else if (error.status === 400) {
-            setErrorMessage("El enlace de verificación es inválido o ha expirado");
-          } else {
-            setErrorMessage("Ha ocurrido un error al verificar tu correo");
-          }
+        if (error instanceof Error && error.message.includes("400")) {
+          setErrorMessage("El enlace de verificación es inválido o ha expirado");
         } else {
-          setErrorMessage("Ha ocurrido un error inesperado");
+          setErrorMessage("Ha ocurrido un error al verificar tu correo");
         }
       }
     }
@@ -47,7 +41,7 @@ export default function VerifyEmailPage() {
   }, [token]);
 
   return (
-    <div className="container mx-auto px-4 py-16">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
       <div className="max-w-md mx-auto">
         {status === "loading" && (
           <div className="text-center">

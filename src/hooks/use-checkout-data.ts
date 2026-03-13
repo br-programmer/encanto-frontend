@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { api } from "@/lib/api";
+import {
+  getCheckoutInitialDataAction,
+  getBranchesByCityAction,
+  getZonesByBranchAction,
+} from "@/actions/checkout-actions";
 import type {
   City,
   Branch,
@@ -46,38 +50,24 @@ export function useCheckoutData(): CheckoutData {
   const [selectedCityId, setSelectedCityIdState] = useState<string | null>(null);
   const [selectedBranchId, setSelectedBranchIdState] = useState<string | null>(null);
 
-  // Fetch initial data on mount
+  // Fetch initial data on mount via Server Action
   useEffect(() => {
     async function fetchInitialData() {
       setIsLoading(true);
       setError(null);
       try {
-        const [
-          citiesData,
-          timeSlotsData,
-          specialDatesData,
-          bankAccountsData,
-          occasionsData,
-          orderSettingsData,
-        ] = await Promise.all([
-          api.cities.active(),
-          api.timeSlots.active(),
-          api.specialDates.list({ isActive: true, limit: 50 }),
-          api.bankAccounts.active(),
-          api.occasions.active(),
-          api.orderSettings.get(),
-        ]);
+        const data = await getCheckoutInitialDataAction();
 
-        setCities(citiesData);
-        setTimeSlots(timeSlotsData);
-        setSpecialDates(specialDatesData.result);
-        setBankAccounts(bankAccountsData);
-        setOccasions(occasionsData);
-        setOrderSettings(orderSettingsData);
+        setCities(data.cities);
+        setTimeSlots(data.timeSlots);
+        setSpecialDates(data.specialDates);
+        setBankAccounts(data.bankAccounts);
+        setOccasions(data.occasions);
+        setOrderSettings(data.orderSettings);
 
         // Auto-select first city if only one
-        if (citiesData.length === 1) {
-          setSelectedCityIdState(citiesData[0].id);
+        if (data.cities.length === 1) {
+          setSelectedCityIdState(data.cities[0].id);
         }
       } catch (err) {
         console.error("Error fetching checkout data:", err);
@@ -101,7 +91,7 @@ export function useCheckoutData(): CheckoutData {
 
     async function fetchBranches() {
       try {
-        const branchesData = await api.branches.byCity(selectedCityId!);
+        const branchesData = await getBranchesByCityAction(selectedCityId!);
         setBranches(branchesData);
 
         // Auto-select first branch if only one
@@ -128,7 +118,7 @@ export function useCheckoutData(): CheckoutData {
 
     async function fetchZones() {
       try {
-        const zonesData = await api.deliveryZones.byBranch(selectedBranchId!);
+        const zonesData = await getZonesByBranchAction(selectedBranchId!);
         setZones(zonesData);
       } catch (err) {
         console.error("Error fetching zones:", err);

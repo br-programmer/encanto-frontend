@@ -13,7 +13,7 @@ export const metadata = {
 interface ProductosPageProps {
   searchParams: Promise<{
     page?: string;
-    categoryId?: string;
+    category?: string | string[];
     minPrice?: string;
     maxPrice?: string;
     inStock?: string;
@@ -26,35 +26,36 @@ export default async function ProductosPage({ searchParams }: ProductosPageProps
   const page = Number(params.page) || 1;
   const limit = 12;
 
-  // Build filters from search params
-  const filters = {
-    page,
-    limit,
-    isActive: true,
-    categoryId: params.categoryId || undefined,
-    minPrice: params.minPrice ? Number(params.minPrice) : undefined,
-    maxPrice: params.maxPrice ? Number(params.maxPrice) : undefined,
-    inStock: params.inStock === "true" ? true : undefined,
-    search: params.search || undefined,
-  };
+  const selectedSlugs = Array.isArray(params.category)
+    ? params.category
+    : params.category
+      ? [params.category]
+      : [];
 
   // Fetch products and categories in parallel
   const [productsResponse, categoriesResponse] = await Promise.all([
-    api.products.list(filters),
+    api.products.list({
+      page,
+      limit,
+      isActive: true,
+      categorySlug: selectedSlugs.length > 0 ? selectedSlugs.join(",") : undefined,
+      minPrice: params.minPrice ? Number(params.minPrice) : undefined,
+      maxPrice: params.maxPrice ? Number(params.maxPrice) : undefined,
+      inStock: params.inStock === "true" ? true : undefined,
+      search: params.search || undefined,
+    }),
     api.categories.list({ isActive: true, rootOnly: true, limit: 100 }),
   ]);
 
   const { result: products, meta } = productsResponse;
   const { result: categories } = categoriesResponse;
 
-  // Find selected category name
-  const selectedCategory = params.categoryId
-    ? categories.find((c) => c.id === params.categoryId)
-    : null;
+  const selectedCategories = categories.filter((c) => selectedSlugs.includes(c.slug));
 
   const breadcrumbItems = [
-    { label: "Productos", href: selectedCategory ? "/productos" : undefined },
-    ...(selectedCategory ? [{ label: selectedCategory.name }] : []),
+    { label: "Productos", href: selectedCategories.length ? "/productos" : undefined },
+    ...(selectedCategories.length === 1 ? [{ label: selectedCategories[0].name }] : []),
+    ...(selectedCategories.length > 1 ? [{ label: `${selectedCategories.length} categorías` }] : []),
   ];
 
   return (
@@ -64,10 +65,14 @@ export default async function ProductosPage({ searchParams }: ProductosPageProps
       {/* Header */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-4xl font-serif">
-          {selectedCategory ? selectedCategory.name : "Todos los Productos"}
+          {selectedCategories.length === 1
+            ? selectedCategories[0].name
+            : "Todos los Productos"}
         </h1>
         <p className="text-foreground-secondary mt-2">
-          {selectedCategory?.description || "Encuentra el arreglo perfecto para cada ocasión"}
+          {selectedCategories.length === 1
+            ? selectedCategories[0].description || "Encuentra el arreglo perfecto para cada ocasión"
+            : "Encuentra el arreglo perfecto para cada ocasión"}
         </p>
         <p className="text-sm text-foreground-muted mt-4">
           {meta.total} {meta.total === 1 ? "producto" : "productos"}
@@ -81,7 +86,7 @@ export default async function ProductosPage({ searchParams }: ProductosPageProps
           <aside className="w-full lg:w-64 flex-shrink-0">
             <ProductFilters
               categories={categories}
-              selectedCategoryId={params.categoryId}
+              selectedCategorySlugs={selectedSlugs}
               minPrice={params.minPrice}
               maxPrice={params.maxPrice}
               inStock={params.inStock === "true"}

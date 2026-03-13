@@ -4,15 +4,31 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, CreditCard, Building2, Gift, User, LogOut, Check, LogIn, UserPlus, ChevronRight, MapPin, Plus, Bookmark, AlertTriangle, Percent } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Checkbox } from "@/components/ui/checkbox";
+import dynamic from "next/dynamic";
 import { OrderSummary } from "./order-summary";
+
+const MapPicker = dynamic(() => import("./map-picker").then(m => ({ default: m.MapPicker })), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[300px] rounded-lg border border-border bg-secondary/30 flex items-center justify-center">
+      <span className="text-sm text-foreground-secondary">Cargando mapa...</span>
+    </div>
+  ),
+});
 import { CheckoutSuccess } from "./checkout-success";
 import { AuthModal } from "@/components/auth-modal";
 import { useCartStore } from "@/stores/cart-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { useAddressesStore, type DeliveryAddress } from "@/stores/addresses-store";
 import { useCheckoutData } from "@/hooks/use-checkout-data";
-import { api, ApiError } from "@/lib/api";
-import type { Order, OrderPreview, BankAccount } from "@/lib/api";
+
+import { previewOrderAction, createOrderAction } from "@/actions/order-actions";
+import type { Order, OrderPreview, BankAccount, DeliveryZone } from "@/lib/api";
 import { cn, formatPrice } from "@/lib/utils";
 
 interface FormData {
@@ -57,6 +73,20 @@ const initialFormData: FormData = {
   longitude: -80.73,
 };
 
+// Normalize phone to E.164 format (Ecuador default)
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  // Already has country code
+  if (digits.startsWith("593") && digits.length >= 12) return `+${digits}`;
+  // Local format starting with 0 (e.g. 0987654321)
+  if (digits.startsWith("0") && digits.length === 10) return `+593${digits.slice(1)}`;
+  // Without leading 0 (e.g. 987654321)
+  if (digits.length === 9 && digits.startsWith("9")) return `+593${digits}`;
+  // Already has + prefix
+  if (phone.startsWith("+")) return phone.replace(/\s/g, "");
+  return phone.replace(/\s/g, "");
+}
+
 const paymentMethods = [
   {
     value: "bank_transfer",
@@ -93,7 +123,7 @@ export function CheckoutForm() {
   const previewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { items, totalPrice, clearCart } = useCartStore();
-  const { user, logout } = useAuthStore();
+  const { user, tokens, logout } = useAuthStore();
   const { addresses, addAddress, getDefaultAddress } = useAddressesStore();
 
   const {
@@ -206,7 +236,7 @@ export function CheckoutForm() {
 
     setIsLoadingPreview(true);
     try {
-      const preview = await api.orders.preview({
+      const preview = await previewOrderAction({
         branchId: formData.branchId,
         deliveryZoneId: formData.deliveryZoneId,
         latitude: formData.latitude,
@@ -286,6 +316,38 @@ export function CheckoutForm() {
       setSelectedBranchId(value);
     }
   };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === "cityId" ? { branchId: "", deliveryZoneId: "" } : {}),
+      ...(name === "branchId" ? { deliveryZoneId: "" } : {}),
+    }));
+    setError(null);
+
+    if (name === "cityId") {
+      setSelectedCityId(value);
+    }
+    if (name === "branchId") {
+      setSelectedBranchId(value);
+    }
+  };
+
+  const handleMapLocationChange = useCallback((lat: number, lng: number, zone: DeliveryZone | null) => {
+    setFormData((prev) => ({
+      ...prev,
+      latitude: lat,
+      longitude: lng,
+      deliveryZoneId: zone?.id ?? "",
+      branchId: zone?.branchId ?? prev.branchId,
+    }));
+
+    if (zone?.branchId) {
+      setSelectedBranchId(zone.branchId);
+    }
+    setError(null);
+  }, [setSelectedBranchId]);
 
   const handlePaymentMethodChange = (method: string) => {
     setFormData((prev) => ({ ...prev, paymentMethod: method }));
@@ -442,9 +504,9 @@ export function CheckoutForm() {
         })),
         senderName,
         senderEmail,
-        senderPhone,
+        senderPhone: normalizePhone(senderPhone),
         recipientName: formData.recipientName,
-        recipientPhone: formData.recipientPhone,
+        recipientPhone: normalizePhone(formData.recipientPhone),
         deliveryAddress: formData.address,
         deliveryCity: selectedCity?.name || "",
         deliveryReference: formData.deliveryReference || undefined,
@@ -452,7 +514,14 @@ export function CheckoutForm() {
         isSurprise: formData.isSurprise,
       };
 
-      const order = await api.orders.create(orderData);
+      const guestToken = typeof window !== "undefined"
+        ? localStorage.getItem("encanto-guest-token") || undefined
+        : undefined;
+      const order = await createOrderAction(
+        orderData,
+        tokens?.accessToken,
+        guestToken
+      );
 
       // Save guest token if returned
       if (order.guestToken) {
@@ -477,9 +546,14 @@ export function CheckoutForm() {
       clearCart();
       setIsSubmitted(true);
     } catch (err) {
-      if (err instanceof ApiError) {
-        const errorData = err.data as { message?: string } | null;
-        setError(errorData?.message || "Hubo un error al procesar tu pedido. Por favor, intenta de nuevo.");
+      if (err instanceof Error) {
+        // Server Actions serialize errors - extract message
+        const msg = err.message;
+        if (msg && msg !== "API Error: 400 Bad Request" && !msg.startsWith("API Error:")) {
+          setError(msg);
+        } else {
+          setError("Hubo un error al procesar tu pedido. Por favor, intenta de nuevo.");
+        }
       } else {
         setError("Hubo un error al procesar tu pedido. Por favor, intenta de nuevo.");
       }
@@ -576,9 +650,6 @@ export function CheckoutForm() {
     );
   }
 
-  const inputClassName =
-    "w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors";
-
   const discountLabel = orderSettings
     ? `${orderSettings.transferDiscountPercentage}% de descuento`
     : "Descuento por transferencia";
@@ -661,21 +732,21 @@ export function CheckoutForm() {
               {/* Logged in user info */}
               {user && (
                 <div className="bg-background rounded-xl border border-border p-6">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
                         <Check className="h-5 w-5 text-green-600" />
                       </div>
-                      <div>
-                        <p className="font-medium">Conectado como {user.fullName}</p>
-                        <p className="text-sm text-foreground-secondary">{user.email}</p>
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">Conectado como {user.fullName}</p>
+                        <p className="text-sm text-foreground-secondary truncate">{user.email}</p>
                       </div>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={handleLogout}
-                      className="text-foreground-secondary hover:text-destructive"
+                      className="text-foreground-secondary hover:text-destructive self-start sm:self-auto flex-shrink-0"
                     >
                       <LogOut className="h-4 w-4 mr-2" />
                       Cerrar sesión
@@ -715,13 +786,12 @@ export function CheckoutForm() {
                       <label htmlFor="senderName" className="block text-sm font-medium mb-2">
                         Tu nombre <span className="text-destructive">*</span>
                       </label>
-                      <input
+                      <Input
                         type="text"
                         id="senderName"
                         name="senderName"
                         value={formData.senderName}
                         onChange={handleChange}
-                        className={inputClassName}
                         placeholder="Tu nombre completo"
                       />
                     </div>
@@ -729,13 +799,12 @@ export function CheckoutForm() {
                       <label htmlFor="senderPhone" className="block text-sm font-medium mb-2">
                         Tu teléfono <span className="text-destructive">*</span>
                       </label>
-                      <input
+                      <Input
                         type="tel"
                         id="senderPhone"
                         name="senderPhone"
                         value={formData.senderPhone}
                         onChange={handleChange}
-                        className={inputClassName}
                         placeholder="+593 99 999 9999"
                       />
                     </div>
@@ -743,13 +812,12 @@ export function CheckoutForm() {
                       <label htmlFor="senderEmail" className="block text-sm font-medium mb-2">
                         Tu correo electrónico <span className="text-destructive">*</span>
                       </label>
-                      <input
+                      <Input
                         type="email"
                         id="senderEmail"
                         name="senderEmail"
                         value={formData.senderEmail}
                         onChange={handleChange}
-                        className={inputClassName}
                         placeholder="correo@ejemplo.com"
                       />
                     </div>
@@ -821,13 +889,12 @@ export function CheckoutForm() {
                         <label htmlFor="recipientName" className="block text-sm font-medium mb-2">
                           Nombre del destinatario <span className="text-destructive">*</span>
                         </label>
-                        <input
+                        <Input
                           type="text"
                           id="recipientName"
                           name="recipientName"
                           value={formData.recipientName}
                           onChange={handleChange}
-                          className={inputClassName}
                           placeholder="¿Quién recibe las flores?"
                         />
                       </div>
@@ -835,13 +902,12 @@ export function CheckoutForm() {
                         <label htmlFor="recipientPhone" className="block text-sm font-medium mb-2">
                           Teléfono del destinatario <span className="text-destructive">*</span>
                         </label>
-                        <input
+                        <Input
                           type="tel"
                           id="recipientPhone"
                           name="recipientPhone"
                           value={formData.recipientPhone}
                           onChange={handleChange}
-                          className={inputClassName}
                           placeholder="+593 99 999 9999"
                         />
                       </div>
@@ -852,13 +918,12 @@ export function CheckoutForm() {
                       <label htmlFor="address" className="block text-sm font-medium mb-2">
                         Dirección de entrega <span className="text-destructive">*</span>
                       </label>
-                      <input
+                      <Input
                         type="text"
                         id="address"
                         name="address"
                         value={formData.address}
                         onChange={handleChange}
-                        className={inputClassName}
                         placeholder="Calle, número, edificio, referencia..."
                       />
                     </div>
@@ -869,20 +934,18 @@ export function CheckoutForm() {
                         <label htmlFor="cityId" className="block text-sm font-medium mb-2">
                           Ciudad <span className="text-destructive">*</span>
                         </label>
-                        <select
-                          id="cityId"
-                          name="cityId"
-                          value={formData.cityId}
-                          onChange={handleChange}
-                          className={inputClassName}
-                        >
-                          <option value="">Selecciona una ciudad</option>
-                          {cities.map((city) => (
-                            <option key={city.id} value={city.id}>
-                              {city.name}
-                            </option>
-                          ))}
-                        </select>
+                        <Select value={formData.cityId} onValueChange={(v) => handleSelectChange("cityId", v)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona una ciudad" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {cities.map((city) => (
+                              <SelectItem key={city.id} value={city.id}>
+                                {city.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       {/* Branch selector - only show if multiple branches */}
@@ -891,49 +954,52 @@ export function CheckoutForm() {
                           <label htmlFor="branchId" className="block text-sm font-medium mb-2">
                             Sucursal <span className="text-destructive">*</span>
                           </label>
-                          <select
-                            id="branchId"
-                            name="branchId"
-                            value={formData.branchId}
-                            onChange={handleChange}
-                            className={inputClassName}
-                          >
-                            <option value="">Selecciona una sucursal</option>
-                            {branches.map((branch) => (
-                              <option key={branch.id} value={branch.id}>
-                                {branch.name}
-                              </option>
-                            ))}
-                          </select>
+                          <Select value={formData.branchId} onValueChange={(v) => handleSelectChange("branchId", v)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecciona una sucursal" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {branches.map((branch) => (
+                                <SelectItem key={branch.id} value={branch.id}>
+                                  {branch.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       )}
 
-                      {/* Zone */}
-                      <div className={branches.length <= 1 ? "" : "sm:col-span-2"}>
-                        <label htmlFor="deliveryZoneId" className="block text-sm font-medium mb-2">
+                    </div>
+
+                    {/* Delivery zone selector */}
+                    {zones.length > 0 && (
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
                           Zona de entrega <span className="text-destructive">*</span>
                         </label>
-                        <select
-                          id="deliveryZoneId"
-                          name="deliveryZoneId"
-                          value={formData.deliveryZoneId}
-                          onChange={handleChange}
-                          className={inputClassName}
-                          disabled={zones.length === 0}
-                        >
-                          <option value="">
-                            {zones.length === 0
-                              ? "Selecciona una ciudad primero"
-                              : "Selecciona una zona"}
-                          </option>
-                          {zones.map((zone) => (
-                            <option key={zone.id} value={zone.id}>
-                              {zone.zoneName} — {formatPrice(zone.deliveryFeeCents)} envío
-                            </option>
-                          ))}
-                        </select>
+                        <Select value={formData.deliveryZoneId} onValueChange={(v) => handleSelectChange("deliveryZoneId", v)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona una zona" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {zones.map((zone) => (
+                              <SelectItem key={zone.id} value={zone.id}>
+                                {zone.zoneName} — {formatPrice(zone.deliveryFeeCents)}
+                                {zone.estimatedMinutes ? ` (~${zone.estimatedMinutes} min)` : ""}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                    </div>
+                    )}
+
+                    {/* Map Picker - shows zones and detects location */}
+                    <MapPicker
+                      latitude={formData.latitude}
+                      longitude={formData.longitude}
+                      onLocationChange={handleMapLocationChange}
+                      zones={zones}
+                    />
 
                     {/* Delivery date and time */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -941,34 +1007,32 @@ export function CheckoutForm() {
                         <label htmlFor="deliveryDate" className="block text-sm font-medium mb-2">
                           Fecha de entrega <span className="text-destructive">*</span>
                         </label>
-                        <input
-                          type="date"
-                          id="deliveryDate"
-                          name="deliveryDate"
-                          value={formData.deliveryDate}
-                          onChange={handleChange}
-                          min={getMinDeliveryDate()}
-                          className={inputClassName}
+                        <DatePicker
+                          value={formData.deliveryDate ? new Date(formData.deliveryDate + "T00:00:00") : undefined}
+                          onChange={(date) => {
+                            const dateStr = date ? date.toISOString().split("T")[0] : "";
+                            handleSelectChange("deliveryDate", dateStr);
+                          }}
+                          minDate={new Date(getMinDeliveryDate() + "T00:00:00")}
+                          placeholder="Selecciona una fecha"
                         />
                       </div>
                       <div>
                         <label htmlFor="deliveryTimeSlotId" className="block text-sm font-medium mb-2">
                           Horario de entrega <span className="text-destructive">*</span>
                         </label>
-                        <select
-                          id="deliveryTimeSlotId"
-                          name="deliveryTimeSlotId"
-                          value={formData.deliveryTimeSlotId}
-                          onChange={handleChange}
-                          className={inputClassName}
-                        >
-                          <option value="">Selecciona un horario</option>
-                          {timeSlots.map((slot) => (
-                            <option key={slot.id} value={slot.id}>
-                              {formatTimeSlot(slot.startTime, slot.endTime, slot.displayLabel)}
-                            </option>
-                          ))}
-                        </select>
+                        <Select value={formData.deliveryTimeSlotId} onValueChange={(v) => handleSelectChange("deliveryTimeSlotId", v)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona un horario" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {timeSlots.map((slot) => (
+                              <SelectItem key={slot.id} value={slot.id}>
+                                {formatTimeSlot(slot.startTime, slot.endTime, slot.displayLabel)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
 
@@ -986,20 +1050,18 @@ export function CheckoutForm() {
                         <label htmlFor="occasionId" className="block text-sm font-medium mb-2">
                           Ocasión
                         </label>
-                        <select
-                          id="occasionId"
-                          name="occasionId"
-                          value={formData.occasionId}
-                          onChange={handleChange}
-                          className={inputClassName}
-                        >
-                          <option value="">Selecciona una ocasión (opcional)</option>
-                          {occasions.map((occasion) => (
-                            <option key={occasion.id} value={occasion.id}>
-                              {occasion.name}
-                            </option>
-                          ))}
-                        </select>
+                        <Select value={formData.occasionId} onValueChange={(v) => handleSelectChange("occasionId", v)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona una ocasión (opcional)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {occasions.map((occasion) => (
+                              <SelectItem key={occasion.id} value={occasion.id}>
+                                {occasion.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     )}
 
@@ -1008,13 +1070,12 @@ export function CheckoutForm() {
                       <label htmlFor="deliveryReference" className="block text-sm font-medium mb-2">
                         Referencia de ubicación
                       </label>
-                      <textarea
+                      <Textarea
                         id="deliveryReference"
                         name="deliveryReference"
                         value={formData.deliveryReference}
                         onChange={handleChange}
                         rows={3}
-                        className={cn(inputClassName, "resize-none")}
                         placeholder="Instrucciones especiales, referencias de ubicación..."
                       />
                     </div>
@@ -1022,12 +1083,10 @@ export function CheckoutForm() {
                     {/* Save Address Option - only show for new addresses when logged in */}
                     {!selectedAddressId && user && (
                       <div className="p-4 bg-secondary/30 rounded-lg space-y-3">
-                        <label className="flex items-start gap-3 cursor-pointer">
-                          <input
-                            type="checkbox"
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <Checkbox
                             checked={saveAddress}
-                            onChange={(e) => setSaveAddress(e.target.checked)}
-                            className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                            onCheckedChange={(checked) => setSaveAddress(checked === true)}
                           />
                           <div className="flex items-center gap-2">
                             <Bookmark className="h-4 w-4 text-primary" />
@@ -1045,17 +1104,17 @@ export function CheckoutForm() {
                             <label htmlFor="addressLabel" className="block text-sm font-medium mb-2">
                               Etiqueta de la dirección
                             </label>
-                            <select
-                              id="addressLabel"
-                              value={addressLabel}
-                              onChange={(e) => setAddressLabel(e.target.value)}
-                              className={inputClassName}
-                            >
-                              <option value="Casa">Casa</option>
-                              <option value="Trabajo">Trabajo</option>
-                              <option value="Oficina">Oficina</option>
-                              <option value="Otro">Otro</option>
-                            </select>
+                            <Select value={addressLabel} onValueChange={setAddressLabel}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Casa">Casa</SelectItem>
+                                <SelectItem value="Trabajo">Trabajo</SelectItem>
+                                <SelectItem value="Oficina">Oficina</SelectItem>
+                                <SelectItem value="Otro">Otro</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                         )}
                       </div>
@@ -1063,16 +1122,13 @@ export function CheckoutForm() {
 
                     {/* Checkboxes */}
                     <div className="space-y-3">
-                      <label className="flex items-start gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          name="isSurprise"
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <Checkbox
                           checked={formData.isSurprise}
-                          onChange={handleChange}
-                          className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                          onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isSurprise: checked === true }))}
                         />
                         <div className="flex items-center gap-2">
-                          <Gift className="h-4 w-4 text-primary" />
+                          <Gift className="h-5 w-5 text-primary flex-shrink-0" />
                           <div>
                             <span className="text-sm font-medium">Es una entrega sorpresa</span>
                             <p className="text-xs text-foreground-secondary">
@@ -1083,16 +1139,13 @@ export function CheckoutForm() {
                       </label>
 
                       {user && (
-                        <label className="flex items-start gap-3 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            name="differentBuyer"
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <Checkbox
                             checked={formData.differentBuyer}
-                            onChange={handleChange}
-                            className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                            onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, differentBuyer: checked === true }))}
                           />
                           <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-primary" />
+                            <User className="h-5 w-5 text-primary flex-shrink-0" />
                             <div>
                               <span className="text-sm font-medium">El comprador es diferente al usuario de la cuenta</span>
                               <p className="text-xs text-foreground-secondary">
@@ -1111,13 +1164,12 @@ export function CheckoutForm() {
                           <label htmlFor="senderName" className="block text-sm font-medium mb-2">
                             Nombre del comprador <span className="text-destructive">*</span>
                           </label>
-                          <input
+                          <Input
                             type="text"
                             id="senderName"
                             name="senderName"
                             value={formData.senderName}
                             onChange={handleChange}
-                            className={inputClassName}
                             placeholder="Nombre completo"
                           />
                         </div>
@@ -1125,13 +1177,12 @@ export function CheckoutForm() {
                           <label htmlFor="senderPhone" className="block text-sm font-medium mb-2">
                             Teléfono del comprador <span className="text-destructive">*</span>
                           </label>
-                          <input
+                          <Input
                             type="tel"
                             id="senderPhone"
                             name="senderPhone"
                             value={formData.senderPhone}
                             onChange={handleChange}
-                            className={inputClassName}
                             placeholder="+593 99 999 9999"
                           />
                         </div>

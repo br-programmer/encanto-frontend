@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Upload, Loader2, Building2, Copy, CheckCircle2 } from "lucide-react";
-import { api, ApiError } from "@/lib/api";
+import { uploadTransferProofAction } from "@/actions/order-actions";
 import { formatPrice } from "@/lib/utils";
 import type { Order, BankAccount } from "@/lib/api";
 
@@ -31,15 +31,23 @@ export function TransferProofUpload({
     setUploadError(null);
 
     try {
-      const updatedOrder = await api.orders.uploadTransferProof(orderId, file);
+      const accessToken = (() => {
+        try {
+          const tokens = localStorage.getItem("encanto-tokens");
+          if (tokens) return JSON.parse(tokens).accessToken;
+        } catch { /* ignore */ }
+        return undefined;
+      })();
+      const guestToken = localStorage.getItem("encanto-guest-token") || undefined;
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const updatedOrder = await uploadTransferProofAction(orderId, formData, accessToken, guestToken);
       onUploadSuccess(updatedOrder);
     } catch (err) {
-      if (err instanceof ApiError) {
-        const errorData = err.data as { message?: string } | null;
-        setUploadError(errorData?.message || "Error al subir el comprobante");
-      } else {
-        setUploadError("Error al subir el comprobante");
-      }
+      const message = err instanceof Error ? err.message : "Error al subir el comprobante";
+      setUploadError(message);
     } finally {
       setIsUploading(false);
       e.target.value = "";

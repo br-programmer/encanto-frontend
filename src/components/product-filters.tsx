@@ -4,12 +4,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Search, X, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/types";
 
 interface ProductFiltersProps {
   categories: Category[];
-  selectedCategoryId?: string;
+  selectedCategorySlugs?: string[];
   minPrice?: string;
   maxPrice?: string;
   inStock?: boolean;
@@ -18,7 +19,7 @@ interface ProductFiltersProps {
 
 export function ProductFilters({
   categories,
-  selectedCategoryId,
+  selectedCategorySlugs = [],
   minPrice,
   maxPrice,
   inStock,
@@ -36,7 +37,6 @@ export function ProductFilters({
   const updateFilters = (updates: Record<string, string | undefined>) => {
     const params = new URLSearchParams(searchParams.toString());
 
-    // Reset to page 1 when filters change
     params.delete("page");
 
     Object.entries(updates).forEach(([key, value]) => {
@@ -52,8 +52,22 @@ export function ProductFilters({
     });
   };
 
-  const handleCategoryChange = (categoryId: string | undefined) => {
-    updateFilters({ categoryId });
+  const handleCategoryToggle = (slug: string) => {
+    const current = new Set(selectedCategorySlugs);
+    if (current.has(slug)) {
+      current.delete(slug);
+    } else {
+      current.add(slug);
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("page");
+    params.delete("category");
+    current.forEach((s) => params.append("category", s));
+
+    startTransition(() => {
+      router.push(`/productos?${params.toString()}`);
+    });
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -83,7 +97,7 @@ export function ProductFilters({
   };
 
   const hasActiveFilters =
-    selectedCategoryId || minPrice || maxPrice || inStock || search;
+    selectedCategorySlugs.length > 0 || minPrice || maxPrice || inStock || search;
 
   const FiltersContent = () => (
     <div className="space-y-6">
@@ -105,32 +119,43 @@ export function ProductFilters({
       {/* Categories */}
       <div>
         <h3 className="font-medium mb-3">Categorías</h3>
-        <div className="space-y-2">
+        <div className="space-y-1">
           <button
-            onClick={() => handleCategoryChange(undefined)}
+            onClick={() => {
+              const params = new URLSearchParams(searchParams.toString());
+              params.delete("page");
+              params.delete("category");
+              startTransition(() => {
+                router.push(`/productos?${params.toString()}`);
+              });
+            }}
             className={cn(
               "block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
-              !selectedCategoryId
+              selectedCategorySlugs.length === 0
                 ? "bg-primary text-white"
                 : "hover:bg-secondary"
             )}
           >
             Todas las categorías
           </button>
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => handleCategoryChange(category.id)}
-              className={cn(
-                "block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
-                selectedCategoryId === category.id
-                  ? "bg-primary text-white"
-                  : "hover:bg-secondary"
-              )}
-            >
-              {category.name}
-            </button>
-          ))}
+          {categories.map((category) => {
+            const isSelected = selectedCategorySlugs.includes(category.slug);
+            return (
+              <label
+                key={category.id}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer",
+                  isSelected ? "bg-primary/10" : "hover:bg-secondary"
+                )}
+              >
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={() => handleCategoryToggle(category.slug)}
+                />
+                <span className={cn(isSelected && "font-medium")}>{category.name}</span>
+              </label>
+            );
+          })}
         </div>
       </div>
 
@@ -166,11 +191,9 @@ export function ProductFilters({
       {/* In Stock */}
       <div>
         <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={inStock}
-            onChange={(e) => handleInStockChange(e.target.checked)}
-            className="w-4 h-4 rounded border-border text-primary focus:ring-primary/20"
+            onCheckedChange={(checked) => handleInStockChange(checked === true)}
           />
           <span className="text-sm">Solo productos en stock</span>
         </label>

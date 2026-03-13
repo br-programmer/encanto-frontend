@@ -51,7 +51,9 @@ async function fetchApi<T>(
     throw new ApiError(response.status, response.statusText, data);
   }
 
-  return response.json();
+  const text = await response.text();
+  if (!text) return null as T;
+  return JSON.parse(text);
 }
 
 // Types
@@ -67,6 +69,11 @@ export interface PaginationMeta {
 export interface PaginatedResponse<T> {
   result: T[];
   meta: PaginationMeta;
+}
+
+// Wrapper for non-paginated responses
+export interface ResultResponse<T> {
+  result: T;
 }
 
 // Category
@@ -135,6 +142,7 @@ export interface ProductFilters {
   limit?: number;
   search?: string;
   categoryId?: string;
+  categorySlug?: string;
   isActive?: boolean;
   isFeatured?: boolean;
   inStock?: boolean;
@@ -243,12 +251,18 @@ export interface Branch {
   cityState?: string;
 }
 
+// GeoJSON Polygon
+export interface GeoPolygon {
+  type: "Polygon";
+  coordinates: number[][][];
+}
+
 // Delivery Zone
 export interface DeliveryZone {
   id: string;
   branchId: string;
   zoneName: string;
-  polygon: unknown | null;
+  polygon: GeoPolygon | null;
   deliveryFeeCents: number;
   estimatedMinutes: number | null;
   isActive: boolean;
@@ -618,7 +632,7 @@ function getGuestTokenHeader(): Record<string, string> {
   return {};
 }
 
-// Authenticated fetch
+// Authenticated fetch (client-side, reads from localStorage)
 async function fetchApiAuth<T>(
   endpoint: string,
   options: FetchOptions = {}
@@ -628,6 +642,40 @@ async function fetchApiAuth<T>(
     ...options,
     headers: {
       ...authHeader,
+      ...options.headers,
+    },
+  });
+}
+
+// Authenticated fetch with explicit token (for Server Actions)
+async function fetchApiWithToken<T>(
+  endpoint: string,
+  accessToken: string,
+  options: FetchOptions = {}
+): Promise<T> {
+  return fetchApi<T>(endpoint, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      ...options.headers,
+    },
+  });
+}
+
+// Fetch with explicit auth + guest tokens (for Server Actions)
+async function fetchApiWithTokens<T>(
+  endpoint: string,
+  options: FetchOptions = {},
+  accessToken?: string,
+  guestToken?: string
+): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+  if (guestToken) headers["X-Guest-Token"] = guestToken;
+  return fetchApi<T>(endpoint, {
+    ...options,
+    headers: {
+      ...headers,
       ...options.headers,
     },
   });
@@ -655,7 +703,7 @@ export const api = {
         body: JSON.stringify({ refreshToken }),
       }),
 
-    me: () => fetchApiAuth<UserProfile>("/users/me"),
+    me: () => fetchApiAuth<ResultResponse<UserProfile>>("/users/me").then(r => r.result),
 
     verifyEmail: (token: string) =>
       fetchApi<{ message: string }>("/auth/verify-email", {
@@ -683,7 +731,8 @@ export const api = {
         throw new ApiError(response.status, response.statusText, data);
       }
 
-      return response.json() as Promise<{ avatarUrl: string }>;
+      const json = await response.json() as { result: { avatarUrl: string } };
+      return json.result;
     },
 
     deleteAvatar: () =>
@@ -691,8 +740,45 @@ export const api = {
         method: "DELETE",
       }),
 
+    uploadAvatarWithToken: async (formData: FormData, accessToken: string): Promise<{ avatarUrl: string }> => {
+      const response = await fetch(`${API_URL}/users/me/avatar`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        const message = (data as { message?: string })?.message || "Error al subir la imagen";
+        throw new Error(message);
+      }
+
+      const json = await response.json() as { result: { avatarUrl: string } };
+      return json.result;
+    },
+
+    deleteAvatarWithToken: (accessToken: string) =>
+      fetchApiWithToken<void>("/users/me/avatar", accessToken, {
+        method: "DELETE",
+      }),
+
     changePassword: (data: ChangePasswordRequest) =>
       fetchApiAuth<{ message: string }>("/users/me/password", {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+
+    // Server Action variants (explicit token)
+    meWithToken: (accessToken: string) =>
+      fetchApiWithToken<ResultResponse<UserProfile>>("/users/me", accessToken).then(r => r.result),
+
+    resendVerificationWithToken: (accessToken: string) =>
+      fetchApiWithToken<{ message: string }>("/users/me/resend-verification", accessToken, {
+        method: "POST",
+      }),
+
+    changePasswordWithToken: (data: ChangePasswordRequest, accessToken: string) =>
+      fetchApiWithToken<{ message: string }>("/users/me/password", accessToken, {
         method: "PATCH",
         body: JSON.stringify(data),
       }),
@@ -706,10 +792,10 @@ export const api = {
       }),
 
     getById: (id: string) =>
-      fetchApi<Category & { children: Category[] }>(`/categories/${id}`),
+      fetchApi<ResultResponse<Category & { children: Category[] }>>(`/categories/${id}`).then(r => r.result),
 
     getBySlug: (slug: string) =>
-      fetchApi<Category & { children: Category[] }>(`/categories/slug/${slug}`),
+      fetchApi<ResultResponse<Category & { children: Category[] }>>(`/categories/slug/${slug}`).then(r => r.result),
   },
 
   // Products
@@ -719,9 +805,9 @@ export const api = {
         params: filters as QueryParams,
       }),
 
-    getById: (id: string) => fetchApi<Product>(`/products/${id}`),
+    getById: (id: string) => fetchApi<ResultResponse<Product>>(`/products/${id}`).then(r => r.result),
 
-    getBySlug: (slug: string) => fetchApi<Product>(`/products/slug/${slug}`),
+    getBySlug: (slug: string) => fetchApi<ResultResponse<Product>>(`/products/slug/${slug}`).then(r => r.result),
 
     featured: (limit = 8) =>
       fetchApi<PaginatedResponse<Product>>("/products", {
@@ -754,7 +840,7 @@ export const api = {
         params: filters as QueryParams,
       }),
 
-    active: () => fetchApi<City[]>("/cities/active"),
+    active: () => fetchApi<ResultResponse<City[]>>("/cities/active").then(r => r.result),
 
     getById: (id: string) => fetchApi<City>(`/cities/${id}`),
   },
@@ -766,9 +852,9 @@ export const api = {
         params: filters as QueryParams,
       }),
 
-    active: () => fetchApi<Branch[]>("/branches/active"),
+    active: () => fetchApi<ResultResponse<Branch[]>>("/branches/active").then(r => r.result),
 
-    byCity: (cityId: string) => fetchApi<Branch[]>(`/branches/city/${cityId}`),
+    byCity: (cityId: string) => fetchApi<ResultResponse<Branch[]>>(`/branches/city/${cityId}`).then(r => r.result),
 
     getById: (id: string) => fetchApi<Branch>(`/branches/${id}`),
   },
@@ -781,14 +867,14 @@ export const api = {
       }),
 
     byBranch: (branchId: string) =>
-      fetchApi<DeliveryZone[]>(`/delivery-zones/branch/${branchId}`),
+      fetchApi<ResultResponse<DeliveryZone[]>>(`/delivery-zones/branch/${branchId}`).then(r => r.result),
 
     contains: (lat: number, lng: number) =>
-      fetchApi<DeliveryZone | null>("/delivery-zones/contains", {
+      fetchApi<ResultResponse<DeliveryZone | null> | null>("/delivery-zones/contains", {
         params: { lat, lng },
-      }),
+      }).then(r => r?.result ?? null),
 
-    getById: (id: string) => fetchApi<DeliveryZone>(`/delivery-zones/${id}`),
+    getById: (id: string) => fetchApi<ResultResponse<DeliveryZone>>(`/delivery-zones/${id}`).then(r => r.result),
   },
 
   // Delivery Time Slots
@@ -798,7 +884,7 @@ export const api = {
         params: filters as QueryParams,
       }),
 
-    active: () => fetchApi<DeliveryTimeSlot[]>("/delivery-time-slots/active"),
+    active: () => fetchApi<ResultResponse<DeliveryTimeSlot[]>>("/delivery-time-slots/active").then(r => r.result),
 
     getById: (id: string) => fetchApi<DeliveryTimeSlot>(`/delivery-time-slots/${id}`),
   },
@@ -815,7 +901,7 @@ export const api = {
 
   // Bank Accounts
   bankAccounts: {
-    active: () => fetchApi<BankAccount[]>("/bank-accounts/active"),
+    active: () => fetchApi<ResultResponse<BankAccount[]>>("/bank-accounts/active").then(r => r.result),
   },
 
   // Occasions
@@ -825,14 +911,14 @@ export const api = {
         params: filters as QueryParams,
       }),
 
-    active: () => fetchApi<Occasion[]>("/occasions/active"),
+    active: () => fetchApi<ResultResponse<Occasion[]>>("/occasions/active").then(r => r.result),
 
     getById: (id: string) => fetchApi<Occasion>(`/occasions/${id}`),
   },
 
   // Add-On Categories
   addOnCategories: {
-    active: () => fetchApi<AddOnCategory[]>("/add-on-categories"),
+    active: () => fetchApi<ResultResponse<AddOnCategory[]>>("/add-on-categories").then(r => r.result),
 
     getById: (id: string) => fetchApi<AddOnCategory>(`/add-on-categories/${id}`),
   },
@@ -840,46 +926,46 @@ export const api = {
   // Add-Ons
   addOns: {
     list: (categoryId?: string) =>
-      fetchApi<AddOn[]>("/add-ons", {
+      fetchApi<ResultResponse<AddOn[]>>("/add-ons", {
         params: categoryId ? { categoryId } : undefined,
-      }),
+      }).then(r => r.result),
 
     getById: (id: string) => fetchApi<AddOn>(`/add-ons/${id}`),
   },
 
   // Order Settings
   orderSettings: {
-    get: () => fetchApi<OrderSettings>("/order-settings"),
+    get: () => fetchApi<ResultResponse<OrderSettings>>("/order-settings").then(r => r.result),
   },
 
   // Delivery Settings
   deliverySettings: {
-    get: () => fetchApi<DeliverySettings>("/delivery-settings"),
+    get: () => fetchApi<ResultResponse<DeliverySettings>>("/delivery-settings").then(r => r.result),
   },
 
   // Orders
   orders: {
     create: (data: CreateOrderRequest) =>
-      fetchApi<Order>("/orders", {
+      fetchApi<ResultResponse<Order>>("/orders", {
         method: "POST",
         body: JSON.stringify(data),
         headers: {
           ...getAuthHeader(),
           ...getGuestTokenHeader(),
         },
-      }),
+      }).then(r => r.result),
 
     preview: (data: PreviewOrderRequest) =>
-      fetchApi<OrderPreview>("/orders/preview", {
+      fetchApi<ResultResponse<OrderPreview>>("/orders/preview", {
         method: "POST",
         body: JSON.stringify(data),
-      }),
+      }).then(r => r.result),
 
     estimateTime: (data: { branchId: string; items: OrderItemRequest[] }) =>
-      fetchApi<{ estimatedPrepMinutes: number }>("/orders/estimate-time", {
+      fetchApi<ResultResponse<{ estimatedPrepMinutes: number }>>("/orders/estimate-time", {
         method: "POST",
         body: JSON.stringify(data),
-      }),
+      }).then(r => r.result),
 
     my: (filters?: OrderFilters) =>
       fetchApiAuth<PaginatedResponse<Order>>("/orders/my", {
@@ -889,18 +975,18 @@ export const api = {
     getById: (id: string) => {
       const authHeader = getAuthHeader();
       const guestHeader = getGuestTokenHeader();
-      return fetchApi<Order>(`/orders/${id}`, {
+      return fetchApi<ResultResponse<Order>>(`/orders/${id}`, {
         headers: { ...authHeader, ...guestHeader },
-      });
+      }).then(r => r.result);
     },
 
     cancel: (id: string) => {
       const authHeader = getAuthHeader();
       const guestHeader = getGuestTokenHeader();
-      return fetchApi<Order>(`/orders/${id}/cancel`, {
+      return fetchApi<ResultResponse<Order>>(`/orders/${id}/cancel`, {
         method: "POST",
         headers: { ...authHeader, ...guestHeader },
-      });
+      }).then(r => r.result);
     },
 
     uploadTransferProof: async (id: string, file: File) => {
@@ -920,18 +1006,70 @@ export const api = {
         throw new ApiError(response.status, response.statusText, data);
       }
 
-      return response.json() as Promise<Order>;
+      const json = await response.json() as { result: Order };
+      return json.result;
+    },
+
+    uploadTransferProofWithTokens: async (
+      id: string,
+      formData: FormData,
+      accessToken?: string,
+      guestToken?: string
+    ): Promise<Order> => {
+      const headers: Record<string, string> = {};
+      if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+      if (guestToken) headers["X-Guest-Token"] = guestToken;
+
+      const response = await fetch(`${API_URL}/orders/${id}/transfer-proof`, {
+        method: "POST",
+        headers,
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        const message = (data as { message?: string })?.message || "Error al subir el comprobante";
+        throw new Error(message);
+      }
+
+      const json = await response.json() as { result: Order };
+      return json.result;
     },
 
     claimGuestOrders: () =>
-      fetchApiAuth<{ claimedCount: number }>("/orders/claim-guest-orders", {
+      fetchApiAuth<ResultResponse<{ claimedCount: number }>>("/orders/claim-guest-orders", {
         method: "POST",
-      }),
+      }).then(r => r.result),
 
     queueStatus: (branchId: string) =>
-      fetchApi<{ pendingOrders: number; estimatedWaitMinutes: number }>(
+      fetchApi<ResultResponse<{ pendingOrders: number; estimatedWaitMinutes: number }>>(
         `/orders/branch/${branchId}/queue-status`
-      ),
+      ).then(r => r.result),
+
+    // Server Action variants (explicit tokens)
+    createWithTokens: (data: CreateOrderRequest, accessToken?: string, guestToken?: string) =>
+      fetchApiWithTokens<ResultResponse<Order>>("/orders", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }, accessToken, guestToken).then(r => r.result),
+
+    myWithToken: (filters: OrderFilters, accessToken: string) =>
+      fetchApiWithToken<PaginatedResponse<Order>>("/orders/my", accessToken, {
+        params: filters as QueryParams,
+      }),
+
+    getByIdWithTokens: (id: string, accessToken?: string, guestToken?: string) =>
+      fetchApiWithTokens<ResultResponse<Order>>(`/orders/${id}`, {}, accessToken, guestToken).then(r => r.result),
+
+    cancelWithTokens: (id: string, accessToken?: string, guestToken?: string) =>
+      fetchApiWithTokens<ResultResponse<Order>>(`/orders/${id}/cancel`, {
+        method: "POST",
+      }, accessToken, guestToken).then(r => r.result),
+
+    claimGuestOrdersWithToken: (accessToken: string) =>
+      fetchApiWithToken<ResultResponse<{ claimedCount: number }>>("/orders/claim-guest-orders", accessToken, {
+        method: "POST",
+      }).then(r => r.result),
   },
 
   // Delivery Addresses
@@ -942,22 +1080,22 @@ export const api = {
       }),
 
     getDefault: () =>
-      fetchApiAuth<DeliveryAddressApi>("/delivery-addresses/default"),
+      fetchApiAuth<ResultResponse<DeliveryAddressApi | null>>("/delivery-addresses/default").then(r => r.result),
 
     getById: (id: string) =>
-      fetchApiAuth<DeliveryAddressApi>(`/delivery-addresses/${id}`),
+      fetchApiAuth<ResultResponse<DeliveryAddressApi>>(`/delivery-addresses/${id}`).then(r => r.result),
 
     create: (data: CreateDeliveryAddressRequest) =>
-      fetchApiAuth<DeliveryAddressApi>("/delivery-addresses", {
+      fetchApiAuth<ResultResponse<DeliveryAddressApi>>("/delivery-addresses", {
         method: "POST",
         body: JSON.stringify(data),
-      }),
+      }).then(r => r.result),
 
     update: (id: string, data: UpdateDeliveryAddressRequest) =>
-      fetchApiAuth<DeliveryAddressApi>(`/delivery-addresses/${id}`, {
+      fetchApiAuth<ResultResponse<DeliveryAddressApi>>(`/delivery-addresses/${id}`, {
         method: "PATCH",
         body: JSON.stringify(data),
-      }),
+      }).then(r => r.result),
 
     delete: (id: string) =>
       fetchApiAuth<void>(`/delivery-addresses/${id}`, {
@@ -965,9 +1103,21 @@ export const api = {
       }),
 
     setDefault: (id: string) =>
-      fetchApiAuth<DeliveryAddressApi>(`/delivery-addresses/${id}/default`, {
+      fetchApiAuth<ResultResponse<DeliveryAddressApi>>(`/delivery-addresses/${id}/default`, {
         method: "PATCH",
+      }).then(r => r.result),
+
+    // Server Action variants (explicit token)
+    listWithToken: (accessToken: string, filters?: { page?: number; limit?: number }) =>
+      fetchApiWithToken<PaginatedResponse<DeliveryAddressApi>>("/delivery-addresses", accessToken, {
+        params: filters as QueryParams,
       }),
+
+    createWithToken: (data: CreateDeliveryAddressRequest, accessToken: string) =>
+      fetchApiWithToken<ResultResponse<DeliveryAddressApi>>("/delivery-addresses", accessToken, {
+        method: "POST",
+        body: JSON.stringify(data),
+      }).then(r => r.result),
   },
 };
 

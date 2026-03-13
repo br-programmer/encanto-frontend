@@ -93,7 +93,7 @@ export function ScrollRevealSection() {
           <p className="text-primary font-medium text-sm sm:text-base uppercase tracking-wider mb-4">
             Cómo funciona
           </p>
-          <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-6">
+          <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl lg:text-6xl mb-6">
             Regalar flores
             <br />
             <span className="text-primary">nunca fue tan fácil</span>
