@@ -65,6 +65,10 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: SITE_URL,
+    languages: {
+      "es-EC": SITE_URL,
+      "x-default": SITE_URL,
+    },
   },
   icons: {
     icon: [
@@ -115,7 +119,11 @@ const jsonLd = {
     opens: "08:00",
     closes: "18:00",
   },
-  sameAs: ["https://www.instagram.com/encanto.ec"],
+  sameAs: [
+    "https://www.instagram.com/encantofloristeria_ecu/",
+    "https://www.facebook.com/BouquetSemay",
+    "https://www.tiktok.com/@soydorilu",
+  ],
   areaServed: {
     "@type": "City",
     name: "Manta",
