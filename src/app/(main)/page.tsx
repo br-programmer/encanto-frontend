@@ -15,7 +15,7 @@ export default async function Home() {
   const [categoriesResponse, productsResponse, instagramResponse] = await Promise.all([
     api.categories.list({ isActive: true, rootOnly: true, limit: 6 }),
     api.products.featured(8),
-    api.instagram.feed(6).catch(() => ({ result: [], meta: { total: 0, cachedAt: "", expiresAt: "" } })),
+    api.instagram.feed({ limit: 6 }).catch(() => ({ result: [], meta: { total: 0, cachedAt: "", expiresAt: "" } })),
   ]);
 
   const categories = categoriesResponse.result;
