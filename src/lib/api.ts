@@ -220,7 +220,7 @@ function getAuthHeader(): Record<string, string> {
   if (typeof window === "undefined") return {};
 
   // First try the dedicated tokens storage
-  let tokens = localStorage.getItem("encanto-tokens");
+  const tokens = localStorage.getItem("encanto-tokens");
   if (tokens) {
     try {
       const { accessToken } = JSON.parse(tokens);
