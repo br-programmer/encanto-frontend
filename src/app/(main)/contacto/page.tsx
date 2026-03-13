@@ -27,7 +27,7 @@ export default function ContactoPage() {
 
       {/* Content */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
           {/* Contact Info */}
           <div className="lg:col-span-1 space-y-8">
             {/* Location */}
@@ -127,7 +127,7 @@ export default function ContactoPage() {
       <section className="bg-secondary/30 py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl font-serif mb-6 text-center">Encuéntranos</h2>
-          <div className="aspect-[21/9] bg-secondary rounded-xl overflow-hidden">
+          <div className="aspect-video md:aspect-[21/9] bg-secondary rounded-xl overflow-hidden">
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.273933566872!2d-80.73479297503488!3d-0.9464981990443535!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x902be1006b41f90d%3A0x7175ee3a3556255e!2sFlorister%C3%ADa%20Encanto!5e0!3m2!1ses!2sec!4v1769298087116!5m2!1ses!2sec"
               width="100%"

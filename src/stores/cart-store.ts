@@ -1,15 +1,17 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { CartItem } from "@/types";
+import type { CartItem, CartItemAddOn } from "@/types";
 
 interface CartState {
   items: CartItem[];
   isOpen: boolean;
 
   // Actions
-  addItem: (item: CartItem["product"], quantity?: number) => void;
+  addItem: (item: CartItem["product"], quantity?: number, addOns?: CartItemAddOn[], cardMessage?: string) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
+  updateItemAddOns: (productId: string, addOns: CartItemAddOn[]) => void;
+  updateItemCardMessage: (productId: string, cardMessage: string) => void;
   clearCart: () => void;
   toggleCart: () => void;
   openCart: () => void;
@@ -20,13 +22,18 @@ interface CartState {
   totalPrice: () => number;
 }
 
+function calculateItemAddOnsTotal(addOns?: CartItemAddOn[]): number {
+  if (!addOns) return 0;
+  return addOns.reduce((total, addOn) => total + addOn.priceCents * addOn.quantity, 0);
+}
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
       isOpen: false,
 
-      addItem: (product, quantity = 1) => {
+      addItem: (product, quantity = 1, addOns, cardMessage) => {
         set((state) => {
           const existingItem = state.items.find(
             (item) => item.product.id === product.id
@@ -36,14 +43,19 @@ export const useCartStore = create<CartState>()(
             return {
               items: state.items.map((item) =>
                 item.product.id === product.id
-                  ? { ...item, quantity: item.quantity + quantity }
+                  ? {
+                      ...item,
+                      quantity: item.quantity + quantity,
+                      ...(addOns !== undefined ? { addOns } : {}),
+                      ...(cardMessage !== undefined ? { cardMessage } : {}),
+                    }
                   : item
               ),
             };
           }
 
           return {
-            items: [...state.items, { product, quantity }],
+            items: [...state.items, { product, quantity, addOns, cardMessage }],
           };
         });
       },
@@ -67,6 +79,22 @@ export const useCartStore = create<CartState>()(
         }));
       },
 
+      updateItemAddOns: (productId, addOns) => {
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.product.id === productId ? { ...item, addOns } : item
+          ),
+        }));
+      },
+
+      updateItemCardMessage: (productId, cardMessage) => {
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.product.id === productId ? { ...item, cardMessage } : item
+          ),
+        }));
+      },
+
       clearCart: () => set({ items: [] }),
 
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
@@ -79,7 +107,9 @@ export const useCartStore = create<CartState>()(
 
       totalPrice: () => {
         return get().items.reduce(
-          (total, item) => total + item.product.priceCents * item.quantity,
+          (total, item) =>
+            total +
+            (item.product.priceCents + calculateItemAddOnsTotal(item.addOns)) * item.quantity,
           0
         );
       },

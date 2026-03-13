@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Search, X, Loader2, ShoppingBag, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
+import { searchProductsAction } from "@/actions/product-actions";
 import { formatPrice } from "@/lib/utils";
 import type { Product } from "@/types";
 
@@ -35,7 +35,7 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
       setHasSearched(true);
       setServerError(false);
       try {
-        const { result } = await api.products.list({
+        const { result } = await searchProductsAction({
           search: query,
           isActive: true,
           limit: 6,

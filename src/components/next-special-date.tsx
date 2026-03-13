@@ -4,81 +4,66 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CalendarHeart, ArrowRight } from "lucide-react";
+import type { SpecialDate } from "@/lib/api";
 
-interface SpecialDate {
-  id: string;
+interface SpecialDateDisplay {
   name: string;
-  shortName: string;
   date: Date;
   imageUrl: string;
   link: string;
   message: string;
 }
 
-// Special dates for the year - will be replaced with API data
-function getSpecialDates(): SpecialDate[] {
+// Fallback special dates when API data is not available
+function getFallbackSpecialDates(): SpecialDateDisplay[] {
   const currentYear = new Date().getFullYear();
   const nextYear = currentYear + 1;
 
   return [
     {
-      id: "san-valentin",
       name: "Día de San Valentín",
-      shortName: "San Valentín",
       date: new Date(currentYear, 1, 14),
       imageUrl: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=1920&q=80",
       link: "/productos?ocasion=amor",
       message: "Sorprende a quien amas con un arreglo especial",
     },
     {
-      id: "dia-mujer",
       name: "Día de la Mujer",
-      shortName: "Día de la Mujer",
       date: new Date(currentYear, 2, 8),
       imageUrl: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1920&q=80",
       link: "/productos?ocasion=agradecimiento",
       message: "Celebra a las mujeres especiales en tu vida",
     },
     {
-      id: "dia-madres",
       name: "Día de las Madres",
-      shortName: "Día de las Madres",
       date: new Date(currentYear, 4, 11),
       imageUrl: "https://images.unsplash.com/photo-1462275646964-a0e3571f4f5f?w=1920&q=80",
       link: "/productos?ocasion=dia-madres",
       message: "El regalo perfecto para mamá",
     },
     {
-      id: "dia-padre",
       name: "Día del Padre",
-      shortName: "Día del Padre",
       date: new Date(currentYear, 5, 16),
       imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80",
       link: "/productos?ocasion=dia-padre",
       message: "Demuéstrale a papá cuánto lo quieres",
     },
     {
-      id: "dia-difuntos",
       name: "Día de los Difuntos",
-      shortName: "Día de los Difuntos",
       date: new Date(currentYear, 10, 2),
       imageUrl: "https://images.unsplash.com/photo-1508610048659-a06b669e3321?w=1920&q=80",
       link: "/productos?ocasion=condolencias",
       message: "Honra la memoria de tus seres queridos",
     },
     {
-      id: "navidad",
       name: "Navidad",
-      shortName: "Navidad",
       date: new Date(currentYear, 11, 25),
       imageUrl: "https://images.unsplash.com/photo-1512389142860-9c449e58a543?w=1920&q=80",
       link: "/productos?ocasion=navidad",
       message: "Comparte la alegría navideña con flores",
     },
     {
-      id: "san-valentin-next",
       name: "Día de San Valentín",
-      shortName: "San Valentín",
       date: new Date(nextYear, 1, 14),
       imageUrl: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=1920&q=80",
       link: "/productos?ocasion=amor",
@@ -87,14 +72,21 @@ function getSpecialDates(): SpecialDate[] {
   ];
 }
 
-function getNextSpecialDate(): SpecialDate | null {
+function apiToDisplay(sd: SpecialDate): SpecialDateDisplay {
+  return {
+    name: sd.name,
+    date: new Date(sd.date + "T00:00:00"),
+    imageUrl: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=1920&q=80",
+    link: "/productos",
+    message: sd.warningMessage || `Prepara tu regalo para ${sd.name}`,
+  };
+}
+
+function getNextDate(dates: SpecialDateDisplay[]): SpecialDateDisplay | null {
   const now = new Date();
-  const specialDates = getSpecialDates();
-
-  const upcoming = specialDates
-    .filter(date => date.date > now)
+  const upcoming = dates
+    .filter((d) => d.date > now)
     .sort((a, b) => a.date.getTime() - b.date.getTime());
-
   return upcoming[0] || null;
 }
 
@@ -111,12 +103,19 @@ function formatDate(date: Date): string {
   });
 }
 
-export function NextSpecialDate() {
-  const [specialDate, setSpecialDate] = useState<SpecialDate | null>(null);
+interface NextSpecialDateProps {
+  specialDates?: SpecialDate[];
+}
+
+export function NextSpecialDate({ specialDates }: NextSpecialDateProps) {
+  const [specialDate, setSpecialDate] = useState<SpecialDateDisplay | null>(null);
 
   useEffect(() => {
-    setSpecialDate(getNextSpecialDate());
-  }, []);
+    const displayDates = specialDates && specialDates.length > 0
+      ? specialDates.map(apiToDisplay)
+      : getFallbackSpecialDates();
+    setSpecialDate(getNextDate(displayDates));
+  }, [specialDates]);
 
   if (!specialDate) return null;
 
@@ -152,7 +151,7 @@ export function NextSpecialDate() {
         {/* Content */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24">
           <div className="max-w-2xl">
-            {/* Badge - white/dark text on primary for good contrast in both modes */}
+            {/* Badge */}
             <div className="inline-flex items-center gap-2 bg-primary/90 text-white dark:text-gray-900 px-4 py-2 rounded-full mb-6 backdrop-blur-sm">
               <CalendarHeart className="h-4 w-4" />
               <span className="text-sm font-medium">Próxima fecha especial</span>
@@ -160,7 +159,7 @@ export function NextSpecialDate() {
 
             {/* Countdown */}
             <div className="mb-4 flex items-baseline gap-3">
-              <span className="text-7xl sm:text-8xl md:text-9xl font-bold text-white font-serif leading-none">
+              <span className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold text-white font-serif leading-none">
                 {daysUntil}
               </span>
               <span className="text-2xl sm:text-3xl text-white/80 font-light">
@@ -170,7 +169,7 @@ export function NextSpecialDate() {
 
             {/* Title */}
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 font-serif">
-              {specialDate.shortName}
+              {specialDate.name}
             </h2>
 
             {/* Date */}
@@ -183,7 +182,7 @@ export function NextSpecialDate() {
               {specialDate.message}
             </p>
 
-            {/* CTA Button - explicit colors for both light/dark modes */}
+            {/* CTA Button */}
             <Button
               size="lg"
               className="h-12 px-8 bg-white dark:bg-white text-gray-900 dark:text-gray-900 hover:bg-white/90 dark:hover:bg-white/90 shadow-lg"
@@ -198,7 +197,7 @@ export function NextSpecialDate() {
         </div>
       </div>
 
-      {/* Bottom Curve - color of section below (Features = bg-background) */}
+      {/* Bottom Curve */}
       <div className="absolute bottom-0 left-0 right-0 z-10 overflow-hidden leading-[0] rotate-180">
         <svg
           viewBox="0 0 1200 120"

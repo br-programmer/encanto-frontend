@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingBag, Menu, X, Search, User, LogOut, LogIn, UserPlus, UserCircle } from "lucide-react";
+import { ShoppingBag, Menu, X, Search, User, LogOut, LogIn, UserPlus, UserCircle, Package } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cart-store";
@@ -97,7 +97,7 @@ export function Header() {
                 alt="Encanto"
                 width={120}
                 height={40}
-                className="h-8 sm:h-10 w-auto"
+                className="h-7 sm:h-8 md:h-10 w-auto"
                 priority
               />
             </Link>
@@ -148,14 +148,14 @@ export function Header() {
                       {displayUser.avatarUrl ? (
                         <Image
                           src={displayUser.avatarUrl}
-                          alt={displayUser.fullName}
+                          alt={displayUser.fullName || ""}
                           width={32}
                           height={32}
                           className="w-full h-full object-cover"
                         />
                       ) : (
                         <span className="text-sm font-medium text-primary">
-                          {displayUser.fullName.charAt(0).toUpperCase()}
+                          {displayUser.fullName?.charAt(0)?.toUpperCase() || "U"}
                         </span>
                       )}
                     </div>
@@ -169,19 +169,19 @@ export function Header() {
                           {displayUser.avatarUrl ? (
                             <Image
                               src={displayUser.avatarUrl}
-                              alt={displayUser.fullName}
+                              alt={displayUser.fullName || ""}
                               width={40}
                               height={40}
                               className="w-full h-full object-cover"
                             />
                           ) : (
                             <span className="text-sm font-medium text-primary">
-                              {displayUser.fullName.charAt(0).toUpperCase()}
+                              {displayUser.fullName?.charAt(0)?.toUpperCase() || "U"}
                             </span>
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{displayUser.fullName}</p>
+                          <p className="text-sm font-medium truncate">{displayUser.fullName || ""}</p>
                           <p className="text-xs text-foreground-secondary truncate">
                             {displayUser.email}
                           </p>
@@ -194,6 +194,14 @@ export function Header() {
                       >
                         <UserCircle className="h-4 w-4" />
                         Mi Perfil
+                      </Link>
+                      <Link
+                        href="/perfil/pedidos"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
+                      >
+                        <Package className="h-4 w-4" />
+                        Mis Pedidos
                       </Link>
                       <button
                         onClick={handleLogout}
@@ -314,19 +322,19 @@ export function Header() {
                     {displayUser.avatarUrl ? (
                       <Image
                         src={displayUser.avatarUrl}
-                        alt={displayUser.fullName}
+                        alt={displayUser.fullName || ""}
                         width={40}
                         height={40}
                         className="w-full h-full object-cover"
                       />
                     ) : (
                       <span className="text-sm font-medium text-primary">
-                        {displayUser.fullName.charAt(0).toUpperCase()}
+                        {displayUser.fullName?.charAt(0)?.toUpperCase() || "U"}
                       </span>
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-medium">{displayUser.fullName}</p>
+                    <p className="text-sm font-medium">{displayUser.fullName || ""}</p>
                     <p className="text-xs text-foreground-secondary">{displayUser.email}</p>
                   </div>
                 </div>
@@ -337,6 +345,14 @@ export function Header() {
                 >
                   <UserCircle className="h-5 w-5" />
                   Mi Perfil
+                </Link>
+                <Link
+                  href="/perfil/pedidos"
+                  className="w-full flex items-center gap-3 px-3 py-2 text-base font-medium text-foreground-secondary hover:text-primary hover:bg-secondary rounded-lg transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Package className="h-5 w-5" />
+                  Mis Pedidos
                 </Link>
                 <button
                   onClick={handleLogout}
