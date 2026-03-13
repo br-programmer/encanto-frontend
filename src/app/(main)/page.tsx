@@ -11,16 +11,18 @@ import { StackedCardsSection } from "@/components/stacked-cards-section";
 import { api } from "@/lib/api";
 
 export default async function Home() {
-  // Fetch categories, featured products, and Instagram feed in parallel
-  const [categoriesResponse, productsResponse, instagramResponse] = await Promise.all([
+  // Fetch categories, featured products, Instagram feed, and special dates in parallel
+  const [categoriesResponse, productsResponse, instagramResponse, specialDatesResponse] = await Promise.all([
     api.categories.list({ isActive: true, rootOnly: true, limit: 6 }),
     api.products.featured(8),
     api.instagram.feed(6).catch(() => ({ result: [], meta: { total: 0, cachedAt: "", expiresAt: "" } })),
+    api.specialDates.list({ isActive: true, limit: 20 }).catch(() => ({ result: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } })),
   ]);
 
   const categories = categoriesResponse.result;
   const featuredProducts = productsResponse.result;
   const instagramPosts = instagramResponse.result;
+  const specialDates = specialDatesResponse.result;
 
   return (
     <div className="flex flex-col">
@@ -104,7 +106,7 @@ export default async function Home() {
       </section>
 
       {/* Next Special Date Parallax */}
-      <NextSpecialDate />
+      <NextSpecialDate specialDates={specialDates} />
 
       {/* Features Section */}
       <section className="py-10 sm:py-16 bg-background">

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown, ChevronUp, ShoppingBag } from "lucide-react";
+import { ChevronDown, ChevronUp, ShoppingBag, Loader2 } from "lucide-react";
 import { cn, formatPrice } from "@/lib/utils";
 import type { CartItem } from "@/types";
 
@@ -11,11 +11,19 @@ interface OrderSummaryProps {
   items: CartItem[];
   subtotal: number;
   shippingCost: number;
+  transferDiscount?: number;
+  isLoadingPreview?: boolean;
 }
 
-export function OrderSummary({ items, subtotal, shippingCost }: OrderSummaryProps) {
+export function OrderSummary({
+  items,
+  subtotal,
+  shippingCost,
+  transferDiscount = 0,
+  isLoadingPreview = false,
+}: OrderSummaryProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const total = subtotal + shippingCost;
+  const total = subtotal + shippingCost - transferDiscount;
 
   return (
     <div className="bg-background rounded-xl border border-border overflow-hidden">
@@ -45,6 +53,9 @@ export function OrderSummary({ items, subtotal, shippingCost }: OrderSummaryProp
       <div className="hidden lg:flex items-center gap-2 p-6 border-b border-border">
         <ShoppingBag className="h-5 w-5 text-primary" />
         <h2 className="font-semibold text-lg">Resumen del pedido</h2>
+        {isLoadingPreview && (
+          <Loader2 className="h-4 w-4 animate-spin text-foreground-secondary ml-auto" />
+        )}
       </div>
 
       {/* Content */}
@@ -86,6 +97,16 @@ export function OrderSummary({ items, subtotal, shippingCost }: OrderSummaryProp
                 <p className="text-foreground-secondary text-sm mt-1">
                   Cantidad: {item.quantity}
                 </p>
+                {/* Add-ons */}
+                {item.addOns && item.addOns.length > 0 && (
+                  <div className="mt-1 space-y-0.5">
+                    {item.addOns.map((addOn) => (
+                      <p key={addOn.addOnId} className="text-xs text-foreground-muted">
+                        + {addOn.name} x{addOn.quantity} ({formatPrice(addOn.priceCents * addOn.quantity)})
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Price */}
@@ -119,6 +140,12 @@ export function OrderSummary({ items, subtotal, shippingCost }: OrderSummaryProp
               )}
             </span>
           </div>
+          {transferDiscount > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-green-600">Descuento transferencia</span>
+              <span className="text-green-600">-{formatPrice(transferDiscount)}</span>
+            </div>
+          )}
           <div className="border-t border-border pt-3 flex justify-between font-semibold text-lg">
             <span>Total</span>
             <span className="text-primary">{formatPrice(total)}</span>

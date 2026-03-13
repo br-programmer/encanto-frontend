@@ -18,9 +18,13 @@ import {
   Briefcase,
   Star,
   Camera,
-  X
+  X,
+  Package,
+  Lock,
+  ChevronRight,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth-store";
 import { useAddressesStore, type DeliveryAddress } from "@/stores/addresses-store";
@@ -321,7 +325,21 @@ export default function PerfilPage() {
               </div>
             )}
 
-            <div className="mt-6 pt-6 border-t border-border">
+            {/* Quick Links */}
+            <div className="mt-6 pt-6 border-t border-border space-y-2">
+              <Link
+                href="/perfil/pedidos"
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Package className="h-5 w-5 text-primary" />
+                  <span className="text-sm font-medium">Mis pedidos</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-foreground-secondary" />
+              </Link>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-border">
               <Button
                 variant="outline"
                 className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
