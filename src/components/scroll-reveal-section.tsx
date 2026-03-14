@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import { Heart, Sparkles, Package, Truck } from "lucide-react";
 
 interface RevealItemProps {
@@ -118,7 +118,7 @@ export function ScrollRevealSection() {
                 className="w-full lg:w-1/2"
               >
                 <div className="relative aspect-[4/3] rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
-                  <Image
+                  <SafeImage
                     src={step.image}
                     alt={step.title}
                     fill

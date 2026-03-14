@@ -7,6 +7,7 @@ import {
   refreshTokenAction,
   getMeAction,
 } from "@/actions/auth-actions";
+import { claimGuestOrdersAction } from "@/actions/order-actions";
 
 export interface User {
   id: string;
@@ -23,6 +24,7 @@ interface AuthState {
   tokens: AuthTokens | null;
   isLoading: boolean;
   error: string | null;
+  _hasHydrated: boolean;
 
   // Actions
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -64,6 +66,22 @@ function clearTokens() {
   if (typeof window !== "undefined") {
     localStorage.removeItem(TOKENS_KEY);
   }
+}
+
+const GUEST_TOKEN_KEY = "encanto-guest-token";
+
+// Claim guest orders and clear guest token after login/register
+async function claimGuestAndCleanup(accessToken: string) {
+  if (typeof window === "undefined") return;
+  const guestToken = localStorage.getItem(GUEST_TOKEN_KEY);
+  if (!guestToken) return;
+
+  try {
+    await claimGuestOrdersAction(accessToken);
+  } catch {
+    // Non-critical — don't block login
+  }
+  localStorage.removeItem(GUEST_TOKEN_KEY);
 }
 
 // Map UserProfile to User
@@ -122,6 +140,7 @@ export const useAuthStore = create<AuthState>()(
       tokens: null,
       isLoading: false,
       error: null,
+      _hasHydrated: false,
 
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
@@ -137,6 +156,10 @@ export const useAuthStore = create<AuthState>()(
           const user = mapUserProfile(profile);
 
           set({ user, isLoading: false });
+
+          // Claim guest orders and clean up guest token
+          claimGuestAndCleanup(tokens.accessToken);
+
           return { success: true };
         } catch (error) {
           const errorMessage = parseApiError(error);
@@ -171,6 +194,10 @@ export const useAuthStore = create<AuthState>()(
           const user = mapUserProfile(profile);
 
           set({ user, isLoading: false });
+
+          // Claim guest orders and clean up guest token
+          claimGuestAndCleanup(tokens.accessToken);
+
           return { success: true };
         } catch (error) {
           const errorMessage = parseApiError(error);
@@ -242,6 +269,11 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         tokens: state.tokens,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state._hasHydrated = true;
+        }
+      },
     }
   )
 );

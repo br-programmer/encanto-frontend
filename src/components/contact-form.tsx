@@ -47,9 +47,6 @@ export function ContactForm() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // Here you would send the data to your backend
-      console.log("Form submitted:", formData);
-
       setIsSubmitted(true);
       setFormData(initialFormData);
     } catch {

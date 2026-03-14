@@ -14,9 +14,12 @@ import type { Order, BankAccount, DeliveryTimeSlot } from "@/lib/api";
 const ORDER_STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending_payment: { label: "Pendiente de pago", color: "bg-amber-100 text-amber-800" },
   paid: { label: "Pagado", color: "bg-blue-100 text-blue-800" },
-  preparing: { label: "Preparando", color: "bg-purple-100 text-purple-800" },
+  preparing: { label: "En preparación", color: "bg-purple-100 text-purple-800" },
+  delivery_assigned: { label: "Repartidor asignado", color: "bg-blue-200 text-blue-900" },
   out_for_delivery: { label: "En camino", color: "bg-indigo-100 text-indigo-800" },
   delivered: { label: "Entregado", color: "bg-green-100 text-green-800" },
+  ready_for_pickup: { label: "Listo para retirar", color: "bg-teal-100 text-teal-800" },
+  picked_up: { label: "Retirado", color: "bg-green-100 text-green-800" },
   cancelled: { label: "Cancelado", color: "bg-red-100 text-red-800" },
 };
 
@@ -36,13 +39,14 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [error, setError] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
 
+  const urlToken = searchParams.get("token");
+
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
       setError(null);
 
       // If there's a guest token in the URL, store it and use it directly
-      const urlToken = searchParams.get("token");
       if (urlToken) {
         localStorage.setItem("encanto-guest-token", urlToken);
       }
@@ -66,6 +70,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         setBankAccounts(pageData.bankAccounts);
         setTimeSlots(pageData.timeSlots);
       } catch (err) {
+        console.error("Error fetching order:", err);
         if (err instanceof Error) {
           if (err.message.includes("404")) {
             setError("Pedido no encontrado");
@@ -83,7 +88,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     }
 
     fetchData();
-  }, [id, searchParams]);
+  }, [id, urlToken]);
 
   const handleCancel = async () => {
     if (!order || !confirm("¿Estás seguro de cancelar este pedido?")) return;
@@ -151,17 +156,30 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
   const statusInfo = ORDER_STATUS_LABELS[order.orderStatus] || { label: order.orderStatus, color: "bg-gray-100 text-gray-800" };
   const isTransfer = order.paymentMethod === "bank_transfer";
+  const isPickup = order.fulfillmentType === "pickup";
   const canCancel = order.orderStatus === "pending_payment";
   const canUploadProof = isTransfer && (order.paymentStatus === "pending" || order.paymentStatus === "awaiting_verification") && !order.transferProofUrl;
 
+  const completedStatuses = isPickup
+    ? ["ready_for_pickup", "picked_up"]
+    : ["delivery_assigned", "out_for_delivery", "delivered"];
+
   // Timeline steps
-  const timelineSteps = [
-    { key: "created", label: "Pedido creado", date: order.createdAt, active: true },
-    { key: "paid", label: "Pago confirmado", date: order.paymentStatus === "paid" ? order.updatedAt : null, active: order.paymentStatus === "paid" },
-    { key: "preparing", label: "En preparación", date: order.preparationStartedAt, active: ["preparing", "out_for_delivery", "delivered"].includes(order.orderStatus) },
-    { key: "dispatched", label: "En camino", date: order.dispatchedAt, active: ["out_for_delivery", "delivered"].includes(order.orderStatus) },
-    { key: "delivered", label: "Entregado", date: order.deliveredAt, active: order.orderStatus === "delivered" },
-  ];
+  const timelineSteps = isPickup
+    ? [
+        { key: "created", label: "Pedido creado", date: order.createdAt, active: true },
+        { key: "paid", label: "Pago confirmado", date: order.paymentStatus === "paid" ? order.updatedAt : null, active: order.paymentStatus === "paid" },
+        { key: "preparing", label: "En preparación", date: order.preparationStartedAt, active: ["preparing", "ready_for_pickup", "picked_up"].includes(order.orderStatus) },
+        { key: "ready", label: "Listo para retirar", date: order.preparationCompletedAt, active: ["ready_for_pickup", "picked_up"].includes(order.orderStatus) },
+        { key: "picked_up", label: "Retirado", date: order.deliveredAt, active: order.orderStatus === "picked_up" },
+      ]
+    : [
+        { key: "created", label: "Pedido creado", date: order.createdAt, active: true },
+        { key: "paid", label: "Pago confirmado", date: order.paymentStatus === "paid" ? order.updatedAt : null, active: order.paymentStatus === "paid" },
+        { key: "preparing", label: "En preparación", date: order.preparationStartedAt, active: ["preparing", "delivery_assigned", "out_for_delivery", "delivered"].includes(order.orderStatus) },
+        { key: "dispatched", label: "En camino", date: order.dispatchedAt, active: ["out_for_delivery", "delivered"].includes(order.orderStatus) },
+        { key: "delivered", label: "Entregado", date: order.deliveredAt, active: order.orderStatus === "delivered" },
+      ];
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
@@ -274,30 +292,39 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         )}
 
-        {/* Delivery Info */}
+        {/* Delivery / Pickup Info */}
         <div className="bg-background rounded-xl border border-border p-6 mb-6">
-          <h2 className="font-semibold mb-4">Información de entrega</h2>
+          <h2 className="font-semibold mb-4">
+            {isPickup ? "Información de retiro" : "Información de entrega"}
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-foreground-secondary">Destinatario</p>
+              <p className="text-foreground-secondary">
+                {isPickup ? "Quien retira" : "Destinatario"}
+              </p>
               <p className="font-medium">{order.recipientName}</p>
             </div>
-            <div>
-              <p className="text-foreground-secondary">Teléfono</p>
-              <p className="font-medium">{order.recipientPhone}</p>
-            </div>
-            <div className="sm:col-span-2">
-              <p className="text-foreground-secondary">Dirección</p>
-              <p className="font-medium">{order.deliveryAddress}, {order.deliveryCity}</p>
-            </div>
-            {order.deliveryReference && (
+            {order.recipientPhone && (
+              <div>
+                <p className="text-foreground-secondary">Teléfono</p>
+                <p className="font-medium">{order.recipientPhone}</p>
+              </div>
+            )}
+            {!isPickup && order.deliveryAddress && (
+              <div className="sm:col-span-2">
+                <p className="text-foreground-secondary">Dirección</p>
+                <p className="font-medium">{order.deliveryAddress}, {order.deliveryCity}</p>
+              </div>
+            )}
+            {!isPickup && order.deliveryReference && (
               <div className="sm:col-span-2">
                 <p className="text-foreground-secondary">Referencia</p>
                 <p className="font-medium">{order.deliveryReference}</p>
               </div>
             )}
             <div>
-              <p className="text-foreground-secondary">Fecha</p>
+              <p className="text-foreground-secondary">
+                {isPickup ? "Fecha de retiro" : "Fecha"}</p>
               <p className="font-medium">
                 {new Date(order.deliveryDate + "T00:00:00").toLocaleDateString("es-EC", {
                   weekday: "long",
@@ -308,7 +335,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               </p>
             </div>
             <div>
-              <p className="text-foreground-secondary">Horario</p>
+              <p className="text-foreground-secondary">
+                {isPickup ? "Horario de retiro" : "Horario"}
+              </p>
               <p className="font-medium">{getTimeSlotLabel(order.deliveryTimeSlotId)}</p>
             </div>
           </div>
@@ -371,10 +400,17 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <span>{formatPrice(order.addOnsTotalCents)}</span>
               </div>
             )}
-            <div className="flex justify-between text-sm">
-              <span className="text-foreground-secondary">Envío</span>
-              <span>{order.deliveryFeeCents === 0 ? <span className="text-green-600">Gratis</span> : formatPrice(order.deliveryFeeCents)}</span>
-            </div>
+            {isPickup ? (
+              <div className="flex justify-between text-sm">
+                <span className="text-foreground-secondary">Retiro en tienda</span>
+                <span className="text-green-600">$0.00</span>
+              </div>
+            ) : (
+              <div className="flex justify-between text-sm">
+                <span className="text-foreground-secondary">Envío</span>
+                <span>{order.deliveryFeeCents === 0 ? <span className="text-green-600">Gratis</span> : formatPrice(order.deliveryFeeCents)}</span>
+              </div>
+            )}
             {order.transferDiscountCents > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-green-600">Descuento transferencia</span>

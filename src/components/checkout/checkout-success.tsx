@@ -122,26 +122,36 @@ export function CheckoutSuccess({
             </p>
           </div>
 
-          {/* Delivery info */}
+          {/* Delivery/Pickup info */}
           <div className="p-6 border-b border-border">
-            <h3 className="font-medium mb-4">Información de entrega</h3>
+            <h3 className="font-medium mb-4">
+              {order.fulfillmentType === "pickup" ? "Información de retiro" : "Información de entrega"}
+            </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-foreground-secondary">Destinatario</p>
+                <p className="text-foreground-secondary">
+                  {order.fulfillmentType === "pickup" ? "Quien retira" : "Destinatario"}
+                </p>
                 <p className="font-medium">{order.recipientName}</p>
               </div>
+              {order.recipientPhone && (
+                <div>
+                  <p className="text-foreground-secondary">Teléfono</p>
+                  <p className="font-medium">{order.recipientPhone}</p>
+                </div>
+              )}
+              {order.fulfillmentType !== "pickup" && order.deliveryAddress && (
+                <div className="sm:col-span-2">
+                  <p className="text-foreground-secondary">Dirección</p>
+                  <p className="font-medium">
+                    {order.deliveryAddress}{order.deliveryCity ? `, ${order.deliveryCity}` : ""}
+                  </p>
+                </div>
+              )}
               <div>
-                <p className="text-foreground-secondary">Teléfono</p>
-                <p className="font-medium">{order.recipientPhone}</p>
-              </div>
-              <div className="sm:col-span-2">
-                <p className="text-foreground-secondary">Dirección</p>
-                <p className="font-medium">
-                  {order.deliveryAddress}, {order.deliveryCity}
+                <p className="text-foreground-secondary">
+                  {order.fulfillmentType === "pickup" ? "Fecha de retiro" : "Fecha de entrega"}
                 </p>
-              </div>
-              <div>
-                <p className="text-foreground-secondary">Fecha de entrega</p>
                 <p className="font-medium">
                   {new Date(order.deliveryDate + "T00:00:00").toLocaleDateString("es-EC", {
                     weekday: "long",
@@ -159,7 +169,7 @@ export function CheckoutSuccess({
                 <p className="text-foreground-secondary">Método de pago</p>
                 <p className="font-medium">{getPaymentMethodLabel(order.paymentMethod)}</p>
               </div>
-              {order.isSurprise && (
+              {order.fulfillmentType !== "pickup" && order.isSurprise && (
                 <div>
                   <p className="text-foreground-secondary">Tipo de entrega</p>
                   <p className="font-medium text-primary">Entrega sorpresa</p>
@@ -213,10 +223,12 @@ export function CheckoutSuccess({
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <span className="text-foreground-secondary">Envío</span>
+              <span className="text-foreground-secondary">
+                {order.fulfillmentType === "pickup" ? "Retiro en tienda" : "Envío"}
+              </span>
               <span>
-                {order.deliveryFeeCents === 0 ? (
-                  <span className="text-green-600">Gratis</span>
+                {order.fulfillmentType === "pickup" || order.deliveryFeeCents === 0 ? (
+                  <span className="text-green-600">{order.fulfillmentType === "pickup" ? "$0.00" : "Gratis"}</span>
                 ) : (
                   formatPrice(order.deliveryFeeCents)
                 )}
@@ -327,7 +339,11 @@ export function CheckoutSuccess({
             <h3 className="font-medium text-amber-800 mb-2">Próximos pasos</h3>
             <ul className="text-sm text-amber-700 space-y-1">
               <li>Te contactaremos por WhatsApp para confirmar tu pedido</li>
-              <li>El día de la entrega, nuestro repartidor se comunicará contigo</li>
+              {order.fulfillmentType === "pickup" ? (
+                <li>Te notificaremos cuando tu pedido esté listo para retirar</li>
+              ) : (
+                <li>El día de la entrega, nuestro repartidor se comunicará contigo</li>
+              )}
             </ul>
           </div>
         )}

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import Link from "next/link";
 import { Flower2, Heart, Star, Sparkles, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -105,7 +105,7 @@ export function StackedCardsSection() {
             >
               {/* Background Image */}
               <div className="absolute inset-0">
-                <Image
+                <SafeImage
                   src={card.image}
                   alt={card.title}
                   fill

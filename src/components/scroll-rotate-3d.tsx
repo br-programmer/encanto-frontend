@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -155,7 +155,7 @@ export function ScrollRotate3D({
               opacity: imagesLoaded ? 1 : 0,
             }}
           >
-            <Image
+            <SafeImage
               src={getCurrentImageUrl()}
               alt={`Ramo de flores - Vista ${currentFrame + 1}`}
               fill

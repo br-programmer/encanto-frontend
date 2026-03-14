@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useRef } from "react";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { SpecialDate } from "@/lib/api";
@@ -210,7 +210,7 @@ export function SpecialDatesCarousel({
                         isTransitioning && "scale-95 opacity-0 -translate-x-8"
                       )}
                     >
-                      <Image
+                      <SafeImage
                         src={currentSlide.imageUrl}
                         alt={`${currentSlide.title} ${currentSlide.subtitle || ""}`}
                         fill
@@ -230,7 +230,7 @@ export function SpecialDatesCarousel({
                           isTransitioning && "opacity-100 scale-105"
                         )}
                       >
-                        <Image
+                        <SafeImage
                           src={nextSlide.imageUrl}
                           alt={`${nextSlide.title} ${nextSlide.subtitle || ""}`}
                           fill

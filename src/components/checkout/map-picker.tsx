@@ -28,6 +28,7 @@ interface MapPickerProps {
   longitude: number;
   onLocationChange: (lat: number, lng: number, zone: DeliveryZone | null) => void;
   zones?: DeliveryZone[];
+  selectedZoneId?: string;
   className?: string;
 }
 
@@ -36,31 +37,81 @@ const CITY_CENTERS: Record<string, [number, number]> = {
   Manta: [-0.95, -80.73],
 };
 
-export function MapPicker({ latitude, longitude, onLocationChange, zones = [], className }: MapPickerProps) {
+export function MapPicker({ latitude, longitude, onLocationChange, zones = [], selectedZoneId, className }: MapPickerProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
+  const detectedZoneLayerRef = useRef<L.LayerGroup | null>(null);
   const zonesLayerRef = useRef<L.LayerGroup | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [zoneResult, setZoneResult] = useState<DeliveryZone | null | "not_found">(null);
+  const [noPolygon, setNoPolygon] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const zoneFromMapRef = useRef(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const drawDetectedZone = useCallback((zone: DeliveryZone) => {
+    if (!mapRef.current) return;
+
+    if (detectedZoneLayerRef.current) {
+      detectedZoneLayerRef.current.clearLayers();
+    } else {
+      detectedZoneLayerRef.current = L.layerGroup().addTo(mapRef.current);
+    }
+
+    if (!zone.polygon) return;
+
+    const geoLayer = L.geoJSON(zone.polygon as GeoJSON.Polygon, {
+      style: {
+        color: "#2ea869",
+        weight: 2.5,
+        opacity: 0.8,
+        fillColor: "#2ea869",
+        fillOpacity: 0.15,
+        dashArray: "6, 4",
+      },
+    });
+
+    geoLayer.bindTooltip(
+      `${zone.zoneName} — ${formatPrice(zone.deliveryFeeCents)}`,
+      { sticky: true, className: "zone-tooltip" }
+    );
+
+    geoLayer.addTo(detectedZoneLayerRef.current);
+  }, []);
 
   const findZone = useCallback(async (lat: number, lng: number) => {
     setIsSearching(true);
+    // Clear previous detected zone
+    if (detectedZoneLayerRef.current) {
+      detectedZoneLayerRef.current.clearLayers();
+    }
     try {
       const zone = await findZoneByPointAction(lat, lng);
-      setZoneResult(zone ?? "not_found");
-      onLocationChange(lat, lng, zone);
-    } catch {
+      if (zone) {
+        zoneFromMapRef.current = true;
+        setZoneResult(zone);
+        setNoPolygon(false);
+        onLocationChange(lat, lng, zone);
+        if (zone.polygon) {
+          drawDetectedZone(zone);
+        }
+      } else {
+        setZoneResult("not_found");
+        onLocationChange(lat, lng, null);
+      }
+    } catch (err) {
+      console.error("Error finding zone by point:", err);
       setZoneResult("not_found");
       onLocationChange(lat, lng, null);
     } finally {
       setIsSearching(false);
     }
-  }, [onLocationChange]);
+  }, [onLocationChange, drawDetectedZone]);
 
   const handleMapClick = useCallback((lat: number, lng: number) => {
+    setHasInteracted(true);
     if (markerRef.current && mapRef.current) {
       markerRef.current.setLatLng([lat, lng]);
     }
@@ -149,8 +200,44 @@ export function MapPicker({ latitude, longitude, onLocationChange, zones = [], c
     });
   }, [zones]);
 
+  // Draw polygon when zone is selected from dropdown
+  useEffect(() => {
+    if (!selectedZoneId || !mapRef.current) {
+      if (detectedZoneLayerRef.current) detectedZoneLayerRef.current.clearLayers();
+      return;
+    }
+
+    const selectedZone = zones.find(z => z.id === selectedZoneId);
+    if (selectedZone?.polygon) {
+      setNoPolygon(false);
+      drawDetectedZone(selectedZone);
+
+      // Only move marker to center if zone was selected from dropdown, not from map/location
+      if (zoneFromMapRef.current) {
+        zoneFromMapRef.current = false;
+      } else {
+        const coords = selectedZone.polygon.coordinates[0];
+        const lats = coords.map(c => c[1]);
+        const lngs = coords.map(c => c[0]);
+        const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+        const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+
+        if (markerRef.current) {
+          markerRef.current.setLatLng([centerLat, centerLng]);
+        }
+        if (mapRef.current) {
+          mapRef.current.setView([centerLat, centerLng], 15);
+        }
+      }
+    } else {
+      setNoPolygon(true);
+      if (detectedZoneLayerRef.current) detectedZoneLayerRef.current.clearLayers();
+    }
+  }, [selectedZoneId, zones, drawDetectedZone]);
+
   const handleLocateMe = () => {
     if (!navigator.geolocation) return;
+    setHasInteracted(true);
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -208,7 +295,16 @@ export function MapPicker({ latitude, longitude, onLocationChange, zones = [], c
           <Loader2 className="h-4 w-4 animate-spin" />
           Buscando zona de entrega...
         </div>
-      ) : zoneResult === "not_found" ? (
+      ) : noPolygon ? (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="flex items-start gap-2">
+            <MapPin className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-amber-800">
+              Esta zona aún no tiene cobertura de mapa disponible. Puedes continuar con tu pedido, nuestro equipo coordinará la entrega contigo.
+            </p>
+          </div>
+        </div>
+      ) : zoneResult === "not_found" && hasInteracted ? (
         <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
           <div className="flex items-start gap-2">
             <MapPin className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
@@ -217,7 +313,7 @@ export function MapPicker({ latitude, longitude, onLocationChange, zones = [], c
             </p>
           </div>
         </div>
-      ) : zoneResult ? (
+      ) : zoneResult && zoneResult !== "not_found" && hasInteracted ? (
         <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -230,7 +326,7 @@ export function MapPicker({ latitude, longitude, onLocationChange, zones = [], c
           </div>
           {zoneResult.estimatedMinutes && (
             <p className="text-xs text-green-700 mt-1 ml-6">
-              Tiempo estimado: ~{zoneResult.estimatedMinutes} min
+              Tiempo estimado: ~{zoneResult.estimatedMinutes} min desde que sale del local
             </p>
           )}
         </div>
