@@ -52,10 +52,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
+const noopToast = {
+  addToast: () => {},
+  removeToast: () => {},
+  toasts: [] as never[],
+};
+
 export function useToast() {
   const context = useContext(ToastContext);
   if (!context) {
-    throw new Error("useToast must be used within a ToastProvider");
+    return noopToast;
   }
   return context;
 }

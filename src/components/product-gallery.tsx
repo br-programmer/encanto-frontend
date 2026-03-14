@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import { ChevronLeft, ChevronRight, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ProductImage } from "@/types";
@@ -45,13 +45,15 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
     <div className="space-y-4">
       {/* Main Image */}
       <div className="relative aspect-square bg-secondary rounded-xl overflow-hidden group">
-        <Image
+        <SafeImage
           src={selectedImage.url}
           alt={selectedImage.altText || productName}
           fill
           className="object-cover"
           sizes="(max-width: 1024px) 100vw, 50vw"
           priority
+          fallbackClassName="w-full h-full"
+          iconSize="lg"
         />
 
         {/* Navigation Arrows */}
@@ -97,12 +99,14 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               )}
               aria-label={`Ver imagen ${index + 1}`}
             >
-              <Image
+              <SafeImage
                 src={image.url}
                 alt={image.altText || `${productName} - imagen ${index + 1}`}
                 fill
                 className="object-cover"
                 sizes="(max-width: 640px) 64px, 80px"
+                fallbackClassName="w-full h-full"
+                iconSize="sm"
               />
             </button>
           ))}

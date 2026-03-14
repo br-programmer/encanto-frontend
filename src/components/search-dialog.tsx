@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import { Search, X, Loader2, ShoppingBag, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { searchProductsAction } from "@/actions/product-actions";
@@ -155,12 +155,14 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                     >
                       <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
                         {primaryImage ? (
-                          <Image
+                          <SafeImage
                             src={primaryImage.url}
                             alt={product.name}
                             fill
                             className="object-cover"
                             sizes="(max-width: 640px) 48px, 64px"
+                            fallbackClassName="w-full h-full"
+                            iconSize="md"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">

@@ -10,6 +10,8 @@ import type {
   BankAccount,
   Occasion,
   OrderSettings,
+  AddOnCategory,
+  AddOn,
 } from "@/lib/api";
 
 export interface CheckoutInitialData {
@@ -19,10 +21,12 @@ export interface CheckoutInitialData {
   bankAccounts: BankAccount[];
   occasions: Occasion[];
   orderSettings: OrderSettings | null;
+  addOnCategories: AddOnCategory[];
+  addOns: AddOn[];
 }
 
 export async function getCheckoutInitialDataAction(): Promise<CheckoutInitialData> {
-  const [cities, timeSlots, specialDatesResponse, bankAccounts, occasions, orderSettings] =
+  const [cities, timeSlots, specialDatesResponse, bankAccounts, occasions, orderSettings, addOnCategories, addOns] =
     await Promise.all([
       api.cities.active(),
       api.timeSlots.active(),
@@ -30,6 +34,8 @@ export async function getCheckoutInitialDataAction(): Promise<CheckoutInitialDat
       api.bankAccounts.active(),
       api.occasions.active(),
       api.orderSettings.get(),
+      api.addOnCategories.active(),
+      api.addOns.list(),
     ]);
 
   return {
@@ -39,6 +45,8 @@ export async function getCheckoutInitialDataAction(): Promise<CheckoutInitialDat
     bankAccounts,
     occasions,
     orderSettings,
+    addOnCategories,
+    addOns,
   };
 }
 
@@ -53,3 +61,4 @@ export async function getZonesByBranchAction(branchId: string): Promise<Delivery
 export async function findZoneByPointAction(lat: number, lng: number): Promise<DeliveryZone | null> {
   return api.deliveryZones.contains(lat, lng);
 }
+

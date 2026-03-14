@@ -389,8 +389,9 @@ export interface DeliverySettings {
 }
 
 // Order Types
+export type FulfillmentType = "delivery" | "pickup";
 export type PaymentMethod = "bank_transfer" | "paypal" | "datafast";
-export type OrderStatus = "pending_payment" | "paid" | "preparing" | "out_for_delivery" | "delivered" | "cancelled";
+export type OrderStatus = "pending_payment" | "paid" | "preparing" | "delivery_assigned" | "out_for_delivery" | "delivered" | "ready_for_pickup" | "picked_up" | "cancelled";
 export type PaymentStatus = "pending" | "awaiting_verification" | "paid" | "cancelled";
 
 export interface OrderItemAddOnRequest {
@@ -406,10 +407,11 @@ export interface OrderItemRequest {
 }
 
 export interface CreateOrderRequest {
+  fulfillmentType: FulfillmentType;
   branchId: string;
-  deliveryZoneId: string;
-  latitude: number;
-  longitude: number;
+  deliveryZoneId?: string;
+  latitude?: number;
+  longitude?: number;
   deliveryDate: string;
   deliveryTimeSlotId: string;
   paymentMethod: PaymentMethod;
@@ -418,19 +420,20 @@ export interface CreateOrderRequest {
   senderEmail: string;
   senderPhone: string;
   recipientName: string;
-  recipientPhone: string;
-  deliveryAddress: string;
-  deliveryCity: string;
+  recipientPhone?: string;
+  deliveryAddress?: string;
+  deliveryCity?: string;
   deliveryReference?: string;
   occasionId?: string;
   isSurprise?: boolean;
 }
 
 export interface PreviewOrderRequest {
+  fulfillmentType: FulfillmentType;
   branchId: string;
-  deliveryZoneId: string;
-  latitude: number;
-  longitude: number;
+  deliveryZoneId?: string;
+  latitude?: number;
+  longitude?: number;
   deliveryDate: string;
   deliveryTimeSlotId: string;
   paymentMethod: PaymentMethod;
@@ -443,13 +446,21 @@ export interface PreviewItemResponse {
   quantity: number;
   unitPriceCents: number;
   lineTotalCents: number;
-  addOns?: {
+  cardMessageFeeCents: number;
+  addOns: {
     addOnId: string;
-    addOnName: string;
+    name: string;
     quantity: number;
     unitPriceCents: number;
     lineTotalCents: number;
   }[];
+}
+
+export interface TimeEstimate {
+  queueWaitMinutes: number;
+  preparationMinutes: number;
+  travelMinutes: number;
+  totalEstimatedMinutes: number;
 }
 
 export interface OrderPreview {
@@ -460,7 +471,7 @@ export interface OrderPreview {
   deliveryFeeCents: number;
   transferDiscountCents: number;
   totalCents: number;
-  estimatedPrepMinutes: number;
+  timeEstimate: TimeEstimate;
   warningMessage?: string;
   isPreview: boolean;
 }
@@ -495,14 +506,15 @@ export interface Order {
   orderNumber: string;
   userId: string | null;
   branchId: string;
+  fulfillmentType: FulfillmentType;
   senderName: string;
   senderEmail: string;
   senderPhone: string;
   recipientName: string;
-  recipientPhone: string;
-  deliveryAddress: string;
-  deliveryCity: string;
-  deliveryZoneId: string;
+  recipientPhone: string | null;
+  deliveryAddress: string | null;
+  deliveryCity: string | null;
+  deliveryZoneId: string | null;
   deliveryReference: string | null;
   deliveryDate: string;
   deliveryTimeSlotId: string;
@@ -539,6 +551,7 @@ export interface OrderFilters {
   limit?: number;
   orderStatus?: OrderStatus;
   paymentStatus?: PaymentStatus;
+  fulfillmentType?: FulfillmentType;
 }
 
 // Delivery Address (API)
@@ -872,9 +885,9 @@ export const api = {
       fetchApi<ResultResponse<DeliveryZone[]>>(`/delivery-zones/branch/${branchId}`).then(r => r.result),
 
     contains: (lat: number, lng: number) =>
-      fetchApi<ResultResponse<DeliveryZone | null> | null>("/delivery-zones/contains", {
+      fetchApi<ResultResponse<DeliveryZone | null>>("/delivery-zones/contains", {
         params: { lat, lng },
-      }).then(r => r?.result ?? null),
+      }).then(r => r.result),
 
     getById: (id: string) => fetchApi<ResultResponse<DeliveryZone>>(`/delivery-zones/${id}`).then(r => r.result),
   },

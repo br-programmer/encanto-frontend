@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, Package, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Package, ChevronLeft, ChevronRight, Truck, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth-store";
 import { getMyOrdersAction } from "@/actions/order-actions";
@@ -14,9 +14,12 @@ import { cn } from "@/lib/utils";
 const ORDER_STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending_payment: { label: "Pendiente de pago", color: "bg-amber-100 text-amber-800" },
   paid: { label: "Pagado", color: "bg-blue-100 text-blue-800" },
-  preparing: { label: "Preparando", color: "bg-purple-100 text-purple-800" },
+  preparing: { label: "En preparación", color: "bg-purple-100 text-purple-800" },
+  delivery_assigned: { label: "Repartidor asignado", color: "bg-blue-200 text-blue-900" },
   out_for_delivery: { label: "En camino", color: "bg-indigo-100 text-indigo-800" },
   delivered: { label: "Entregado", color: "bg-green-100 text-green-800" },
+  ready_for_pickup: { label: "Listo para retirar", color: "bg-teal-100 text-teal-800" },
+  picked_up: { label: "Retirado", color: "bg-green-100 text-green-800" },
   cancelled: { label: "Cancelado", color: "bg-red-100 text-red-800" },
 };
 
@@ -29,17 +32,17 @@ const PAYMENT_STATUS_LABELS: Record<string, { label: string; color: string }> = 
 
 export default function MisPedidosPage() {
   const router = useRouter();
-  const { user, tokens, isLoading: authLoading, refreshToken } = useAuthStore();
+  const { user, tokens, isLoading: authLoading, refreshToken, _hasHydrated } = useAuthStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [meta, setMeta] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (_hasHydrated && !authLoading && !user) {
       router.push("/");
     }
-  }, [authLoading, user, router]);
+  }, [_hasHydrated, authLoading, user, router]);
 
   useEffect(() => {
     if (!user || !tokens?.accessToken) return;
@@ -77,7 +80,7 @@ export default function MisPedidosPage() {
     fetchOrders();
   }, [user, tokens, page]);
 
-  if (authLoading || !user) {
+  if (!_hasHydrated || authLoading || !user) {
     return (
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -113,7 +116,7 @@ export default function MisPedidosPage() {
         </div>
       ) : (
         <>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {orders.map((order) => {
               const orderStatus = ORDER_STATUS_LABELS[order.orderStatus] || { label: order.orderStatus, color: "bg-gray-100 text-gray-800" };
               const paymentStatus = PAYMENT_STATUS_LABELS[order.paymentStatus] || { label: order.paymentStatus, color: "bg-gray-100 text-gray-800" };
@@ -137,22 +140,26 @@ export default function MisPedidosPage() {
                     <span className={cn("text-xs px-2 py-1 rounded-full font-medium", paymentStatus.color)}>
                       {paymentStatus.label}
                     </span>
+                    <span className={cn(
+                      "text-xs px-2 py-1 rounded-full font-medium inline-flex items-center gap-1",
+                      order.fulfillmentType === "pickup" ? "bg-cyan-100 text-cyan-800" : "bg-orange-100 text-orange-800"
+                    )}>
+                      {order.fulfillmentType === "pickup" ? <Store className="h-3 w-3" /> : <Truck className="h-3 w-3" />}
+                      {order.fulfillmentType === "pickup" ? "Retiro" : "Envío"}
+                    </span>
                   </div>
                   <p className="text-sm text-foreground-secondary truncate">
-                    {order.recipientName} — {order.deliveryAddress}, {order.deliveryCity}
+                    {order.fulfillmentType === "pickup"
+                      ? `Retiro en tienda — ${order.recipientName}`
+                      : `${order.recipientName} — ${order.deliveryAddress}, ${order.deliveryCity}`}
                   </p>
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="text-sm text-foreground-secondary">
-                      Entrega: {new Date(order.deliveryDate + "T00:00:00").toLocaleDateString("es-EC", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </p>
-                    <p className="text-xs text-foreground-secondary">
-                      {order.items?.length ?? 0} {(order.items?.length ?? 0) === 1 ? "producto" : "productos"}
-                    </p>
-                  </div>
+                  <p className="text-sm text-foreground-secondary mt-1">
+                    {order.fulfillmentType === "pickup" ? "Retiro" : "Entrega"}: {new Date(order.deliveryDate + "T00:00:00").toLocaleDateString("es-EC", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
                 </Link>
               );
             })}

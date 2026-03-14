@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useRef } from "react";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -97,7 +97,7 @@ export function HeroCarousel({
             )}
           >
             {/* Desktop Image */}
-            <Image
+            <SafeImage
               src={banner.imageUrl}
               alt={banner.alt}
               fill
@@ -106,7 +106,7 @@ export function HeroCarousel({
               sizes="100vw"
             />
             {/* Mobile Image */}
-            <Image
+            <SafeImage
               src={banner.imageUrlMobile || banner.imageUrl}
               alt={banner.alt}
               fill

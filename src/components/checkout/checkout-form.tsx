@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, CreditCard, Building2, Gift, User, LogOut, Check, LogIn, UserPlus, ChevronRight, MapPin, Plus, Bookmark, AlertTriangle, Percent } from "lucide-react";
+import { Loader2, CreditCard, Building2, Gift, User, LogOut, Check, LogIn, UserPlus, ChevronRight, MapPin, Plus, Bookmark, AlertTriangle, Percent, Truck, Store, MessageSquare, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +21,7 @@ const MapPicker = dynamic(() => import("./map-picker").then(m => ({ default: m.M
   ),
 });
 import { CheckoutSuccess } from "./checkout-success";
+import { AddOnsModal } from "./add-ons-modal";
 import { AuthModal } from "@/components/auth-modal";
 import { useCartStore } from "@/stores/cart-store";
 import { useAuthStore } from "@/stores/auth-store";
@@ -28,10 +29,11 @@ import { useAddressesStore, type DeliveryAddress } from "@/stores/addresses-stor
 import { useCheckoutData } from "@/hooks/use-checkout-data";
 
 import { previewOrderAction, createOrderAction } from "@/actions/order-actions";
-import type { Order, OrderPreview, BankAccount, DeliveryZone } from "@/lib/api";
+import type { Order, OrderPreview, BankAccount, DeliveryZone, FulfillmentType } from "@/lib/api";
 import { cn, formatPrice } from "@/lib/utils";
 
 interface FormData {
+  fulfillmentType: FulfillmentType;
   senderName: string;
   senderEmail: string;
   senderPhone: string;
@@ -53,6 +55,7 @@ interface FormData {
 }
 
 const initialFormData: FormData = {
+  fulfillmentType: "delivery",
   senderName: "",
   senderEmail: "",
   senderPhone: "",
@@ -103,6 +106,33 @@ const paymentMethods = [
   },
 ];
 
+const CHECKOUT_STORAGE_KEY = "encanto-checkout-form";
+
+function getSavedFormData(): FormData | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const saved = sessionStorage.getItem(CHECKOUT_STORAGE_KEY);
+    if (!saved) return null;
+    return JSON.parse(saved) as FormData;
+  } catch {
+    return null;
+  }
+}
+
+function saveFormData(data: FormData) {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(data));
+  } catch {
+    // Storage full or unavailable
+  }
+}
+
+function clearSavedFormData() {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(CHECKOUT_STORAGE_KEY);
+}
+
 export function CheckoutForm() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -122,7 +152,8 @@ export function CheckoutForm() {
   const [specialDateWarning, setSpecialDateWarning] = useState<string | null>(null);
   const previewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { items, totalPrice, clearCart } = useCartStore();
+  const { items, totalPrice, clearCart, updateItemCardMessage, updateItemAddOns } = useCartStore();
+  const [addOnsModalProductId, setAddOnsModalProductId] = useState<string | null>(null);
   const { user, tokens, logout } = useAuthStore();
   const { addresses, addAddress, getDefaultAddress } = useAddressesStore();
 
@@ -135,6 +166,8 @@ export function CheckoutForm() {
     bankAccounts,
     occasions,
     orderSettings,
+    addOnCategories,
+    addOns: availableAddOns,
     isLoading: isLoadingCheckoutData,
     error: checkoutDataError,
     selectedCityId,
@@ -147,7 +180,22 @@ export function CheckoutForm() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    // Restore saved form data
+    const saved = getSavedFormData();
+    if (saved) {
+      setFormData(saved);
+      if (saved.cityId) setSelectedCityId(saved.cityId);
+      if (saved.branchId) setSelectedBranchId(saved.branchId);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Persist form data to sessionStorage
+  useEffect(() => {
+    if (mounted) {
+      saveFormData(formData);
+    }
+  }, [mounted, formData]);
+
 
   // Auto-set city/branch when data loads
   useEffect(() => {
@@ -220,11 +268,14 @@ export function CheckoutForm() {
     }
   }, [formData.deliveryDate, getSpecialDateForDate]);
 
+  const isPickup = formData.fulfillmentType === "pickup";
+
   // Fetch order preview with debounce
   const fetchPreview = useCallback(async () => {
+    const needsZone = formData.fulfillmentType === "delivery";
     if (
       !formData.branchId ||
-      !formData.deliveryZoneId ||
+      (needsZone && !formData.deliveryZoneId) ||
       !formData.deliveryDate ||
       !formData.deliveryTimeSlotId ||
       !formData.paymentMethod ||
@@ -237,10 +288,13 @@ export function CheckoutForm() {
     setIsLoadingPreview(true);
     try {
       const preview = await previewOrderAction({
+        fulfillmentType: formData.fulfillmentType,
         branchId: formData.branchId,
-        deliveryZoneId: formData.deliveryZoneId,
-        latitude: formData.latitude,
-        longitude: formData.longitude,
+        ...(needsZone ? {
+          deliveryZoneId: formData.deliveryZoneId,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
+        } : {}),
         deliveryDate: formData.deliveryDate,
         deliveryTimeSlotId: formData.deliveryTimeSlotId,
         paymentMethod: formData.paymentMethod as "bank_transfer" | "paypal" | "datafast",
@@ -260,7 +314,7 @@ export function CheckoutForm() {
     } finally {
       setIsLoadingPreview(false);
     }
-  }, [formData.branchId, formData.deliveryZoneId, formData.deliveryDate, formData.deliveryTimeSlotId, formData.paymentMethod, formData.latitude, formData.longitude, items]);
+  }, [formData.fulfillmentType, formData.branchId, formData.deliveryZoneId, formData.deliveryDate, formData.deliveryTimeSlotId, formData.paymentMethod, formData.latitude, formData.longitude, items]);
 
   useEffect(() => {
     if (previewTimeoutRef.current) {
@@ -282,6 +336,7 @@ export function CheckoutForm() {
 
   // Get shipping cost from preview or zone
   const getShippingCost = (): number => {
+    if (isPickup) return 0;
     if (orderPreview) return orderPreview.deliveryFeeCents;
     if (formData.deliveryZoneId) {
       const zone = getZoneById(formData.deliveryZoneId);
@@ -384,22 +439,22 @@ export function CheckoutForm() {
       }
     }
     if (!formData.recipientName.trim()) {
-      setError("Por favor, ingresa el nombre del destinatario");
+      setError(isPickup ? "Por favor, ingresa el nombre de quien retira" : "Por favor, ingresa el nombre del destinatario");
       return false;
     }
-    if (!formData.recipientPhone.trim()) {
+    if (!isPickup && !formData.recipientPhone.trim()) {
       setError("Por favor, ingresa el teléfono del destinatario");
       return false;
     }
-    if (!formData.address.trim()) {
+    if (!isPickup && !formData.address.trim()) {
       setError("Por favor, ingresa la dirección de entrega");
       return false;
     }
-    if (!formData.cityId) {
+    if (!isPickup && !formData.cityId) {
       setError("Por favor, selecciona una ciudad");
       return false;
     }
-    if (!formData.deliveryZoneId) {
+    if (!isPickup && !formData.deliveryZoneId) {
       setError("Por favor, selecciona la zona de entrega");
       return false;
     }
@@ -489,10 +544,16 @@ export function CheckoutForm() {
       const selectedCity = cities.find((c) => c.id === formData.cityId);
 
       const orderData = {
+        fulfillmentType: formData.fulfillmentType,
         branchId: formData.branchId,
-        deliveryZoneId: formData.deliveryZoneId,
-        latitude: formData.latitude,
-        longitude: formData.longitude,
+        ...(isPickup ? {} : {
+          deliveryZoneId: formData.deliveryZoneId,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
+          deliveryAddress: formData.address,
+          deliveryCity: selectedCity?.name || "",
+          deliveryReference: formData.deliveryReference || undefined,
+        }),
         deliveryDate: formData.deliveryDate,
         deliveryTimeSlotId: formData.deliveryTimeSlotId,
         paymentMethod: formData.paymentMethod as "bank_transfer" | "paypal" | "datafast",
@@ -506,15 +567,13 @@ export function CheckoutForm() {
         senderEmail,
         senderPhone: normalizePhone(senderPhone),
         recipientName: formData.recipientName,
-        recipientPhone: normalizePhone(formData.recipientPhone),
-        deliveryAddress: formData.address,
-        deliveryCity: selectedCity?.name || "",
-        deliveryReference: formData.deliveryReference || undefined,
+        ...(formData.recipientPhone.trim() ? { recipientPhone: normalizePhone(formData.recipientPhone) } : {}),
         occasionId: formData.occasionId || undefined,
         isSurprise: formData.isSurprise,
       };
 
-      const guestToken = typeof window !== "undefined"
+      // Only send guest token if user is NOT logged in
+      const guestToken = !tokens?.accessToken && typeof window !== "undefined"
         ? localStorage.getItem("encanto-guest-token") || undefined
         : undefined;
       const order = await createOrderAction(
@@ -544,6 +603,7 @@ export function CheckoutForm() {
 
       setCreatedOrder(order);
       clearCart();
+      clearSavedFormData();
       setIsSubmitted(true);
     } catch (err) {
       if (err instanceof Error) {
@@ -566,6 +626,7 @@ export function CheckoutForm() {
     setIsSubmitted(false);
     setCreatedOrder(null);
     setFormData(initialFormData);
+    clearSavedFormData();
     router.push("/productos");
   };
 
@@ -651,7 +712,7 @@ export function CheckoutForm() {
   }
 
   const discountLabel = orderSettings
-    ? `${orderSettings.transferDiscountPercentage}% de descuento`
+    ? `${orderSettings.transferDiscountPercentage} de descuento`
     : "Descuento por transferencia";
 
   return (
@@ -827,11 +888,50 @@ export function CheckoutForm() {
 
               {/* Shipping Form */}
               <form onSubmit={handleSubmit} className="space-y-8" id="checkout-form">
+                {/* Fulfillment Type Toggle */}
                 <div className="bg-background rounded-xl border border-border p-6">
-                  <h2 className="text-xl font-semibold mb-6">Información de entrega</h2>
+                  <h2 className="text-xl font-semibold mb-4">Tipo de entrega</h2>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, fulfillmentType: "delivery", deliveryZoneId: "", address: "" }))}
+                      className={cn(
+                        "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors",
+                        formData.fulfillmentType === "delivery"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      <Truck className={cn("h-6 w-6", formData.fulfillmentType === "delivery" ? "text-primary" : "text-foreground-muted")} />
+                      <span className={cn("text-sm font-medium", formData.fulfillmentType === "delivery" ? "text-primary" : "text-foreground-secondary")}>
+                        Envío a domicilio
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, fulfillmentType: "pickup", deliveryZoneId: "", address: "" }))}
+                      className={cn(
+                        "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors",
+                        formData.fulfillmentType === "pickup"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      <Store className={cn("h-6 w-6", formData.fulfillmentType === "pickup" ? "text-primary" : "text-foreground-muted")} />
+                      <span className={cn("text-sm font-medium", formData.fulfillmentType === "pickup" ? "text-primary" : "text-foreground-secondary")}>
+                        Retiro en tienda
+                      </span>
+                    </button>
+                  </div>
+                </div>
 
-                  {/* Saved Addresses */}
-                  {addresses.length > 0 && (
+                <div className="bg-background rounded-xl border border-border p-6">
+                  <h2 className="text-xl font-semibold mb-6">
+                    {isPickup ? "Información de retiro" : "Información de entrega"}
+                  </h2>
+
+                  {/* Saved Addresses - delivery only */}
+                  {!isPickup && addresses.length > 0 && (
                     <div className="mb-6">
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="text-sm font-medium text-foreground-secondary">Direcciones guardadas</h3>
@@ -884,10 +984,10 @@ export function CheckoutForm() {
 
                   <div className="space-y-6">
                     {/* Recipient info */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className={cn("grid gap-4", isPickup ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
                       <div>
                         <label htmlFor="recipientName" className="block text-sm font-medium mb-2">
-                          Nombre del destinatario <span className="text-destructive">*</span>
+                          {isPickup ? "Nombre de quien retira" : "Nombre del destinatario"} <span className="text-destructive">*</span>
                         </label>
                         <Input
                           type="text"
@@ -895,65 +995,33 @@ export function CheckoutForm() {
                           name="recipientName"
                           value={formData.recipientName}
                           onChange={handleChange}
-                          placeholder="¿Quién recibe las flores?"
+                          placeholder={isPickup ? "¿Quién retira el pedido?" : "¿Quién recibe las flores?"}
                         />
                       </div>
-                      <div>
-                        <label htmlFor="recipientPhone" className="block text-sm font-medium mb-2">
-                          Teléfono del destinatario <span className="text-destructive">*</span>
-                        </label>
-                        <Input
-                          type="tel"
-                          id="recipientPhone"
-                          name="recipientPhone"
-                          value={formData.recipientPhone}
-                          onChange={handleChange}
-                          placeholder="+593 99 999 9999"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Address */}
-                    <div>
-                      <label htmlFor="address" className="block text-sm font-medium mb-2">
-                        Dirección de entrega <span className="text-destructive">*</span>
-                      </label>
-                      <Input
-                        type="text"
-                        id="address"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleChange}
-                        placeholder="Calle, número, edificio, referencia..."
-                      />
-                    </div>
-
-                    {/* City and Branch */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="cityId" className="block text-sm font-medium mb-2">
-                          Ciudad <span className="text-destructive">*</span>
-                        </label>
-                        <Select value={formData.cityId} onValueChange={(v) => handleSelectChange("cityId", v)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona una ciudad" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {cities.map((city) => (
-                              <SelectItem key={city.id} value={city.id}>
-                                {city.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Branch selector - only show if multiple branches */}
-                      {branches.length > 1 && (
+                      {!isPickup && (
                         <div>
-                          <label htmlFor="branchId" className="block text-sm font-medium mb-2">
-                            Sucursal <span className="text-destructive">*</span>
+                          <label htmlFor="recipientPhone" className="block text-sm font-medium mb-2">
+                            Teléfono del destinatario <span className="text-destructive">*</span>
                           </label>
+                          <Input
+                            type="tel"
+                            id="recipientPhone"
+                            name="recipientPhone"
+                            value={formData.recipientPhone}
+                            onChange={handleChange}
+                            placeholder="+593 99 999 9999"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Pickup: branch selector + info */}
+                    {isPickup && (
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Sucursal de retiro <span className="text-destructive">*</span>
+                        </label>
+                        {branches.length > 1 ? (
                           <Select value={formData.branchId} onValueChange={(v) => handleSelectChange("branchId", v)}>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecciona una sucursal" />
@@ -966,46 +1034,132 @@ export function CheckoutForm() {
                               ))}
                             </SelectContent>
                           </Select>
-                        </div>
-                      )}
-
-                    </div>
-
-                    {/* Delivery zone selector */}
-                    {zones.length > 0 && (
-                      <div>
-                        <label className="block text-sm font-medium mb-2">
-                          Zona de entrega <span className="text-destructive">*</span>
-                        </label>
-                        <Select value={formData.deliveryZoneId} onValueChange={(v) => handleSelectChange("deliveryZoneId", v)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona una zona" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {zones.map((zone) => (
-                              <SelectItem key={zone.id} value={zone.id}>
-                                {zone.zoneName} — {formatPrice(zone.deliveryFeeCents)}
-                                {zone.estimatedMinutes ? ` (~${zone.estimatedMinutes} min)` : ""}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        ) : branches.length === 1 ? (
+                          <div className="p-3 bg-secondary/30 rounded-lg">
+                            <p className="font-medium text-sm">{branches[0].name}</p>
+                            {branches[0].address && (
+                              <p className="text-sm text-foreground-secondary mt-1">{branches[0].address}</p>
+                            )}
+                          </div>
+                        ) : null}
                       </div>
                     )}
 
-                    {/* Map Picker - shows zones and detects location */}
-                    <MapPicker
-                      latitude={formData.latitude}
-                      longitude={formData.longitude}
-                      onLocationChange={handleMapLocationChange}
-                      zones={zones}
-                    />
+                    {/* Delivery-specific fields */}
+                    {!isPickup && (
+                      <>
+                        {/* Address */}
+                        <div>
+                          <label htmlFor="address" className="block text-sm font-medium mb-2">
+                            Dirección de entrega <span className="text-destructive">*</span>
+                          </label>
+                          <Input
+                            type="text"
+                            id="address"
+                            name="address"
+                            value={formData.address}
+                            onChange={handleChange}
+                            placeholder="Calle, número, edificio, referencia..."
+                          />
+                        </div>
 
-                    {/* Delivery date and time */}
+                        {/* City and Branch */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label htmlFor="cityId" className="block text-sm font-medium mb-2">
+                              Ciudad <span className="text-destructive">*</span>
+                            </label>
+                            <Select value={formData.cityId} onValueChange={(v) => handleSelectChange("cityId", v)}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecciona una ciudad" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {cities.map((city) => (
+                                  <SelectItem key={city.id} value={city.id}>
+                                    {city.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Branch selector - only show if multiple branches */}
+                          {branches.length > 1 && (
+                            <div>
+                              <label htmlFor="branchId" className="block text-sm font-medium mb-2">
+                                Sucursal <span className="text-destructive">*</span>
+                              </label>
+                              <Select value={formData.branchId} onValueChange={(v) => handleSelectChange("branchId", v)}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecciona una sucursal" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {branches.map((branch) => (
+                                    <SelectItem key={branch.id} value={branch.id}>
+                                      {branch.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Delivery zone selector */}
+                        {zones.length > 0 && (
+                          <div>
+                            <label className="block text-sm font-medium mb-2">
+                              Zona de entrega <span className="text-destructive">*</span>
+                            </label>
+                            <Select value={formData.deliveryZoneId} onValueChange={(v) => handleSelectChange("deliveryZoneId", v)}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecciona una zona" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {zones.map((zone) => (
+                                  <SelectItem key={zone.id} value={zone.id}>
+                                    {zone.zoneName} — {formatPrice(zone.deliveryFeeCents)}
+                                    {zone.estimatedMinutes ? ` (~${zone.estimatedMinutes} min)` : ""}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
+                        {/* Map Picker - shows zones and detects location */}
+                        <MapPicker
+                          latitude={formData.latitude}
+                          longitude={formData.longitude}
+                          onLocationChange={handleMapLocationChange}
+                          zones={zones}
+                          selectedZoneId={formData.deliveryZoneId}
+                        />
+                      </>
+                    )}
+
+                    {/* Reference / Notes - delivery only */}
+                    {!isPickup && (
+                      <div>
+                        <label htmlFor="deliveryReference" className="block text-sm font-medium mb-2">
+                          Referencia de ubicación
+                        </label>
+                        <Textarea
+                          id="deliveryReference"
+                          name="deliveryReference"
+                          value={formData.deliveryReference}
+                          onChange={handleChange}
+                          rows={3}
+                          placeholder="Instrucciones especiales, referencias de ubicación..."
+                        />
+                      </div>
+                    )}
+
+                    {/* Date and time */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="deliveryDate" className="block text-sm font-medium mb-2">
-                          Fecha de entrega <span className="text-destructive">*</span>
+                          {isPickup ? "Fecha de retiro" : "Fecha de entrega"} <span className="text-destructive">*</span>
                         </label>
                         <DatePicker
                           value={formData.deliveryDate ? new Date(formData.deliveryDate + "T00:00:00") : undefined}
@@ -1019,7 +1173,7 @@ export function CheckoutForm() {
                       </div>
                       <div>
                         <label htmlFor="deliveryTimeSlotId" className="block text-sm font-medium mb-2">
-                          Horario de entrega <span className="text-destructive">*</span>
+                          {isPickup ? "Horario de retiro" : "Horario de entrega"} <span className="text-destructive">*</span>
                         </label>
                         <Select value={formData.deliveryTimeSlotId} onValueChange={(v) => handleSelectChange("deliveryTimeSlotId", v)}>
                           <SelectTrigger>
@@ -1065,23 +1219,95 @@ export function CheckoutForm() {
                       </div>
                     )}
 
-                    {/* Reference / Notes */}
+                    {/* Card message & add-ons per item */}
                     <div>
-                      <label htmlFor="deliveryReference" className="block text-sm font-medium mb-2">
-                        Referencia de ubicación
-                      </label>
-                      <Textarea
-                        id="deliveryReference"
-                        name="deliveryReference"
-                        value={formData.deliveryReference}
-                        onChange={handleChange}
-                        rows={3}
-                        placeholder="Instrucciones especiales, referencias de ubicación..."
-                      />
+                      <div className="flex items-center gap-2 mb-3">
+                        <MessageSquare className="h-4 w-4 text-primary" />
+                        <label className="block text-sm font-medium">
+                          Personaliza tu pedido
+                        </label>
+                        <span className="text-xs text-foreground-secondary">(opcional)</span>
+                      </div>
+                      <div className="space-y-4">
+                        {items.map((item) => (
+                          <div key={item.product.id} className="p-3 bg-secondary/20 rounded-lg space-y-3">
+                            <p className="text-sm font-semibold text-foreground">
+                              {item.product.name}
+                            </p>
+
+                            {/* Add-ons summary / button */}
+                            {availableAddOns.length > 0 && (
+                              <div>
+                                {item.addOns && item.addOns.length > 0 ? (
+                                  <div className="space-y-1.5">
+                                    {item.addOns.map((addOn) => (
+                                      <div key={addOn.addOnId} className="flex items-center justify-between text-sm">
+                                        <span className="text-foreground-secondary">
+                                          + {addOn.name}{addOn.quantity > 1 ? ` x${addOn.quantity}` : ""}
+                                        </span>
+                                        <span className="text-primary font-medium">
+                                          {formatPrice(addOn.priceCents * addOn.quantity)}
+                                        </span>
+                                      </div>
+                                    ))}
+                                    <button
+                                      type="button"
+                                      onClick={() => setAddOnsModalProductId(item.product.id)}
+                                      className="text-xs text-primary hover:underline mt-1"
+                                    >
+                                      Editar complementos
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setAddOnsModalProductId(item.product.id)}
+                                    className="flex items-center gap-2 w-full p-2.5 rounded-lg border border-dashed border-primary/40 text-sm text-primary hover:bg-primary/5 transition-colors"
+                                  >
+                                    <Package className="h-4 w-4" />
+                                    <span>Agregar complementos</span>
+                                    <Plus className="h-3.5 w-3.5 ml-auto" />
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Card message */}
+                            <div>
+                              <label className="block text-xs text-foreground-secondary mb-1">
+                                Dedicatoria de tarjeta
+                              </label>
+                              <Textarea
+                                value={item.cardMessage || ""}
+                                onChange={(e) => updateItemCardMessage(item.product.id, e.target.value)}
+                                rows={2}
+                                maxLength={200}
+                                placeholder="Escribe tu dedicatoria aquí..."
+                              />
+                              <p className="text-xs text-foreground-muted text-right mt-1">
+                                {(item.cardMessage || "").length}/200
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
-                    {/* Save Address Option - only show for new addresses when logged in */}
-                    {!selectedAddressId && user && (
+                    {/* Add-ons Modal */}
+                    {addOnsModalProductId && (
+                      <AddOnsModal
+                        isOpen={!!addOnsModalProductId}
+                        onClose={() => setAddOnsModalProductId(null)}
+                        productName={items.find((i) => i.product.id === addOnsModalProductId)?.product.name || ""}
+                        addOnCategories={addOnCategories}
+                        addOns={availableAddOns}
+                        currentAddOns={items.find((i) => i.product.id === addOnsModalProductId)?.addOns}
+                        onSave={(newAddOns) => updateItemAddOns(addOnsModalProductId, newAddOns)}
+                      />
+                    )}
+
+                    {/* Save Address Option - delivery only, new addresses when logged in */}
+                    {!isPickup && !selectedAddressId && user && (
                       <div className="p-4 bg-secondary/30 rounded-lg space-y-3">
                         <label className="flex items-center gap-3 cursor-pointer">
                           <Checkbox
@@ -1122,21 +1348,23 @@ export function CheckoutForm() {
 
                     {/* Checkboxes */}
                     <div className="space-y-3">
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                          checked={formData.isSurprise}
-                          onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isSurprise: checked === true }))}
-                        />
-                        <div className="flex items-center gap-2">
-                          <Gift className="h-5 w-5 text-primary flex-shrink-0" />
-                          <div>
-                            <span className="text-sm font-medium">Es una entrega sorpresa</span>
-                            <p className="text-xs text-foreground-secondary">
-                              No revelaremos el contenido al destinatario antes de la entrega
-                            </p>
+                      {!isPickup && (
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <Checkbox
+                            checked={formData.isSurprise}
+                            onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isSurprise: checked === true }))}
+                          />
+                          <div className="flex items-center gap-2">
+                            <Gift className="h-5 w-5 text-primary flex-shrink-0" />
+                            <div>
+                              <span className="text-sm font-medium">Es una entrega sorpresa</span>
+                              <p className="text-xs text-foreground-secondary">
+                                No revelaremos el contenido al destinatario antes de la entrega
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </label>
+                        </label>
+                      )}
 
                       {user && (
                         <label className="flex items-center gap-3 cursor-pointer">
@@ -1198,31 +1426,34 @@ export function CheckoutForm() {
                   <div className="space-y-3">
                     {paymentMethods.map((method) => {
                       const isTransfer = method.value === "bank_transfer";
+                      const isSelected = formData.paymentMethod === method.value;
                       const description = isTransfer && orderSettings
-                        ? `${orderSettings.transferDiscountPercentage}% de descuento por transferencia`
+                        ? `${orderSettings.transferDiscountPercentage} de descuento por transferencia`
                         : method.description || "";
 
                       return (
-                        <label
+                        <button
                           key={method.value}
+                          type="button"
+                          onClick={() => method.available && handlePaymentMethodChange(method.value)}
+                          disabled={!method.available}
                           className={cn(
-                            "flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all",
-                            formData.paymentMethod === method.value
+                            "flex items-center gap-4 p-4 border rounded-lg transition-all w-full text-left",
+                            isSelected
                               ? "border-primary bg-primary/5"
                               : "border-border hover:border-primary/50",
                             !method.available && "opacity-50 cursor-not-allowed"
                           )}
                         >
-                          <input
-                            type="radio"
-                            name="paymentMethodRadio"
-                            value={method.value}
-                            checked={formData.paymentMethod === method.value}
-                            onChange={() => method.available && handlePaymentMethodChange(method.value)}
-                            disabled={!method.available}
-                            className="h-4 w-4 text-primary focus:ring-primary"
-                          />
-                          <method.icon className="h-5 w-5 text-foreground-secondary flex-shrink-0" />
+                          <div className={cn(
+                            "h-5 w-5 rounded-full border-2 flex items-center justify-center flex-shrink-0",
+                            isSelected ? "border-primary" : "border-foreground-muted"
+                          )}>
+                            {isSelected && (
+                              <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+                            )}
+                          </div>
+                          <method.icon className={cn("h-5 w-5 flex-shrink-0", isSelected ? "text-primary" : "text-foreground-secondary")} />
                           <div className="flex-1">
                             <span className="font-medium">{method.label}</span>
                             {isTransfer && orderSettings && (
@@ -1235,7 +1466,7 @@ export function CheckoutForm() {
                               <p className="text-sm text-foreground-secondary">{description}</p>
                             )}
                           </div>
-                        </label>
+                        </button>
                       );
                     })}
                   </div>
@@ -1296,6 +1527,8 @@ export function CheckoutForm() {
             shippingCost={shippingCost}
             transferDiscount={transferDiscount}
             isLoadingPreview={isLoadingPreview}
+            isPickup={isPickup}
+            preview={orderPreview}
           />
 
           {/* Submit button - visible on desktop, only when form is shown */}

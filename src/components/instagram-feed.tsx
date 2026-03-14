@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import { Instagram, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
@@ -46,12 +46,14 @@ export async function InstagramFeed({
                 rel="noopener noreferrer"
                 className="group relative aspect-square rounded-lg overflow-hidden bg-secondary"
               >
-                <Image
+                <SafeImage
                   src={post.mediaType === "VIDEO" && post.thumbnailUrl ? post.thumbnailUrl : post.mediaUrl}
                   alt={post.caption || "Post de Instagram"}
                   fill
                   className="object-cover transition-transform duration-300 group-hover:scale-110"
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                  fallbackClassName="w-full h-full"
+                  iconSize="lg"
                 />
                 {/* Video indicator */}
                 {post.mediaType === "VIDEO" && (

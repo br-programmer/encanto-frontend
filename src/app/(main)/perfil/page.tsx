@@ -30,22 +30,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuthStore } from "@/stores/auth-store";
 import { useAddressesStore, type DeliveryAddress } from "@/stores/addresses-store";
 import { resendVerificationAction, uploadAvatarAction, deleteAvatarAction } from "@/actions/auth-actions";
-import { claimGuestOrdersAction } from "@/actions/order-actions";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
 export default function PerfilPage() {
   const router = useRouter();
-  const { user, tokens, logout, refreshToken, fetchUser, isLoading: authLoading } = useAuthStore();
+  const { user, tokens, logout, refreshToken, fetchUser, isLoading: authLoading, _hasHydrated } = useAuthStore();
   const { addresses, addAddress, updateAddress, deleteAddress, setDefaultAddress } = useAddressesStore();
 
   const [mounted, setMounted] = useState(false);
   const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const [isClaimingOrders, setIsClaimingOrders] = useState(false);
-  const [claimResult, setClaimResult] = useState<{ claimedCount: number } | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState<DeliveryAddress | null>(null);
   const [addressFormData, setAddressFormData] = useState({
@@ -66,10 +63,10 @@ export default function PerfilPage() {
   }, [fetchUser]);
 
   useEffect(() => {
-    if (mounted && !authLoading && !user) {
+    if (mounted && _hasHydrated && !authLoading && !user) {
       router.push("/");
     }
-  }, [mounted, authLoading, user, router]);
+  }, [mounted, _hasHydrated, authLoading, user, router]);
 
   const handleResendVerification = async () => {
     if (!tokens?.accessToken) return;
@@ -105,33 +102,6 @@ export default function PerfilPage() {
     router.push("/");
   };
 
-  const handleClaimGuestOrders = async () => {
-    if (!tokens?.accessToken) return;
-    setIsClaimingOrders(true);
-    try {
-      const result = await claimGuestOrdersAction(tokens.accessToken);
-      setClaimResult(result);
-    } catch (error) {
-      if (error instanceof Error && error.message.includes("401")) {
-        const refreshed = await refreshToken();
-        if (refreshed) {
-          try {
-            const newTokens = useAuthStore.getState().tokens;
-            if (newTokens?.accessToken) {
-              const result = await claimGuestOrdersAction(newTokens.accessToken);
-              setClaimResult(result);
-              return;
-            }
-          } catch {
-            // ignore retry error
-          }
-        }
-      }
-      console.error("Error claiming guest orders:", error);
-    } finally {
-      setIsClaimingOrders(false);
-    }
-  };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -239,7 +209,7 @@ export default function PerfilPage() {
     }
   };
 
-  if (!mounted || authLoading) {
+  if (!mounted || !_hasHydrated || authLoading) {
     return (
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -374,45 +344,6 @@ export default function PerfilPage() {
                 <ChevronRight className="h-4 w-4 text-foreground-secondary" />
               </Link>
             </div>
-
-            {/* Claim guest orders */}
-            {user.emailVerified && (
-              <div className="mt-4 pt-4 border-t border-border">
-                {claimResult ? (
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-sm text-green-800">
-                      {claimResult.claimedCount > 0
-                        ? `Se asociaron ${claimResult.claimedCount} pedido${claimResult.claimedCount > 1 ? "s" : ""} a tu cuenta.`
-                        : "No se encontraron pedidos de invitado con tu correo."}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm text-blue-800 mb-2">
-                      ¿Hiciste compras como invitado? Asocia esos pedidos a tu cuenta.
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleClaimGuestOrders}
-                      disabled={isClaimingOrders}
-                    >
-                      {isClaimingOrders ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Buscando...
-                        </>
-                      ) : (
-                        <>
-                          <Package className="h-4 w-4 mr-2" />
-                          Asociar pedidos
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
 
             <div className="mt-4 pt-4 border-t border-border">
               <Button

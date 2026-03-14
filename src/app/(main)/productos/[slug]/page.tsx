@@ -35,14 +35,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  // Fetch related products from same category
-  let relatedProducts: typeof product[] = [];
-  if (product.categoryId) {
-    const { result } = await api.products.byCategory(product.categoryId, {
-      limit: 4,
-    });
-    relatedProducts = result.filter((p) => p.id !== product.id).slice(0, 4);
-  }
+  // Fetch related products and add-ons in parallel
+  const [relatedData, addOnCategories, addOns] = await Promise.all([
+    product.categoryId
+      ? api.products.byCategory(product.categoryId, { limit: 4 })
+      : Promise.resolve({ result: [] as typeof product[] }),
+    api.addOnCategories.active(),
+    api.addOns.list(),
+  ]);
+
+  const relatedProducts = relatedData.result
+    .filter((p) => p.id !== product.id)
+    .slice(0, 4);
 
   const breadcrumbItems = [
     { label: "Productos", href: "/productos" },
@@ -63,7 +67,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <ProductGallery images={product.images} productName={product.name} />
 
           {/* Product Info */}
-          <ProductInfo product={product} />
+          <ProductInfo product={product} addOnCategories={addOnCategories} addOns={addOns} />
         </div>
       </div>
 
