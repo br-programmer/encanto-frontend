@@ -10,6 +10,7 @@ import type {
   BankAccount,
   Occasion,
   OrderSettings,
+  ProductAddOnsGroup,
   AddOnCategory,
   AddOn,
 } from "@/lib/api";
@@ -48,6 +49,10 @@ export async function getCheckoutInitialDataAction(): Promise<CheckoutInitialDat
     addOnCategories,
     addOns,
   };
+}
+
+export async function getProductAddOnsAction(productId: string): Promise<ProductAddOnsGroup[]> {
+  return api.products.addOns(productId);
 }
 
 export async function getBranchesByCityAction(cityId: string): Promise<Branch[]> {

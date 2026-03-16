@@ -31,6 +31,8 @@ export type {
   Occasion,
   AddOn,
   AddOnCategory,
+  ProductAddOnItem,
+  ProductAddOnsGroup,
   OrderSettings,
   DeliverySettings,
   // Orders
@@ -58,6 +60,7 @@ export interface CartItemAddOn {
   addOnId: string;
   name: string;
   priceCents: number;
+  imageUrl?: string;
   quantity: number;
 }
 

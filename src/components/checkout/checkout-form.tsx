@@ -157,6 +157,8 @@ export function CheckoutForm() {
   const { user, tokens, logout } = useAuthStore();
   const { addresses, addAddress, getDefaultAddress } = useAddressesStore();
 
+  const [productAddOnGroups, setProductAddOnGroups] = useState<Record<string, import("@/types").ProductAddOnsGroup[]>>({});
+
   const {
     cities,
     branches,

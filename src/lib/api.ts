@@ -358,6 +358,26 @@ export interface AddOn {
   updatedAt: string;
 }
 
+// Product Add-Ons (grouped by category)
+export interface ProductAddOnItem {
+  id: string;
+  name: string;
+  slug: string;
+  priceCents: number;
+  imageUrl: string;
+  displayOrder: number;
+}
+
+export interface ProductAddOnsGroup {
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+    imageUrl: string | null;
+  };
+  addOns: ProductAddOnItem[];
+}
+
 // Order Settings
 export interface OrderSettings {
   id: string;
@@ -836,6 +856,9 @@ export const api = {
       fetchApi<PaginatedResponse<Product>>("/products", {
         params: { ...filters, categoryId, isActive: true } as QueryParams,
       }),
+
+    addOns: (productId: string) =>
+      fetchApi<ResultResponse<ProductAddOnsGroup[]>>(`/products/${productId}/add-ons`).then(r => r.result),
   },
 
   // Instagram
