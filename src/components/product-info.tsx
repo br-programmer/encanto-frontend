@@ -8,51 +8,36 @@ import { AddOnsModal } from "@/components/checkout/add-ons-modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCartStore } from "@/stores/cart-store";
-import { useToast } from "@/components/ui/toast";
 import { formatPrice, calculateDiscount, isInStock, getPrimaryImage, cn } from "@/lib/utils";
-import type { Product, AddOn, AddOnCategory, CartItemAddOn } from "@/types";
+import type { Product, ProductAddOnsGroup, ProductAddOnItem, CartItemAddOn } from "@/types";
 
 interface SelectedAddOn {
-  addOn: AddOn;
+  addOn: ProductAddOnItem;
   quantity: number;
 }
 
 interface ProductInfoProps {
   product: Product;
-  addOnCategories?: AddOnCategory[];
-  addOns?: AddOn[];
+  addOnGroups?: ProductAddOnsGroup[];
 }
 
-export function ProductInfo({ product, addOnCategories = [], addOns = [] }: ProductInfoProps) {
+export function ProductInfo({ product, addOnGroups = [] }: ProductInfoProps) {
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
   const [selectedAddOns, setSelectedAddOns] = useState<Map<string, SelectedAddOn>>(new Map());
   const [showAllAddOns, setShowAllAddOns] = useState(false);
-  const { addItem, openCart } = useCartStore();
-  const { addToast } = useToast();
+  const { addItem } = useCartStore();
 
   const discount = calculateDiscount(product.priceCents, product.comparePriceCents);
   const stock = product.stock ?? product.inventory?.quantity ?? 0;
   const inStock = isInStock(stock);
   const primaryImage = getPrimaryImage(product.images);
 
-  // Group add-ons by category
-  const addOnsByCategory = useMemo(() => {
-    if (addOnCategories.length === 0 || addOns.length === 0) return [];
-
-    return addOnCategories
-      .map((cat) => ({
-        category: cat,
-        items: addOns.filter((a) => a.categoryId === cat.id),
-      }))
-      .filter((group) => group.items.length > 0);
-  }, [addOnCategories, addOns]);
-
-  // First N add-ons to show inline
-  const MAX_VISIBLE_ADDONS = 5;
-  const allAddOnsFlat = useMemo(() => addOns, [addOns]);
-  const visibleAddOns = useMemo(() => allAddOnsFlat.slice(0, MAX_VISIBLE_ADDONS), [allAddOnsFlat]);
-  const hasMoreAddOns = allAddOnsFlat.length > MAX_VISIBLE_ADDONS;
+  const allAddOnsFlat = useMemo(
+    () => addOnGroups.flatMap((g) => g.addOns),
+    [addOnGroups]
+  );
+  const hasAddOns = allAddOnsFlat.length > 0;
 
   // Calculate add-ons subtotal
   const addOnsSubtotal = useMemo(() => {
@@ -74,7 +59,7 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
     });
   };
 
-  const handleToggleAddOn = (addOn: AddOn) => {
+  const handleToggleAddOn = (addOn: ProductAddOnItem) => {
     setSelectedAddOns((prev) => {
       const next = new Map(prev);
       if (next.has(addOn.id)) {
@@ -109,6 +94,7 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
         addOnId: addOn.id,
         name: addOn.name,
         priceCents: addOn.priceCents,
+        imageUrl: addOn.imageUrl,
         quantity: q,
       });
     });
@@ -127,14 +113,6 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
 
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
-
-    addToast(
-      quantity > 1
-        ? `${quantity} ${product.name} agregados al carrito`
-        : `${product.name} agregado al carrito`,
-      "cart"
-    );
-    openCart();
 
     // Reset add-ons after adding
     setSelectedAddOns(new Map());
@@ -199,102 +177,104 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
       </div>
 
       {/* Add-ons Selection */}
-      {inStock && addOns.length > 0 && (
+      {inStock && hasAddOns && (
         <div className="mt-6">
-          <h3 className="text-sm font-semibold mb-3">Complementa tu pedido</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {visibleAddOns.map((addOn) => {
-              const selected = selectedAddOns.get(addOn.id);
-              const isSelected = !!selected;
+          <h3 className="text-sm font-semibold mb-3">Complementa tu regalo</h3>
 
-              return (
-                <div
-                  key={addOn.id}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer",
-                    isSelected
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  )}
-                  onClick={() => !isSelected && handleToggleAddOn(addOn)}
+          {/* Add-ons Grid (max 4 visible) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {allAddOnsFlat.slice(0, 4).map((addOn) => {
+                  const selected = selectedAddOns.get(addOn.id);
+                  const isSelected = !!selected;
+
+                  return (
+                    <div
+                      key={addOn.id}
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer",
+                        isSelected
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      )}
+                      onClick={() => !isSelected && handleToggleAddOn(addOn)}
+                    >
+                      {addOn.imageUrl ? (
+                        <div className="relative w-12 h-12 rounded-md overflow-hidden bg-secondary flex-shrink-0">
+                          <SafeImage
+                            src={addOn.imageUrl}
+                            alt={addOn.name}
+                            fill
+                            className="object-cover"
+                            sizes="48px"
+                            fallbackClassName="w-full h-full"
+                            iconSize="sm"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-md bg-secondary flex items-center justify-center flex-shrink-0">
+                          <Package className="h-5 w-5 text-foreground-muted" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{addOn.name}</p>
+                        <p className="text-sm text-primary font-semibold">
+                          +{formatPrice(addOn.priceCents)}
+                        </p>
+                      </div>
+                      {isSelected ? (
+                        <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={() => handleAddOnQuantity(addOn.id, -1)}
+                            className="w-7 h-7 flex items-center justify-center rounded-md border border-border hover:bg-secondary transition-colors"
+                          >
+                            <Minus className="h-3 w-3" />
+                          </button>
+                          <span className="w-6 text-center text-sm font-medium">{selected.quantity}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleAddOnQuantity(addOn.id, 1)}
+                            className="w-7 h-7 flex items-center justify-center rounded-md border border-border hover:bg-secondary transition-colors"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="w-5 h-5 rounded border border-border flex-shrink-0" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Ver todos button */}
+              {allAddOnsFlat.length > 4 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllAddOns(true)}
+                  className="mt-3 text-sm text-primary font-medium hover:underline"
                 >
-                  {addOn.imageUrl ? (
-                    <div className="relative w-12 h-12 rounded-md overflow-hidden bg-secondary flex-shrink-0">
-                      <SafeImage
-                        src={addOn.imageUrl}
-                        alt={addOn.name}
-                        fill
-                        className="object-cover"
-                        sizes="48px"
-                        fallbackClassName="w-full h-full"
-                        iconSize="sm"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-12 h-12 rounded-md bg-secondary flex items-center justify-center flex-shrink-0">
-                      <Package className="h-5 w-5 text-foreground-muted" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{addOn.name}</p>
-                    <p className="text-sm text-primary font-semibold">
-                      +{formatPrice(addOn.priceCents)}
-                    </p>
-                  </div>
-                  {isSelected ? (
-                    <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        type="button"
-                        onClick={() => handleAddOnQuantity(addOn.id, -1)}
-                        className="w-7 h-7 flex items-center justify-center rounded-md border border-border hover:bg-secondary transition-colors"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </button>
-                      <span className="w-6 text-center text-sm font-medium">{selected.quantity}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleAddOnQuantity(addOn.id, 1)}
-                        className="w-7 h-7 flex items-center justify-center rounded-md border border-border hover:bg-secondary transition-colors"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="w-5 h-5 rounded border border-border flex-shrink-0" />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Ver todos button */}
-          {hasMoreAddOns && (
-            <button
-              type="button"
-              onClick={() => setShowAllAddOns(true)}
-              className="mt-3 text-sm text-primary font-medium hover:underline flex items-center gap-1"
-            >
-              Ver todos los complementos ({allAddOnsFlat.length})
-            </button>
-          )}
+                  Ver todos los complementos ({allAddOnsFlat.length})
+                </button>
+              )}
 
           {/* All add-ons modal */}
           <AddOnsModal
             isOpen={showAllAddOns}
             onClose={() => setShowAllAddOns(false)}
             productName={product.name}
-            addOnCategories={addOnCategories}
-            addOns={addOns}
+            addOnGroups={addOnGroups}
             currentAddOns={Array.from(selectedAddOns.values()).map(({ addOn, quantity: q }) => ({
               addOnId: addOn.id,
               name: addOn.name,
               priceCents: addOn.priceCents,
+              imageUrl: addOn.imageUrl,
               quantity: q,
             }))}
             onSave={(newAddOns) => {
               const newMap = new Map<string, SelectedAddOn>();
               newAddOns.forEach((ca) => {
-                const addOn = addOns.find((a) => a.id === ca.addOnId);
+                const addOn = allAddOnsFlat.find((a) => a.id === ca.addOnId);
                 if (addOn) {
                   newMap.set(addOn.id, { addOn, quantity: ca.quantity });
                 }

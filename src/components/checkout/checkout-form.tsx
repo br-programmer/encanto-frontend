@@ -157,6 +157,8 @@ export function CheckoutForm() {
   const { user, tokens, logout } = useAuthStore();
   const { addresses, addAddress, getDefaultAddress } = useAddressesStore();
 
+  const [productAddOnGroups, setProductAddOnGroups] = useState<Record<string, import("@/types").ProductAddOnsGroup[]>>({});
+
   const {
     cities,
     branches,
@@ -166,8 +168,6 @@ export function CheckoutForm() {
     bankAccounts,
     occasions,
     orderSettings,
-    addOnCategories,
-    addOns: availableAddOns,
     isLoading: isLoadingCheckoutData,
     error: checkoutDataError,
     selectedCityId,
@@ -196,6 +196,28 @@ export function CheckoutForm() {
     }
   }, [mounted, formData]);
 
+
+  // Fetch add-ons per product in cart
+  useEffect(() => {
+    async function fetchAddOns() {
+      const { getProductAddOnsAction } = await import("@/actions/checkout-actions");
+      const results = await Promise.all(
+        items.map(async (item) => {
+          if (productAddOnGroups[item.product.id]) return null;
+          const groups = await getProductAddOnsAction(item.product.id);
+          return { productId: item.product.id, groups };
+        })
+      );
+      const newGroups: Record<string, import("@/types").ProductAddOnsGroup[]> = {};
+      results.forEach((r) => {
+        if (r) newGroups[r.productId] = r.groups;
+      });
+      if (Object.keys(newGroups).length > 0) {
+        setProductAddOnGroups((prev) => ({ ...prev, ...newGroups }));
+      }
+    }
+    if (items.length > 0) fetchAddOns();
+  }, [items]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-set city/branch when data loads
   useEffect(() => {
@@ -1236,7 +1258,7 @@ export function CheckoutForm() {
                             </p>
 
                             {/* Add-ons summary / button */}
-                            {availableAddOns.length > 0 && (
+                            {(productAddOnGroups[item.product.id]?.length ?? 0) > 0 && (
                               <div>
                                 {item.addOns && item.addOns.length > 0 ? (
                                   <div className="space-y-1.5">
@@ -1299,8 +1321,7 @@ export function CheckoutForm() {
                         isOpen={!!addOnsModalProductId}
                         onClose={() => setAddOnsModalProductId(null)}
                         productName={items.find((i) => i.product.id === addOnsModalProductId)?.product.name || ""}
-                        addOnCategories={addOnCategories}
-                        addOns={availableAddOns}
+                        addOnGroups={productAddOnGroups[addOnsModalProductId] || []}
                         currentAddOns={items.find((i) => i.product.id === addOnsModalProductId)?.addOns}
                         onSave={(newAddOns) => updateItemAddOns(addOnsModalProductId, newAddOns)}
                       />

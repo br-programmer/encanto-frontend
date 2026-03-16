@@ -6,7 +6,6 @@ import { ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCartStore } from "@/stores/cart-store";
-import { useToast } from "@/components/ui/toast";
 import { formatPrice } from "@/lib/utils";
 import type { Product } from "@/types";
 
@@ -16,8 +15,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, hideFeaturedBadge = false }: ProductCardProps) {
-  const { addItem, openCart } = useCartStore();
-  const { addToast } = useToast();
+  const { addItem } = useCartStore();
 
   const primaryImage = product.images?.find((img) => img.isPrimary) || product.images?.[0];
   const hasDiscount = product.comparePriceCents && product.comparePriceCents > product.priceCents;
@@ -35,8 +33,6 @@ export function ProductCard({ product, hideFeaturedBadge = false }: ProductCardP
       priceCents: product.priceCents,
       image: primaryImage?.url || null,
     });
-    addToast(`${product.name} agregado al carrito`, "cart");
-    openCart();
   };
 
   return (

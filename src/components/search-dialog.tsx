@@ -6,6 +6,7 @@ import { SafeImage } from "@/components/ui/safe-image";
 import { Search, X, Loader2, ShoppingBag, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { searchProductsAction } from "@/actions/product-actions";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { formatPrice } from "@/lib/utils";
 import type { Product } from "@/types";
 
@@ -21,6 +22,8 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [serverError, setServerError] = useState(false);
+
+  useScrollLock(isOpen);
 
   // Debounced search
   useEffect(() => {

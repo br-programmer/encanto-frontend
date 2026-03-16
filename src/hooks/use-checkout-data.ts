@@ -15,8 +15,6 @@ import type {
   BankAccount,
   Occasion,
   OrderSettings,
-  AddOnCategory,
-  AddOn,
 } from "@/lib/api";
 
 interface CheckoutData {
@@ -28,8 +26,6 @@ interface CheckoutData {
   bankAccounts: BankAccount[];
   occasions: Occasion[];
   orderSettings: OrderSettings | null;
-  addOnCategories: AddOnCategory[];
-  addOns: AddOn[];
   isLoading: boolean;
   error: string | null;
   selectedCityId: string | null;
@@ -49,8 +45,6 @@ export function useCheckoutData(): CheckoutData {
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [occasions, setOccasions] = useState<Occasion[]>([]);
   const [orderSettings, setOrderSettings] = useState<OrderSettings | null>(null);
-  const [addOnCategories, setAddOnCategories] = useState<AddOnCategory[]>([]);
-  const [addOns, setAddOns] = useState<AddOn[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCityId, setSelectedCityIdState] = useState<string | null>(null);
@@ -70,8 +64,6 @@ export function useCheckoutData(): CheckoutData {
         setBankAccounts(data.bankAccounts);
         setOccasions(data.occasions);
         setOrderSettings(data.orderSettings);
-        setAddOnCategories(data.addOnCategories);
-        setAddOns(data.addOns);
 
         // Auto-select first city if only one
         if (data.cities.length === 1) {
@@ -167,8 +159,6 @@ export function useCheckoutData(): CheckoutData {
     bankAccounts,
     occasions,
     orderSettings,
-    addOnCategories,
-    addOns,
     isLoading,
     error,
     selectedCityId,

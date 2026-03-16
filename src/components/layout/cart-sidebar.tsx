@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useCartStore } from "@/stores/cart-store";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { formatPrice } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,8 @@ export function CartSidebar() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useScrollLock(isOpen);
 
   // Use empty array on server, real items after mount
   const displayItems = mounted ? items : [];

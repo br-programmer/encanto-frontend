@@ -35,13 +35,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  // Fetch related products and add-ons in parallel
-  const [relatedData, addOnCategories, addOns] = await Promise.all([
+  // Fetch related products and compatible add-ons in parallel
+  const [relatedData, addOnGroups] = await Promise.all([
     product.categoryId
       ? api.products.byCategory(product.categoryId, { limit: 4 })
       : Promise.resolve({ result: [] as typeof product[] }),
-    api.addOnCategories.active(),
-    api.addOns.list(),
+    api.products.addOns(product.id),
   ]);
 
   const relatedProducts = relatedData.result
@@ -67,7 +66,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <ProductGallery images={product.images} productName={product.name} />
 
           {/* Product Info */}
-          <ProductInfo product={product} addOnCategories={addOnCategories} addOns={addOns} />
+          <ProductInfo product={product} addOnGroups={addOnGroups} />
         </div>
       </div>
 
