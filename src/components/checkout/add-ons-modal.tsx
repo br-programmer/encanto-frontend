@@ -3,16 +3,15 @@
 import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { SafeImage } from "@/components/ui/safe-image";
-import { X, Minus, Plus, Package, Search } from "lucide-react";
+import { X, Minus, Plus, Package, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { cn, formatPrice } from "@/lib/utils";
-import type { ProductAddOnsGroup, ProductAddOnItem } from "@/types";
+import type { AddOn, AddOnCategory } from "@/lib/api";
 import type { CartItemAddOn } from "@/types";
 
 interface SelectedAddOn {
-  addOn: ProductAddOnItem;
+  addOn: AddOn;
   quantity: number;
 }
 
@@ -20,7 +19,8 @@ interface AddOnsModalProps {
   isOpen: boolean;
   onClose: () => void;
   productName: string;
-  addOnGroups: ProductAddOnsGroup[];
+  addOnCategories: AddOnCategory[];
+  addOns: AddOn[];
   currentAddOns?: CartItemAddOn[];
   onSave: (addOns: CartItemAddOn[]) => void;
 }
@@ -29,40 +29,52 @@ export function AddOnsModal({
   isOpen,
   onClose,
   productName,
-  addOnGroups,
+  addOnCategories,
+  addOns,
   currentAddOns = [],
   onSave,
 }: AddOnsModalProps) {
-  const allAddOnsFlat = useMemo(
-    () => addOnGroups.flatMap((g) => g.addOns),
-    [addOnGroups]
-  );
-
+  // Initialize selection from current add-ons
   const [selected, setSelected] = useState<Map<string, SelectedAddOn>>(() => {
     const map = new Map<string, SelectedAddOn>();
     currentAddOns.forEach((ca) => {
-      const addOn = allAddOnsFlat.find((a) => a.id === ca.addOnId);
+      const addOn = addOns.find((a) => a.id === ca.addOnId);
       if (addOn) {
         map.set(addOn.id, { addOn, quantity: ca.quantity });
       }
     });
     return map;
   });
-  const [activeTab, setActiveTab] = useState<string | null>(
-    addOnGroups.length > 0 ? addOnGroups[0].category.id : null
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
+    () => new Set(addOnCategories.map((c) => c.id))
   );
   const [search, setSearch] = useState("");
 
-  useScrollLock(isOpen);
+  const toggleCategory = (categoryId: string) => {
+    setCollapsedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
+  };
 
-  // Filtered add-ons for active tab
-  const filteredAddOns = useMemo(() => {
-    const group = addOnGroups.find((g) => g.category.id === activeTab);
-    if (!group) return [];
+  // Group add-ons by category, filtered by search
+  const grouped = useMemo(() => {
     const q = search.toLowerCase().trim();
-    if (!q) return group.addOns;
-    return group.addOns.filter((a) => a.name.toLowerCase().includes(q));
-  }, [addOnGroups, activeTab, search]);
+    return addOnCategories
+      .map((cat) => ({
+        category: cat,
+        items: addOns.filter((a) =>
+          a.categoryId === cat.id &&
+          (!q || a.name.toLowerCase().includes(q))
+        ),
+      }))
+      .filter((g) => g.items.length > 0);
+  }, [addOnCategories, addOns, search]);
 
   const selectedTotal = useMemo(() => {
     let total = 0;
@@ -72,7 +84,7 @@ export function AddOnsModal({
     return total;
   }, [selected]);
 
-  const handleToggle = (addOn: ProductAddOnItem) => {
+  const handleToggle = (addOn: AddOn) => {
     setSelected((prev) => {
       const next = new Map(prev);
       if (next.has(addOn.id)) {
@@ -106,7 +118,6 @@ export function AddOnsModal({
         addOnId: addOn.id,
         name: addOn.name,
         priceCents: addOn.priceCents,
-        imageUrl: addOn.imageUrl,
         quantity,
       });
     });
@@ -140,45 +151,8 @@ export function AddOnsModal({
             </Button>
           </div>
 
-          {/* Tabs + Search */}
-          <div className="px-5 py-4 border-b border-border space-y-4">
-            {/* Category Tabs */}
-            {addOnGroups.length > 1 && (
-              <div className="flex gap-2 flex-wrap">
-                {addOnGroups.map((group) => {
-                  const isActive = group.category.id === activeTab;
-                  const selectedCount = group.addOns.filter((a) => selected.has(a.id)).length;
-                  return (
-                    <button
-                      key={group.category.id}
-                      type="button"
-                      onClick={() => {
-                        setActiveTab(group.category.id);
-                        setSearch("");
-                      }}
-                      className={cn(
-                        "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
-                        isActive
-                          ? "bg-primary text-white"
-                          : "bg-secondary text-foreground-secondary hover:text-foreground"
-                      )}
-                    >
-                      {group.category.name}
-                      {selectedCount > 0 && (
-                        <span className={cn(
-                          "min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold inline-flex items-center justify-center",
-                          isActive ? "bg-white text-primary" : "bg-primary text-white"
-                        )}>
-                          {selectedCount}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Search */}
+          {/* Search */}
+          <div className="px-5 py-3 border-b border-border">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted" />
               <input
@@ -193,82 +167,112 @@ export function AddOnsModal({
 
           {/* Content */}
           <ScrollArea className="flex-1 overflow-auto">
-            <div className="px-5 py-6">
-              {filteredAddOns.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {filteredAddOns.map((addOn) => {
-                    const entry = selected.get(addOn.id);
-                    const isSelected = !!entry;
+            <div className="p-5 space-y-5">
+              {grouped.map(({ category, items }) => {
+                const isCollapsed = collapsedCategories.has(category.id);
+                const selectedInCategory = items.filter((a) => selected.has(a.id)).length;
 
-                    return (
-                      <div
-                        key={addOn.id}
-                        className={cn(
-                          "flex flex-col items-center p-3 rounded-lg border transition-colors cursor-pointer text-center",
-                          isSelected
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50"
-                        )}
-                        onClick={() => !isSelected && handleToggle(addOn)}
-                      >
-                        {addOn.imageUrl ? (
-                          <div className="relative w-16 h-16 rounded-md overflow-hidden bg-secondary mb-2">
-                            <SafeImage
-                              src={addOn.imageUrl}
-                              alt={addOn.name}
-                              fill
-                              className="object-cover"
-                              sizes="64px"
-                              fallbackClassName="w-full h-full"
-                              iconSize="md"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-16 h-16 rounded-md bg-secondary flex items-center justify-center mb-2">
-                            <Package className="h-6 w-6 text-foreground-muted" />
-                          </div>
-                        )}
+                return (
+                <div key={category.id}>
+                  <button
+                    type="button"
+                    onClick={() => toggleCategory(category.id)}
+                    className="group flex items-center justify-between w-full mb-3 py-1.5 px-2 -mx-2 rounded-md hover:bg-secondary/50 transition-colors"
+                    title={isCollapsed ? "Expandir categoría" : "Colapsar categoría"}
+                  >
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-medium text-foreground-secondary uppercase tracking-wide group-hover:text-foreground transition-colors">
+                        {category.name}
+                      </p>
+                      {selectedInCategory > 0 && (
+                        <span className="text-[10px] bg-primary text-white min-w-5 h-5 inline-flex items-center justify-center rounded-full font-medium">
+                          {selectedInCategory}
+                        </span>
+                      )}
+                    </div>
+                    {isCollapsed ? (
+                      <ChevronDown className="h-4 w-4 text-foreground-muted group-hover:text-foreground transition-colors" />
+                    ) : (
+                      <ChevronUp className="h-4 w-4 text-foreground-muted group-hover:text-foreground transition-colors" />
+                    )}
+                  </button>
+                  {!isCollapsed && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {items.map((addOn) => {
+                      const entry = selected.get(addOn.id);
+                      const isSelected = !!entry;
 
-                        <p className="text-xs font-medium line-clamp-2 mb-1">{addOn.name}</p>
-                        <p className="text-xs text-primary font-semibold">
-                          +{formatPrice(addOn.priceCents)}
-                        </p>
+                      return (
+                        <div
+                          key={addOn.id}
+                          className={cn(
+                            "flex flex-col items-center p-3 rounded-lg border transition-colors cursor-pointer text-center",
+                            isSelected
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          )}
+                          onClick={() => !isSelected && handleToggle(addOn)}
+                        >
+                          {/* Image */}
+                          {addOn.imageUrl ? (
+                            <div className="relative w-16 h-16 rounded-md overflow-hidden bg-secondary mb-2">
+                              <SafeImage
+                                src={addOn.imageUrl}
+                                alt={addOn.name}
+                                fill
+                                className="object-cover"
+                                sizes="64px"
+                                fallbackClassName="w-full h-full"
+                                iconSize="md"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-16 h-16 rounded-md bg-secondary flex items-center justify-center mb-2">
+                              <Package className="h-6 w-6 text-foreground-muted" />
+                            </div>
+                          )}
 
-                        {isSelected ? (
-                          <div
-                            className="flex items-center gap-1 mt-2"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <button
-                              type="button"
-                              onClick={() => handleQuantity(addOn.id, -1)}
-                              className="w-7 h-7 flex items-center justify-center rounded-md border border-border hover:bg-secondary transition-colors"
+                          {/* Info */}
+                          <p className="text-xs font-medium line-clamp-2 mb-1">{addOn.name}</p>
+                          <p className="text-xs text-primary font-semibold">
+                            +{formatPrice(addOn.priceCents)}
+                          </p>
+
+                          {/* Quantity or checkbox */}
+                          {isSelected ? (
+                            <div
+                              className="flex items-center gap-1 mt-2"
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              <Minus className="h-3 w-3" />
-                            </button>
-                            <span className="w-6 text-center text-sm font-medium">
-                              {entry.quantity}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleQuantity(addOn.id, 1)}
-                              className="w-7 h-7 flex items-center justify-center rounded-md border border-border hover:bg-secondary transition-colors"
-                            >
-                              <Plus className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="w-5 h-5 rounded border border-border mt-2" />
-                        )}
-                      </div>
-                    );
-                  })}
+                              <button
+                                type="button"
+                                onClick={() => handleQuantity(addOn.id, -1)}
+                                className="w-7 h-7 flex items-center justify-center rounded-md border border-border hover:bg-secondary transition-colors"
+                              >
+                                <Minus className="h-3 w-3" />
+                              </button>
+                              <span className="w-6 text-center text-sm font-medium">
+                                {entry.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleQuantity(addOn.id, 1)}
+                                className="w-7 h-7 flex items-center justify-center rounded-md border border-border hover:bg-secondary transition-colors"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="w-5 h-5 rounded border border-border mt-2" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  )}
                 </div>
-              ) : (
-                <p className="text-sm text-foreground-muted text-center py-8">
-                  No se encontraron complementos
-                </p>
-              )}
+                );
+              })}
             </div>
           </ScrollArea>
 
