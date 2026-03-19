@@ -5,19 +5,24 @@ import { ProductCard } from "@/components/product-card";
 import { CategoryCard } from "@/components/category-card";
 import { InstagramFeed } from "@/components/instagram-feed";
 import { HeroCarousel } from "@/components/hero-carousel";
+import { NextSpecialDate } from "@/components/next-special-date";
+import { ScrollRevealSection } from "@/components/scroll-reveal-section";
+import { StackedCardsSection } from "@/components/stacked-cards-section";
 import { api } from "@/lib/api";
 
 export default async function Home() {
-  // Fetch categories, featured products, and Instagram feed in parallel
-  const [categoriesResponse, productsResponse, instagramResponse] = await Promise.all([
+  // Fetch categories, featured products, Instagram feed, and special dates in parallel
+  const [categoriesResponse, productsResponse, specialDatesResponse, instagramResponse] = await Promise.all([
     api.categories.list({ isActive: true, rootOnly: true, limit: 6 }),
     api.products.featured(8),
-    api.instagram.feed(6).catch(() => ({ result: [], meta: { total: 0, cachedAt: "", expiresAt: "" } })),
+    api.specialDates.list({ isActive: true, limit: 20 }).catch(() => ({ result: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } })),
+    api.instagram.feed({ limit: 6 }).catch(() => ({ result: [], meta: { total: 0, cachedAt: "", expiresAt: "" } })),
   ]);
 
   const categories = categoriesResponse.result;
   const featuredProducts = productsResponse.result;
   const instagramPosts = instagramResponse.result;
+  const specialDates = specialDatesResponse.result;
 
   return (
     <div className="flex flex-col">
@@ -100,6 +105,9 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Next Special Date Parallax */}
+      <NextSpecialDate specialDates={specialDates} />
+
       {/* Features Section */}
       <section className="py-10 sm:py-16 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -144,8 +152,14 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Stacked Cards Section - Apple AirPods Style */}
+      <StackedCardsSection />
+
       {/* Instagram Feed */}
       <InstagramFeed posts={instagramPosts} instagramUrl="https://www.instagram.com/encantofloristeria_ecu" />
+
+      {/* Scroll Reveal Section - Apple Style */}
+      <ScrollRevealSection />
 
       {/* WhatsApp CTA */}
       <section className="py-12 sm:py-20 bg-secondary">

@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { X, Plus, Minus, ShoppingBag, Trash2 } from "lucide-react";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useCartStore } from "@/stores/cart-store";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { formatPrice } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,8 @@ export function CartSidebar() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useScrollLock(isOpen);
 
   // Use empty array on server, real items after mount
   const displayItems = mounted ? items : [];
@@ -82,12 +85,14 @@ export function CartSidebar() {
                       {/* Image */}
                       <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden bg-secondary flex-shrink-0">
                         {item.product.image ? (
-                          <Image
+                          <SafeImage
                             src={item.product.image}
                             alt={item.product.name}
                             fill
                             className="object-cover"
                             sizes="(max-width: 640px) 64px, 80px"
+                            fallbackClassName="w-full h-full"
+                            iconSize="md"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
@@ -108,6 +113,24 @@ export function CartSidebar() {
                         <p className="text-primary font-semibold text-sm sm:text-base mt-1">
                           {formatPrice(item.product.priceCents)}
                         </p>
+
+                        {/* Add-ons */}
+                        {item.addOns && item.addOns.length > 0 && (
+                          <div className="mt-1 space-y-0.5">
+                            {item.addOns.map((addOn) => (
+                              <p key={addOn.addOnId} className="text-xs text-foreground-muted">
+                                + {addOn.name}{addOn.quantity > 1 ? ` x${addOn.quantity}` : ""} ({formatPrice(addOn.priceCents * addOn.quantity)})
+                              </p>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Card message */}
+                        {item.cardMessage && (
+                          <p className="text-xs text-foreground-muted mt-1 italic truncate">
+                            💌 {item.cardMessage}
+                          </p>
+                        )}
 
                         {/* Quantity controls */}
                         <div className="flex items-center justify-between mt-2">

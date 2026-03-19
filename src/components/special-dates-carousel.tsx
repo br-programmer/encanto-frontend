@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState, useRef } from "react";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import type { SpecialDate } from "@/lib/api";
 
 export interface CarouselSlide {
   id: string;
@@ -16,11 +17,34 @@ export interface CarouselSlide {
 
 interface SpecialDatesCarouselProps {
   slides?: CarouselSlide[];
+  specialDates?: SpecialDate[];
   autoplayDelay?: number;
 }
 
-// Mock data for development - will be replaced with API data
-const MOCK_SLIDES: CarouselSlide[] = [
+// Convert API special dates to carousel slides
+function specialDatesToSlides(dates: SpecialDate[]): CarouselSlide[] {
+  return dates
+    .filter((sd) => sd.isActive)
+    .slice(0, 6)
+    .map((sd, index) => {
+      const nameParts = sd.name.split(" ");
+      const midpoint = Math.ceil(nameParts.length / 2);
+      const title = nameParts.slice(0, midpoint).join(" ");
+      const subtitle = nameParts.slice(midpoint).join(" ");
+
+      return {
+        id: sd.id,
+        number: String(index + 1).padStart(2, "0"),
+        title,
+        subtitle: subtitle || undefined,
+        imageUrl: `https://picsum.photos/seed/${sd.date}/800/600`,
+        link: "/productos",
+      };
+    });
+}
+
+// Fallback mock data
+const FALLBACK_SLIDES: CarouselSlide[] = [
   {
     id: "1",
     number: "01",
@@ -56,14 +80,18 @@ const MOCK_SLIDES: CarouselSlide[] = [
 ];
 
 export function SpecialDatesCarousel({
-  slides = MOCK_SLIDES,
+  slides,
+  specialDates,
   autoplayDelay = 5000,
 }: SpecialDatesCarouselProps) {
+  const resolvedSlides = slides
+    ?? (specialDates && specialDates.length > 0 ? specialDatesToSlides(specialDates) : FALLBACK_SLIDES);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const nextIndex = (currentIndex + 1) % slides.length;
+  const nextIndex = (currentIndex + 1) % resolvedSlides.length;
 
   const goToSlide = useCallback(
     (index: number) => {
@@ -83,7 +111,7 @@ export function SpecialDatesCarousel({
 
   // Autoplay
   useEffect(() => {
-    if (slides.length <= 1) return;
+    if (resolvedSlides.length <= 1) return;
 
     timeoutRef.current = setTimeout(goToNext, autoplayDelay);
 
@@ -92,12 +120,12 @@ export function SpecialDatesCarousel({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [currentIndex, autoplayDelay, goToNext, slides.length]);
+  }, [currentIndex, autoplayDelay, goToNext, resolvedSlides.length]);
 
-  if (slides.length === 0) return null;
+  if (resolvedSlides.length === 0) return null;
 
-  const currentSlide = slides[currentIndex];
-  const nextSlide = slides[nextIndex];
+  const currentSlide = resolvedSlides[currentIndex];
+  const nextSlide = resolvedSlides[nextIndex];
 
   return (
     <section className="relative w-full bg-section-dark overflow-hidden">
@@ -152,9 +180,9 @@ export function SpecialDatesCarousel({
                 </Link>
 
                 {/* Progress Bars */}
-                {slides.length > 1 && (
+                {resolvedSlides.length > 1 && (
                   <div className="flex gap-2 mt-12">
-                    {slides.map((_, index) => (
+                    {resolvedSlides.map((_, index) => (
                       <button
                         key={index}
                         onClick={() => goToSlide(index)}
@@ -182,7 +210,7 @@ export function SpecialDatesCarousel({
                         isTransitioning && "scale-95 opacity-0 -translate-x-8"
                       )}
                     >
-                      <Image
+                      <SafeImage
                         src={currentSlide.imageUrl}
                         alt={`${currentSlide.title} ${currentSlide.subtitle || ""}`}
                         fill
@@ -194,7 +222,7 @@ export function SpecialDatesCarousel({
                   </div>
 
                   {/* Preview Image (Next Slide) */}
-                  {slides.length > 1 && (
+                  {resolvedSlides.length > 1 && (
                     <div className="hidden md:block w-1/3 relative">
                       <div
                         className={cn(
@@ -202,7 +230,7 @@ export function SpecialDatesCarousel({
                           isTransitioning && "opacity-100 scale-105"
                         )}
                       >
-                        <Image
+                        <SafeImage
                           src={nextSlide.imageUrl}
                           alt={`${nextSlide.title} ${nextSlide.subtitle || ""}`}
                           fill

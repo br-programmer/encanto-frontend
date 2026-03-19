@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { X, User, Mail, Lock, Phone, Loader2, LogIn, UserPlus, CheckCircle2, MailOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth-store";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { cn } from "@/lib/utils";
 
 interface AuthModalProps {
@@ -58,7 +59,9 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
     }
   }, [isOpen, initialMode]);
 
-  // Close on escape key and lock body scroll
+  useScrollLock(isOpen);
+
+  // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -66,12 +69,10 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
 
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
-      document.body.style.overflow = "hidden";
     }
 
     return () => {
       document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "";
     };
   }, [isOpen, onClose]);
 

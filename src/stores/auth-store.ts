@@ -1,6 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { api, ApiError, type UserProfile, type AuthTokens } from "@/lib/api";
+import { ApiError, type AuthTokens, type UserProfile } from "@/lib/api";
+import {
+  signInAction,
+  signUpAction,
+  refreshTokenAction,
+  getMeAction,
+} from "@/actions/auth-actions";
+import { claimGuestOrdersAction } from "@/actions/order-actions";
 
 export interface User {
   id: string;
@@ -17,6 +24,7 @@ interface AuthState {
   tokens: AuthTokens | null;
   isLoading: boolean;
   error: string | null;
+  _hasHydrated: boolean;
 
   // Actions
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -60,6 +68,22 @@ function clearTokens() {
   }
 }
 
+const GUEST_TOKEN_KEY = "encanto-guest-token";
+
+// Claim guest orders and clear guest token after login/register
+async function claimGuestAndCleanup(accessToken: string) {
+  if (typeof window === "undefined") return;
+  const guestToken = localStorage.getItem(GUEST_TOKEN_KEY);
+  if (!guestToken) return;
+
+  try {
+    await claimGuestOrdersAction(accessToken);
+  } catch {
+    // Non-critical — don't block login
+  }
+  localStorage.removeItem(GUEST_TOKEN_KEY);
+}
+
 // Map UserProfile to User
 function mapUserProfile(profile: UserProfile): User {
   return {
@@ -71,6 +95,13 @@ function mapUserProfile(profile: UserProfile): User {
     emailVerified: profile.emailVerified,
     isActive: profile.isActive,
   };
+}
+
+// Check if an error from a Server Action is a specific HTTP status
+function isApiStatus(error: unknown, status: number): boolean {
+  if (error instanceof ApiError) return error.status === status;
+  if (error instanceof Error) return error.message.includes(`${status}`);
+  return false;
 }
 
 // Parse API error message
@@ -93,6 +124,12 @@ function parseApiError(error: unknown): string {
       return "Tu cuenta está inactiva";
     }
   }
+  // Fallback: check message for common status codes
+  if (error instanceof Error) {
+    if (error.message.includes("401")) return "Credenciales incorrectas";
+    if (error.message.includes("409")) return "Este correo ya está registrado";
+    if (error.message.includes("403")) return "Tu cuenta está inactiva";
+  }
   return "Ha ocurrido un error. Intenta de nuevo.";
 }
 
@@ -103,21 +140,26 @@ export const useAuthStore = create<AuthState>()(
       tokens: null,
       isLoading: false,
       error: null,
+      _hasHydrated: false,
 
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
 
         try {
           // Sign in to get tokens
-          const tokens = await api.auth.signIn({ email, password });
+          const tokens = await signInAction({ email, password });
           saveTokens(tokens);
           set({ tokens });
 
           // Fetch user profile
-          const profile = await api.auth.me();
+          const profile = await getMeAction(tokens.accessToken);
           const user = mapUserProfile(profile);
 
           set({ user, isLoading: false });
+
+          // Claim guest orders and clean up guest token
+          claimGuestAndCleanup(tokens.accessToken);
+
           return { success: true };
         } catch (error) {
           const errorMessage = parseApiError(error);
@@ -132,7 +174,7 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           // Register user
-          await api.auth.signUp({
+          await signUpAction({
             email: data.email,
             password: data.password,
             fullName: data.fullName,
@@ -140,7 +182,7 @@ export const useAuthStore = create<AuthState>()(
           });
 
           // Auto login after registration
-          const tokens = await api.auth.signIn({
+          const tokens = await signInAction({
             email: data.email,
             password: data.password,
           });
@@ -148,10 +190,14 @@ export const useAuthStore = create<AuthState>()(
           set({ tokens });
 
           // Fetch user profile
-          const profile = await api.auth.me();
+          const profile = await getMeAction(tokens.accessToken);
           const user = mapUserProfile(profile);
 
           set({ user, isLoading: false });
+
+          // Claim guest orders and clean up guest token
+          claimGuestAndCleanup(tokens.accessToken);
+
           return { success: true };
         } catch (error) {
           const errorMessage = parseApiError(error);
@@ -173,7 +219,7 @@ export const useAuthStore = create<AuthState>()(
         }
 
         try {
-          const newTokens = await api.auth.refreshToken(currentTokens.refreshToken);
+          const newTokens = await refreshTokenAction(currentTokens.refreshToken);
           saveTokens(newTokens);
           set({ tokens: newTokens });
           return true;
@@ -184,23 +230,25 @@ export const useAuthStore = create<AuthState>()(
       },
 
       fetchUser: async () => {
-        const tokens = get().tokens || getTokens();
-        if (!tokens) return;
+        const currentTokens = get().tokens || getTokens();
+        if (!currentTokens?.accessToken) return;
 
         set({ isLoading: true });
 
         try {
-          const profile = await api.auth.me();
+          const profile = await getMeAction(currentTokens.accessToken);
           const user = mapUserProfile(profile);
           set({ user, isLoading: false });
         } catch (error) {
-          if (error instanceof ApiError && error.status === 401) {
+          if (isApiStatus(error, 401)) {
             // Try to refresh token
             const refreshed = await get().refreshToken();
             if (refreshed) {
-              // Retry fetching user
+              // Retry fetching user with new token
               try {
-                const profile = await api.auth.me();
+                const newTokens = get().tokens;
+                if (!newTokens?.accessToken) throw new Error("No token after refresh");
+                const profile = await getMeAction(newTokens.accessToken);
                 const user = mapUserProfile(profile);
                 set({ user, isLoading: false });
                 return;
@@ -221,6 +269,11 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         tokens: state.tokens,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state._hasHydrated = true;
+        }
+      },
     }
   )
 );

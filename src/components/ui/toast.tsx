@@ -52,10 +52,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
+const noopToast = {
+  addToast: () => {},
+  removeToast: () => {},
+  toasts: [] as never[],
+};
+
 export function useToast() {
   const context = useContext(ToastContext);
   if (!context) {
-    throw new Error("useToast must be used within a ToastProvider");
+    return noopToast;
   }
   return context;
 }
@@ -70,7 +76,7 @@ function ToastContainer({
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2">
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 items-center">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
       ))}
@@ -96,7 +102,7 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   return (
     <div
       className={cn(
-        "flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg animate-in slide-in-from-right-5 fade-in duration-200 min-w-[280px] max-w-[400px]",
+        "flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg animate-in slide-in-from-bottom-5 fade-in duration-200 min-w-[280px] max-w-[400px]",
         bgColors[toast.type]
       )}
     >

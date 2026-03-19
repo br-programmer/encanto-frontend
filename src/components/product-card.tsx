@@ -1,12 +1,11 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCartStore } from "@/stores/cart-store";
-import { useToast } from "@/components/ui/toast";
 import { formatPrice } from "@/lib/utils";
 import type { Product } from "@/types";
 
@@ -16,8 +15,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, hideFeaturedBadge = false }: ProductCardProps) {
-  const { addItem, openCart } = useCartStore();
-  const { addToast } = useToast();
+  const { addItem } = useCartStore();
 
   const primaryImage = product.images?.find((img) => img.isPrimary) || product.images?.[0];
   const hasDiscount = product.comparePriceCents && product.comparePriceCents > product.priceCents;
@@ -35,8 +33,6 @@ export function ProductCard({ product, hideFeaturedBadge = false }: ProductCardP
       priceCents: product.priceCents,
       image: primaryImage?.url || null,
     });
-    addToast(`${product.name} agregado al carrito`, "cart");
-    openCart();
   };
 
   return (
@@ -44,12 +40,14 @@ export function ProductCard({ product, hideFeaturedBadge = false }: ProductCardP
       {/* Image */}
       <Link href={`/productos/${product.slug}`} className="block relative aspect-square overflow-hidden bg-secondary">
         {primaryImage ? (
-          <Image
+          <SafeImage
             src={primaryImage.url}
             alt={primaryImage.altText || product.name}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            fallbackClassName="w-full h-full"
+            iconSize="lg"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

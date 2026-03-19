@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import Link from "next/link";
 import type { Category } from "@/types";
 
@@ -14,12 +14,14 @@ export function CategoryCard({ category }: CategoryCardProps) {
     >
       {/* Image */}
       {category.imageUrl ? (
-        <Image
+        <SafeImage
           src={category.imageUrl}
           alt={category.name}
           fill
           className="object-cover transition-transform duration-300 group-hover:scale-105"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          fallbackClassName="w-full h-full"
+          iconSize="lg"
         />
       ) : (
         <div className="w-full h-full bg-gradient-to-br from-secondary to-accent" />

@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { Send, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface FormData {
   name: string;
@@ -27,7 +30,7 @@ export function ContactForm() {
   const [error, setError] = useState<string | null>(null);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -43,9 +46,6 @@ export function ContactForm() {
     // In production, replace with actual API call
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Here you would send the data to your backend
-      console.log("Form submitted:", formData);
 
       setIsSubmitted(true);
       setFormData(initialFormData);
@@ -81,14 +81,13 @@ export function ContactForm() {
           <label htmlFor="name" className="block text-sm font-medium mb-2">
             Nombre completo <span className="text-destructive">*</span>
           </label>
-          <input
+          <Input
             type="text"
             id="name"
             name="name"
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
             placeholder="Tu nombre"
           />
         </div>
@@ -98,14 +97,13 @@ export function ContactForm() {
           <label htmlFor="email" className="block text-sm font-medium mb-2">
             Correo electrónico <span className="text-destructive">*</span>
           </label>
-          <input
+          <Input
             type="email"
             id="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
             placeholder="tu@email.com"
           />
         </div>
@@ -117,13 +115,12 @@ export function ContactForm() {
           <label htmlFor="phone" className="block text-sm font-medium mb-2">
             Teléfono
           </label>
-          <input
+          <Input
             type="tel"
             id="phone"
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
             placeholder="+593 99 999 9999"
           />
         </div>
@@ -133,21 +130,18 @@ export function ContactForm() {
           <label htmlFor="subject" className="block text-sm font-medium mb-2">
             Asunto <span className="text-destructive">*</span>
           </label>
-          <select
-            id="subject"
-            name="subject"
-            value={formData.subject}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-          >
-            <option value="">Selecciona un asunto</option>
-            <option value="pedido">Hacer un pedido</option>
-            <option value="consulta">Consulta general</option>
-            <option value="personalizado">Arreglo personalizado</option>
-            <option value="evento">Evento especial</option>
-            <option value="otro">Otro</option>
-          </select>
+          <Select value={formData.subject} onValueChange={(value) => { setFormData((prev) => ({ ...prev, subject: value })); setError(null); }}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona un asunto" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pedido">Hacer un pedido</SelectItem>
+              <SelectItem value="consulta">Consulta general</SelectItem>
+              <SelectItem value="personalizado">Arreglo personalizado</SelectItem>
+              <SelectItem value="evento">Evento especial</SelectItem>
+              <SelectItem value="otro">Otro</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -156,14 +150,13 @@ export function ContactForm() {
         <label htmlFor="message" className="block text-sm font-medium mb-2">
           Mensaje <span className="text-destructive">*</span>
         </label>
-        <textarea
+        <Textarea
           id="message"
           name="message"
           value={formData.message}
           onChange={handleChange}
           required
           rows={5}
-          className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none"
           placeholder="Cuéntanos en qué podemos ayudarte..."
         />
       </div>

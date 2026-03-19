@@ -18,18 +18,25 @@ import {
   Briefcase,
   Star,
   Camera,
-  X
+  X,
+  Package,
+  Lock,
+  ChevronRight,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuthStore } from "@/stores/auth-store";
 import { useAddressesStore, type DeliveryAddress } from "@/stores/addresses-store";
-import { api, ApiError } from "@/lib/api";
+import { resendVerificationAction, uploadAvatarAction, deleteAvatarAction } from "@/actions/auth-actions";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
 export default function PerfilPage() {
   const router = useRouter();
-  const { user, logout, refreshToken, fetchUser, isLoading: authLoading } = useAuthStore();
+  const { user, tokens, logout, refreshToken, fetchUser, isLoading: authLoading, _hasHydrated } = useAuthStore();
   const { addresses, addAddress, updateAddress, deleteAddress, setDefaultAddress } = useAddressesStore();
 
   const [mounted, setMounted] = useState(false);
@@ -56,25 +63,29 @@ export default function PerfilPage() {
   }, [fetchUser]);
 
   useEffect(() => {
-    if (mounted && !authLoading && !user) {
+    if (mounted && _hasHydrated && !authLoading && !user) {
       router.push("/");
     }
-  }, [mounted, authLoading, user, router]);
+  }, [mounted, _hasHydrated, authLoading, user, router]);
 
   const handleResendVerification = async () => {
+    if (!tokens?.accessToken) return;
     setIsResendingVerification(true);
     try {
-      await api.auth.resendVerification();
+      await resendVerificationAction(tokens.accessToken);
       setVerificationSent(true);
     } catch (error) {
       // If 401, try refreshing token and retry
-      if (error instanceof ApiError && error.status === 401) {
+      if (error instanceof Error && error.message.includes("401")) {
         const refreshed = await refreshToken();
         if (refreshed) {
           try {
-            await api.auth.resendVerification();
-            setVerificationSent(true);
-            return;
+            const newTokens = useAuthStore.getState().tokens;
+            if (newTokens?.accessToken) {
+              await resendVerificationAction(newTokens.accessToken);
+              setVerificationSent(true);
+              return;
+            }
           } catch (retryError) {
             console.error("Error resending verification after refresh:", retryError);
           }
@@ -90,6 +101,7 @@ export default function PerfilPage() {
     logout();
     router.push("/");
   };
+
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -110,14 +122,15 @@ export default function PerfilPage() {
 
     setIsUploadingAvatar(true);
     try {
-      await api.auth.uploadAvatar(file);
-      await fetchUser(); // Refresh user data to get new avatar URL
+      const formData = new FormData();
+      formData.append("file", file);
+      await uploadAvatarAction(formData, tokens!.accessToken);
+      await fetchUser();
     } catch (error) {
       console.error("Error uploading avatar:", error);
       alert("Error al subir la imagen. Intenta de nuevo.");
     } finally {
       setIsUploadingAvatar(false);
-      // Reset file input
       e.target.value = "";
     }
   };
@@ -127,8 +140,8 @@ export default function PerfilPage() {
 
     setIsUploadingAvatar(true);
     try {
-      await api.auth.deleteAvatar();
-      await fetchUser(); // Refresh user data
+      await deleteAvatarAction(tokens!.accessToken);
+      await fetchUser();
     } catch (error) {
       console.error("Error deleting avatar:", error);
     } finally {
@@ -196,12 +209,9 @@ export default function PerfilPage() {
     }
   };
 
-  const inputClassName =
-    "w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors";
-
-  if (!mounted || authLoading) {
+  if (!mounted || !_hasHydrated || authLoading) {
     return (
-      <div className="container mx-auto px-4 py-16 flex items-center justify-center">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -212,14 +222,14 @@ export default function PerfilPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl md:text-3xl font-bold mb-8">Mi Perfil</h1>
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 sm:mb-8">Mi Perfil</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         {/* Left Column - User Info */}
         <div className="lg:col-span-1 space-y-6">
           {/* User Card */}
-          <div className="bg-background rounded-xl border border-border p-6">
+          <div className="bg-background rounded-xl border border-border p-4 sm:p-6">
             <div className="flex flex-col items-center mb-6">
               {/* Avatar */}
               <div className="relative group mb-4">
@@ -270,10 +280,10 @@ export default function PerfilPage() {
 
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-foreground-muted" />
+                <Mail className="h-5 w-5 text-foreground-muted flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-foreground-secondary">Correo</p>
-                  <p className="truncate">{user.email}</p>
+                  <p className="truncate text-sm sm:text-base">{user.email}</p>
                 </div>
                 {user.emailVerified ? (
                   <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
@@ -283,17 +293,17 @@ export default function PerfilPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <Phone className="h-5 w-5 text-foreground-muted" />
-                <div>
+                <Phone className="h-5 w-5 text-foreground-muted flex-shrink-0" />
+                <div className="min-w-0">
                   <p className="text-sm text-foreground-secondary">Teléfono</p>
-                  <p>{user.phone}</p>
+                  <p className="text-sm sm:text-base">{user.phone}</p>
                 </div>
               </div>
             </div>
 
             {/* Email verification warning */}
             {!user.emailVerified && (
-              <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-lg">
                 <p className="text-sm text-amber-800 mb-3">
                   Tu correo electrónico no está verificado. Verifica tu cuenta para acceder a todas las funcionalidades.
                 </p>
@@ -321,10 +331,24 @@ export default function PerfilPage() {
               </div>
             )}
 
-            <div className="mt-6 pt-6 border-t border-border">
+            {/* Quick Links */}
+            <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border space-y-2">
+              <Link
+                href="/perfil/pedidos"
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Package className="h-5 w-5 text-primary" />
+                  <span className="text-sm font-medium">Mis pedidos</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-foreground-secondary" />
+              </Link>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-border">
               <Button
                 variant="outline"
-                className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="w-full border-destructive text-destructive hover:bg-destructive hover:text-white"
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4 mr-2" />
@@ -336,14 +360,14 @@ export default function PerfilPage() {
 
         {/* Right Column - Addresses */}
         <div className="lg:col-span-2">
-          <div className="bg-background rounded-xl border border-border p-6">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-background rounded-xl border border-border p-4 sm:p-6">
+            <div className="flex items-start sm:items-center justify-between gap-3 mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center flex-shrink-0">
                   <MapPin className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold">Direcciones de entrega</h2>
+                  <h2 className="text-lg sm:text-xl font-semibold">Direcciones de entrega</h2>
                   <p className="text-sm text-foreground-secondary">
                     {addresses.length} {addresses.length === 1 ? "dirección guardada" : "direcciones guardadas"}
                   </p>
@@ -351,6 +375,8 @@ export default function PerfilPage() {
               </div>
               {!showAddressForm && (
                 <Button
+                  size="sm"
+                  className="flex-shrink-0"
                   onClick={() => {
                     resetAddressForm();
                     setAddressFormData(prev => ({
@@ -362,15 +388,15 @@ export default function PerfilPage() {
                     setShowAddressForm(true);
                   }}
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Agregar
+                  <Plus className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Agregar</span>
                 </Button>
               )}
             </div>
 
             {/* Address Form */}
             {showAddressForm && (
-              <div className="mb-6 p-4 bg-secondary/30 rounded-lg border border-border">
+              <div className="mb-6 p-3 sm:p-4 bg-secondary/30 rounded-lg border border-border">
                 <h3 className="font-medium mb-4">
                   {editingAddress ? "Editar dirección" : "Nueva dirección"}
                 </h3>
@@ -378,15 +404,16 @@ export default function PerfilPage() {
                   {/* Label */}
                   <div>
                     <label className="block text-sm font-medium mb-2">Etiqueta</label>
-                    <select
-                      value={addressFormData.label}
-                      onChange={(e) => setAddressFormData({ ...addressFormData, label: e.target.value })}
-                      className={inputClassName}
-                    >
-                      <option value="Casa">Casa</option>
-                      <option value="Trabajo">Trabajo</option>
-                      <option value="Otro">Otro</option>
-                    </select>
+                    <Select value={addressFormData.label} onValueChange={(value) => setAddressFormData({ ...addressFormData, label: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Casa">Casa</SelectItem>
+                        <SelectItem value="Trabajo">Trabajo</SelectItem>
+                        <SelectItem value="Otro">Otro</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Recipient Name */}
@@ -394,11 +421,10 @@ export default function PerfilPage() {
                     <label className="block text-sm font-medium mb-2">
                       Nombre del destinatario <span className="text-destructive">*</span>
                     </label>
-                    <input
+                    <Input
                       type="text"
                       value={addressFormData.recipientName}
                       onChange={(e) => setAddressFormData({ ...addressFormData, recipientName: e.target.value })}
-                      className={inputClassName}
                       placeholder="Nombre completo"
                     />
                   </div>
@@ -408,11 +434,10 @@ export default function PerfilPage() {
                     <label className="block text-sm font-medium mb-2">
                       Teléfono <span className="text-destructive">*</span>
                     </label>
-                    <input
+                    <Input
                       type="tel"
                       value={addressFormData.recipientPhone}
                       onChange={(e) => setAddressFormData({ ...addressFormData, recipientPhone: e.target.value })}
-                      className={inputClassName}
                       placeholder="+593 99 999 9999"
                     />
                   </div>
@@ -420,15 +445,16 @@ export default function PerfilPage() {
                   {/* City */}
                   <div>
                     <label className="block text-sm font-medium mb-2">Ciudad</label>
-                    <select
-                      value={addressFormData.city}
-                      onChange={(e) => setAddressFormData({ ...addressFormData, city: e.target.value })}
-                      className={inputClassName}
-                    >
-                      <option value="Manta">Manta</option>
-                      <option value="Portoviejo">Portoviejo</option>
-                      <option value="Montecristi">Montecristi</option>
-                    </select>
+                    <Select value={addressFormData.city} onValueChange={(value) => setAddressFormData({ ...addressFormData, city: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Manta">Manta</SelectItem>
+                        <SelectItem value="Portoviejo">Portoviejo</SelectItem>
+                        <SelectItem value="Montecristi">Montecristi</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Address */}
@@ -436,11 +462,10 @@ export default function PerfilPage() {
                     <label className="block text-sm font-medium mb-2">
                       Dirección <span className="text-destructive">*</span>
                     </label>
-                    <input
+                    <Input
                       type="text"
                       value={addressFormData.address}
                       onChange={(e) => setAddressFormData({ ...addressFormData, address: e.target.value })}
-                      className={inputClassName}
                       placeholder="Calle principal, número, referencias"
                     />
                   </div>
@@ -450,11 +475,10 @@ export default function PerfilPage() {
                     <label className="block text-sm font-medium mb-2">
                       Zona/Sector <span className="text-destructive">*</span>
                     </label>
-                    <input
+                    <Input
                       type="text"
                       value={addressFormData.zone}
                       onChange={(e) => setAddressFormData({ ...addressFormData, zone: e.target.value })}
-                      className={inputClassName}
                       placeholder="Ej: Barrio Américas"
                     />
                   </div>
@@ -462,11 +486,10 @@ export default function PerfilPage() {
                   {/* Notes */}
                   <div>
                     <label className="block text-sm font-medium mb-2">Notas adicionales</label>
-                    <input
+                    <Input
                       type="text"
                       value={addressFormData.notes}
                       onChange={(e) => setAddressFormData({ ...addressFormData, notes: e.target.value })}
-                      className={inputClassName}
                       placeholder="Ej: Casa color azul"
                     />
                   </div>
@@ -474,22 +497,20 @@ export default function PerfilPage() {
                   {/* Default checkbox */}
                   <div className="md:col-span-2">
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={addressFormData.isDefault}
-                        onChange={(e) => setAddressFormData({ ...addressFormData, isDefault: e.target.checked })}
-                        className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                        onCheckedChange={(checked) => setAddressFormData({ ...addressFormData, isDefault: checked === true })}
                       />
                       <span className="text-sm">Establecer como dirección predeterminada</span>
                     </label>
                   </div>
                 </div>
 
-                <div className="flex gap-3 mt-4">
-                  <Button onClick={handleSaveAddress}>
+                <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                  <Button onClick={handleSaveAddress} className="w-full sm:w-auto">
                     {editingAddress ? "Guardar cambios" : "Agregar dirección"}
                   </Button>
-                  <Button variant="outline" onClick={resetAddressForm}>
+                  <Button variant="outline" onClick={resetAddressForm} className="w-full sm:w-auto">
                     Cancelar
                   </Button>
                 </div>
@@ -527,15 +548,15 @@ export default function PerfilPage() {
                   <div
                     key={address.id}
                     className={cn(
-                      "p-4 rounded-lg border transition-colors",
+                      "p-3 sm:p-4 rounded-lg border transition-colors",
                       address.isDefault
                         ? "border-primary bg-primary/5"
                         : "border-border hover:border-primary/50"
                     )}
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-start justify-between gap-2 sm:gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
                           {getLabelIcon(address.label)}
                           <span className="font-medium">{address.label}</span>
                           {address.isDefault && (
@@ -545,24 +566,25 @@ export default function PerfilPage() {
                             </span>
                           )}
                         </div>
-                        <p className="text-foreground-secondary text-sm mb-1">
+                        <p className="text-foreground-secondary text-sm mb-1 truncate">
                           {address.recipientName} - {address.recipientPhone}
                         </p>
-                        <p className="text-sm">{address.address}</p>
+                        <p className="text-sm truncate">{address.address}</p>
                         <p className="text-sm text-foreground-secondary">
                           {address.zone}, {address.city}
                         </p>
                         {address.notes && (
-                          <p className="text-sm text-foreground-muted mt-1">
+                          <p className="text-sm text-foreground-muted mt-1 truncate">
                             Nota: {address.notes}
                           </p>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         {!address.isDefault && (
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
+                            className="h-8 w-8"
                             onClick={() => setDefaultAddress(address.id)}
                             title="Establecer como predeterminada"
                           >
@@ -571,15 +593,16 @@ export default function PerfilPage() {
                         )}
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
+                          className="h-8 w-8"
                           onClick={() => handleEditAddress(address)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
                           onClick={() => handleDeleteAddress(address.id)}
                         >
                           <Trash2 className="h-4 w-4" />
