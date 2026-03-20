@@ -521,6 +521,36 @@ export interface OrderItemResponse {
   addOns: OrderItemAddOnResponse[];
 }
 
+export interface DeliveryVehicleSnapshot {
+  vehicleType: "motorcycle" | "car";
+  brand: string;
+  model: string;
+  year: number | null;
+  color: string;
+  licensePlate: string;
+  imageUrl: string | null;
+}
+
+export interface DeliveryPerson {
+  id: string;
+  fullName: string;
+  phone: string;
+  avatarUrl: string | null;
+  vehicle: DeliveryVehicleSnapshot | null;
+}
+
+export interface OrderDeliveryZone {
+  id: string;
+  zoneName: string;
+}
+
+export interface OrderDeliveryTimeSlot {
+  id: string;
+  startTime: string;
+  endTime: string;
+  displayLabel: string | null;
+}
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -551,9 +581,11 @@ export interface Order {
   transferProofUrl: string | null;
   transferReference: string | null;
   transferVerifiedAt: string | null;
+  transferRejectionReason: string | null;
   orderStatus: OrderStatus;
   estimatedPrepMinutes: number;
   preparationOverrideMinutes: number | null;
+  overrideReason: string | null;
   preparationStartedAt: string | null;
   preparationCompletedAt: string | null;
   dispatchedAt: string | null;
@@ -564,7 +596,15 @@ export interface Order {
   updatedAt: string;
   items: OrderItemResponse[];
   guestToken?: string;
+  // Detail-only fields (not present in list endpoints)
+  deliveryZone?: OrderDeliveryZone | null;
+  deliveryTimeSlot?: OrderDeliveryTimeSlot | null;
+  deliveryPerson?: DeliveryPerson | null;
+  deliveryVehicleSnapshot?: unknown;
 }
+
+// For list endpoints (GET /orders/my) - no nested relations
+export type OrderListItem = Omit<Order, "items" | "deliveryZone" | "deliveryTimeSlot" | "deliveryPerson" | "deliveryVehicleSnapshot">;
 
 export interface OrderFilters {
   page?: number;
@@ -1006,14 +1046,14 @@ export const api = {
       }).then(r => r.result),
 
     my: (filters?: OrderFilters) =>
-      fetchApiAuth<PaginatedResponse<Order>>("/orders/my", {
+      fetchApiAuth<PaginatedResponse<OrderListItem>>("/orders/my", {
         params: filters as QueryParams,
       }),
 
-    getById: (id: string) => {
+    getByOrderNumber: (orderNumber: string) => {
       const authHeader = getAuthHeader();
       const guestHeader = getGuestTokenHeader();
-      return fetchApi<ResultResponse<Order>>(`/orders/${id}`, {
+      return fetchApi<ResultResponse<Order>>(`/orders/${orderNumber}`, {
         headers: { ...authHeader, ...guestHeader },
       }).then(r => r.result);
     },
@@ -1080,7 +1120,7 @@ export const api = {
       }).then(r => r.result),
 
     queueStatus: (branchId: string) =>
-      fetchApi<ResultResponse<{ pendingOrders: number; estimatedWaitMinutes: number }>>(
+      fetchApi<ResultResponse<{ ordersInQueue: number; estimatedWaitMinutes: number }>>(
         `/orders/branch/${branchId}/queue-status`
       ).then(r => r.result),
 
@@ -1092,12 +1132,12 @@ export const api = {
       }, accessToken, guestToken).then(r => r.result),
 
     myWithToken: (filters: OrderFilters, accessToken: string) =>
-      fetchApiWithToken<PaginatedResponse<Order>>("/orders/my", accessToken, {
+      fetchApiWithToken<PaginatedResponse<OrderListItem>>("/orders/my", accessToken, {
         params: filters as QueryParams,
       }),
 
-    getByIdWithTokens: (id: string, accessToken?: string, guestToken?: string) =>
-      fetchApiWithTokens<ResultResponse<Order>>(`/orders/${id}`, {}, accessToken, guestToken).then(r => r.result),
+    getByOrderNumberWithTokens: (orderNumber: string, accessToken?: string, guestToken?: string) =>
+      fetchApiWithTokens<ResultResponse<Order>>(`/orders/${orderNumber}`, {}, accessToken, guestToken).then(r => r.result),
 
     cancelWithTokens: (id: string, accessToken?: string, guestToken?: string) =>
       fetchApiWithTokens<ResultResponse<Order>>(`/orders/${id}/cancel`, {

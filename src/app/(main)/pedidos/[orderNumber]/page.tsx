@@ -4,10 +4,10 @@ import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Package, ChevronLeft, AlertTriangle } from "lucide-react";
+import { Loader2, Package, ChevronLeft, AlertTriangle, Phone, Bike, Car, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TransferProofUpload } from "@/components/orders/transfer-proof-upload";
-import { getOrderByIdAction, cancelOrderAction, getOrderPageDataAction } from "@/actions/order-actions";
+import { getOrderByOrderNumberAction, cancelOrderAction, getOrderPageDataAction } from "@/actions/order-actions";
 import { formatPrice, cn } from "@/lib/utils";
 import type { Order, BankAccount, DeliveryTimeSlot } from "@/lib/api";
 
@@ -15,10 +15,10 @@ const ORDER_STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending_payment: { label: "Pendiente de pago", color: "bg-amber-100 text-amber-800" },
   paid: { label: "Pagado", color: "bg-blue-100 text-blue-800" },
   preparing: { label: "En preparación", color: "bg-purple-100 text-purple-800" },
-  delivery_assigned: { label: "Repartidor asignado", color: "bg-blue-200 text-blue-900" },
-  out_for_delivery: { label: "En camino", color: "bg-indigo-100 text-indigo-800" },
+  delivery_assigned: { label: "Repartidor asignado", color: "bg-indigo-100 text-indigo-800" },
+  out_for_delivery: { label: "En camino", color: "bg-violet-100 text-violet-800" },
   delivered: { label: "Entregado", color: "bg-green-100 text-green-800" },
-  ready_for_pickup: { label: "Listo para retirar", color: "bg-teal-100 text-teal-800" },
+  ready_for_pickup: { label: "Listo para retirar", color: "bg-indigo-100 text-indigo-800" },
   picked_up: { label: "Retirado", color: "bg-green-100 text-green-800" },
   cancelled: { label: "Cancelado", color: "bg-red-100 text-red-800" },
 };
@@ -29,8 +29,13 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   datafast: "Tarjeta de crédito/débito",
 };
 
-export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+const VEHICLE_TYPE_LABELS: Record<string, string> = {
+  motorcycle: "Moto",
+  car: "Auto",
+};
+
+export default function OrderDetailPage({ params }: { params: Promise<{ orderNumber: string }> }) {
+  const { orderNumber } = use(params);
   const searchParams = useSearchParams();
   const [order, setOrder] = useState<Order | null>(null);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
@@ -46,7 +51,6 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       setIsLoading(true);
       setError(null);
 
-      // If there's a guest token in the URL, store it and use it directly
       if (urlToken) {
         localStorage.setItem("encanto-guest-token", urlToken);
       }
@@ -59,11 +63,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           } catch { /* ignore */ }
           return undefined;
         })();
-        // Prefer URL token (direct access) over stored token
         const guestToken = urlToken || localStorage.getItem("encanto-guest-token") || undefined;
 
         const [orderData, pageData] = await Promise.all([
-          getOrderByIdAction(id, accessToken, guestToken),
+          getOrderByOrderNumberAction(orderNumber, accessToken, guestToken),
           getOrderPageDataAction(),
         ]);
         setOrder(orderData);
@@ -88,7 +91,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     }
 
     fetchData();
-  }, [id, urlToken]);
+  }, [orderNumber, urlToken]);
 
   const handleCancel = async () => {
     if (!order || !confirm("¿Estás seguro de cancelar este pedido?")) return;
@@ -118,16 +121,22 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     setOrder(updatedOrder);
   };
 
-  const getTimeSlotLabel = (slotId: string) => {
-    const slot = timeSlots.find((s) => s.id === slotId);
+  const formatTime = (t: string) => {
+    const [h, m] = t.split(":");
+    const hour = parseInt(h);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+    return `${displayHour}:${m} ${ampm}`;
+  };
+
+  const getTimeSlotLabel = () => {
+    if (order?.deliveryTimeSlot) {
+      const slot = order.deliveryTimeSlot;
+      return slot.displayLabel || `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`;
+    }
+    if (!order) return "";
+    const slot = timeSlots.find((s) => s.id === order.deliveryTimeSlotId);
     if (!slot) return "";
-    const formatTime = (t: string) => {
-      const [h, m] = t.split(":");
-      const hour = parseInt(h);
-      const ampm = hour >= 12 ? "PM" : "AM";
-      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-      return `${displayHour}:${m} ${ampm}`;
-    };
     return `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`;
   };
 
@@ -158,11 +167,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const isTransfer = order.paymentMethod === "bank_transfer";
   const isPickup = order.fulfillmentType === "pickup";
   const canCancel = order.orderStatus === "pending_payment";
-  const canUploadProof = isTransfer && (order.paymentStatus === "pending" || order.paymentStatus === "awaiting_verification") && !order.transferProofUrl;
-
-  const completedStatuses = isPickup
-    ? ["ready_for_pickup", "picked_up"]
-    : ["delivery_assigned", "out_for_delivery", "delivered"];
+  const canUploadProof = isTransfer && order.paymentStatus === "pending" && !order.transferProofUrl;
+  const showTransferRejection = isTransfer && order.paymentStatus === "pending" && order.transferRejectionReason;
 
   // Timeline steps
   const timelineSteps = isPickup
@@ -214,6 +220,19 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             {statusInfo.label}
           </span>
         </div>
+
+        {/* Transfer rejection banner */}
+        {showTransferRejection && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-amber-800">Transferencia rechazada</p>
+                <p className="text-sm text-amber-700 mt-1">{order.transferRejectionReason}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Timeline */}
         {order.orderStatus !== "cancelled" && (
@@ -292,6 +311,77 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         )}
 
+        {/* Delivery Person */}
+        {order.deliveryPerson && (
+          <div className="bg-background rounded-xl border border-border p-6 mb-6">
+            <h2 className="font-semibold mb-4">Tu repartidor</h2>
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 rounded-full overflow-hidden bg-secondary/30 flex-shrink-0">
+                {order.deliveryPerson.avatarUrl ? (
+                  <Image
+                    src={order.deliveryPerson.avatarUrl}
+                    alt={order.deliveryPerson.fullName}
+                    width={56}
+                    height={56}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <User className="h-6 w-6 text-foreground-muted" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium">{order.deliveryPerson.fullName}</p>
+                <a
+                  href={`tel:${order.deliveryPerson.phone}`}
+                  className="text-sm text-primary hover:underline inline-flex items-center gap-1 mt-1"
+                >
+                  <Phone className="h-3.5 w-3.5" />
+                  {order.deliveryPerson.phone}
+                </a>
+
+                {order.deliveryPerson.vehicle && (
+                  <div className="mt-3 flex items-start gap-3">
+                    <div className="flex items-center gap-1.5 text-sm text-foreground-secondary">
+                      {order.deliveryPerson.vehicle.vehicleType === "motorcycle" ? (
+                        <Bike className="h-4 w-4" />
+                      ) : (
+                        <Car className="h-4 w-4" />
+                      )}
+                      <span>
+                        {VEHICLE_TYPE_LABELS[order.deliveryPerson.vehicle.vehicleType] || order.deliveryPerson.vehicle.vehicleType}
+                        {" - "}
+                        {order.deliveryPerson.vehicle.brand} {order.deliveryPerson.vehicle.model}
+                        {order.deliveryPerson.vehicle.year ? ` (${order.deliveryPerson.vehicle.year})` : ""}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {order.deliveryPerson.vehicle && (
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-foreground-secondary">
+                    <span>Color: {order.deliveryPerson.vehicle.color}</span>
+                    <span>Placa: {order.deliveryPerson.vehicle.licensePlate}</span>
+                  </div>
+                )}
+
+                {order.deliveryPerson.vehicle?.imageUrl && (
+                  <div className="mt-3 w-32 h-20 rounded-lg overflow-hidden bg-secondary/30">
+                    <Image
+                      src={order.deliveryPerson.vehicle.imageUrl}
+                      alt="Vehículo"
+                      width={128}
+                      height={80}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Delivery / Pickup Info */}
         <div className="bg-background rounded-xl border border-border p-6 mb-6">
           <h2 className="font-semibold mb-4">
@@ -322,6 +412,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <p className="font-medium">{order.deliveryReference}</p>
               </div>
             )}
+            {!isPickup && order.deliveryZone && (
+              <div>
+                <p className="text-foreground-secondary">Zona de entrega</p>
+                <p className="font-medium">{order.deliveryZone.zoneName}</p>
+              </div>
+            )}
             <div>
               <p className="text-foreground-secondary">
                 {isPickup ? "Fecha de retiro" : "Fecha"}</p>
@@ -338,7 +434,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               <p className="text-foreground-secondary">
                 {isPickup ? "Horario de retiro" : "Horario"}
               </p>
-              <p className="font-medium">{getTimeSlotLabel(order.deliveryTimeSlotId)}</p>
+              <p className="font-medium">{getTimeSlotLabel()}</p>
             </div>
           </div>
         </div>
@@ -451,11 +547,20 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         )}
 
-        {/* Transfer proof already uploaded */}
-        {isTransfer && order.transferProofUrl && (
+        {/* Transfer proof already uploaded - awaiting verification */}
+        {isTransfer && order.paymentStatus === "awaiting_verification" && order.transferProofUrl && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+            <p className="text-sm text-blue-800 font-medium">
+              Comprobante de pago subido. Estamos verificando tu transferencia.
+            </p>
+          </div>
+        )}
+
+        {/* Transfer proof uploaded and paid */}
+        {isTransfer && order.paymentStatus === "paid" && order.transferProofUrl && (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
             <p className="text-sm text-green-800 font-medium">
-              Comprobante de pago subido. Estamos verificando tu transferencia.
+              Pago verificado correctamente.
             </p>
           </div>
         )}

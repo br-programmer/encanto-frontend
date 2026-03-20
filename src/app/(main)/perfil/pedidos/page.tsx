@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth-store";
 import { getMyOrdersAction } from "@/actions/order-actions";
 import { formatPrice } from "@/lib/utils";
-import type { Order } from "@/lib/api";
+import type { OrderListItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const ORDER_STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -33,7 +33,7 @@ const PAYMENT_STATUS_LABELS: Record<string, { label: string; color: string }> = 
 export default function MisPedidosPage() {
   const router = useRouter();
   const { user, tokens, isLoading: authLoading, refreshToken, _hasHydrated } = useAuthStore();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<OrderListItem[]>([]);
   const [meta, setMeta] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
