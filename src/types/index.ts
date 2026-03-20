@@ -37,6 +37,7 @@ export type {
   DeliverySettings,
   // Orders
   Order,
+  OrderListItem,
   OrderItemResponse,
   OrderItemAddOnResponse,
   OrderPreview,
@@ -49,6 +50,10 @@ export type {
   PaymentMethod,
   OrderStatus,
   PaymentStatus,
+  DeliveryPerson,
+  DeliveryVehicleSnapshot,
+  OrderDeliveryZone,
+  OrderDeliveryTimeSlot,
   // Delivery Addresses
   DeliveryAddressApi,
   CreateDeliveryAddressRequest,
