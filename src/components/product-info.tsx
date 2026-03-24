@@ -378,11 +378,19 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
       {/* Shipping Info */}
       <div className="mt-8 p-4 bg-secondary/50 rounded-lg">
         <div className="flex items-start gap-3">
-          <Truck className="h-5 w-5 text-primary mt-0.5" />
+          <Truck className="h-6 w-6 text-primary mt-0.5 flex-shrink-0" />
           <div>
-            <p className="font-normal text-sm">Envío el mismo día</p>
+            <p className="font-normal text-sm">Entrega programada</p>
             <p className="text-sm text-foreground-secondary mt-1">
-              Pedidos antes de las 2pm se entregan el mismo día en Manta.
+              Programa tu entrega con al menos 2 días de anticipación. ¿Lo necesitas hoy?{" "}
+              <a
+                href="https://wa.me/593982742191?text=Hola!%20Necesito%20un%20pedido%20para%20hoy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Contáctanos por WhatsApp
+              </a>.
             </p>
           </div>
         </div>

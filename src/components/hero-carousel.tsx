@@ -19,33 +19,25 @@ interface HeroCarouselProps {
   autoplayDelay?: number;
 }
 
-// Mock data - will be replaced with API data
-const MOCK_BANNERS: HeroBanner[] = [
+const DEFAULT_BANNERS: HeroBanner[] = [
   {
     id: "1",
-    imageUrl: "https://picsum.photos/seed/banner1/1920/600",
-    imageUrlMobile: "https://picsum.photos/seed/banner1m/800/800",
-    alt: "Flores para el Día de las Madres",
-    link: "/categorias/rosas",
+    imageUrl: "/banners/banner-1-desktop.jpg",
+    imageUrlMobile: "/banners/banner-1-mobile.jpg",
+    alt: "Encanto Florería - Arreglos florales para toda ocasión",
+    link: "/productos",
   },
   {
     id: "2",
-    imageUrl: "https://picsum.photos/seed/banner2/1920/600",
-    imageUrlMobile: "https://picsum.photos/seed/banner2m/800/800",
-    alt: "Arreglos de San Valentín",
-    link: "/categorias/girasoles",
-  },
-  {
-    id: "3",
-    imageUrl: "https://picsum.photos/seed/banner3/1920/600",
-    imageUrlMobile: "https://picsum.photos/seed/banner3m/800/800",
-    alt: "Nuevos Arreglos Florales",
+    imageUrl: "/banners/banner-2-desktop.jpg",
+    imageUrlMobile: "/banners/banner-2-mobile.jpg",
+    alt: "Encanto Florería - Los mejores arreglos de Manta",
     link: "/productos",
   },
 ];
 
 export function HeroCarousel({
-  banners = MOCK_BANNERS,
+  banners = DEFAULT_BANNERS,
   autoplayDelay = 5000,
 }: HeroCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -80,13 +72,14 @@ export function HeroCarousel({
   if (banners.length === 0) return null;
 
   return (
-    <section
-      className="relative w-full overflow-hidden bg-secondary"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <section className="bg-background-alt py-4 sm:py-6 lg:py-8">
+      <div
+        className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 overflow-hidden"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
       {/* Slides Container */}
-      <div className="relative aspect-[4/3] sm:aspect-[16/7] md:aspect-[16/6] lg:aspect-[16/6]">
+      <div className="relative aspect-[4/3] sm:aspect-[16/7] md:aspect-[16/6] lg:aspect-[16/6] overflow-hidden">
         {banners.map((banner, index) => (
           <Link
             key={banner.id}
@@ -158,6 +151,7 @@ export function HeroCarousel({
           ))}
         </div>
       )}
+      </div>
     </section>
   );
 }

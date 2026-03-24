@@ -64,22 +64,23 @@ export function ProductCard({ product, hideFeaturedBadge = false, disableRotatio
             </div>
           )}
 
-          {/* Badges - left */}
-          <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {hasDiscount && (
+          {/* Badge - left: discount */}
+          {hasDiscount && !isOutOfStock && (
+            <div className="absolute top-2 left-2">
               <Badge variant="destructive" className="text-xs">-{discountPercent}%</Badge>
-            )}
-            {isOutOfStock && (
-              <Badge variant="secondary" className="text-xs">Agotado</Badge>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Badge - right */}
-          {product.isFeatured && !hideFeaturedBadge && (
+          {/* Badge - right: featured or out of stock */}
+          {isOutOfStock ? (
+            <div className="absolute top-2 right-2">
+              <Badge variant="secondary" className="text-xs">Agotado</Badge>
+            </div>
+          ) : product.isFeatured && !hideFeaturedBadge ? (
             <div className="absolute top-2 right-2">
               <Badge variant="default" className="text-xs">Destacado</Badge>
             </div>
-          )}
+          ) : null}
 
           {/* Cart button */}
           {!isOutOfStock && (
