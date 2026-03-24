@@ -269,7 +269,7 @@ export function ScrollRotate3D({
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2}
+                strokeWidth={1.5}
                 d="M19 14l-7 7m0 0l-7-7m7 7V3"
               />
             </svg>
