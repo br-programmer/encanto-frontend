@@ -719,25 +719,51 @@ export function CheckoutForm() {
 
   // Show success view
   if (isSubmitted && createdOrder) {
+    const canReopenPayPal = createdOrder.paymentMethod === "paypal" && createdOrder.paymentStatus !== "paid";
     return (
-      <CheckoutSuccess
-        order={createdOrder}
-        bankAccounts={bankAccounts}
-        orderSettings={orderSettings}
-        timeSlots={timeSlots}
-        onNewOrder={handleNewOrder}
-      />
+      <>
+        <CheckoutSuccess
+          order={createdOrder}
+          bankAccounts={bankAccounts}
+          orderSettings={orderSettings}
+          timeSlots={timeSlots}
+          onNewOrder={handleNewOrder}
+          onPayPal={canReopenPayPal ? () => setPendingPayPal(true) : undefined}
+        />
+        {canReopenPayPal && (
+          <PayPalCheckoutModal
+            isOpen={pendingPayPal}
+            onClose={() => setPendingPayPal(false)}
+            orderId={createdOrder.id}
+            orderNumber={createdOrder.orderNumber}
+            totalCents={createdOrder.totalCents}
+            accessToken={paypalTokens.accessToken}
+            guestToken={paypalTokens.guestToken}
+            onSuccess={(paidOrder) => {
+              setCreatedOrder(paidOrder);
+              setPendingPayPal(false);
+            }}
+            onError={(msg) => {
+              setError(msg);
+            }}
+          />
+        )}
+      </>
     );
   }
 
-  // Show PayPal modal over a minimal view while waiting for payment
+  // Show PayPal modal over CheckoutSuccess while waiting for payment
   if (pendingPayPal && createdOrder) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-foreground-secondary">Esperando pago...</p>
-        </div>
+      <>
+        <CheckoutSuccess
+          order={createdOrder}
+          bankAccounts={bankAccounts}
+          orderSettings={orderSettings}
+          timeSlots={timeSlots}
+          onNewOrder={handleNewOrder}
+          onPayPal={() => setPendingPayPal(true)}
+        />
         <PayPalCheckoutModal
           isOpen={pendingPayPal}
           onClose={() => {
@@ -758,7 +784,7 @@ export function CheckoutForm() {
             setError(msg);
           }}
         />
-      </div>
+      </>
     );
   }
 

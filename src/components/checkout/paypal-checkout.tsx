@@ -48,26 +48,13 @@ export function PayPalCheckoutModal({
 
   useScrollLock(isOpen);
 
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !isProcessing) onClose();
-    };
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-    }
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [isOpen, isProcessing, onClose]);
+  // No keyboard close - only X button
 
   if (!mounted || !isOpen) return null;
 
   const modalContent = (
     <div className="fixed inset-0 z-[100]">
-      <div
-        className="absolute inset-0 bg-black/50"
-        onClick={() => { if (!isProcessing) onClose(); }}
-      />
+      <div className="absolute inset-0 bg-black/50" />
 
       <div className="absolute inset-0 flex items-center justify-center p-4 overflow-y-auto">
         <div
