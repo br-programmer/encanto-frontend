@@ -4,9 +4,11 @@ import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Package, ChevronLeft, AlertTriangle, Phone, Bike, Car, User } from "lucide-react";
+import { Loader2, Package, ChevronLeft, AlertTriangle, Phone, Bike, Car, User, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TransferProofUpload } from "@/components/orders/transfer-proof-upload";
+import { PayPalProvider } from "@/components/checkout/paypal-provider";
+import { PayPalCheckoutModal } from "@/components/checkout/paypal-checkout";
 import { getOrderByOrderNumberAction, cancelOrderAction, getOrderPageDataAction } from "@/actions/order-actions";
 import { formatPrice, cn } from "@/lib/utils";
 import type { Order, BankAccount, DeliveryTimeSlot } from "@/lib/api";
@@ -43,6 +45,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [paypalModalOpen, setPaypalModalOpen] = useState(false);
 
   const urlToken = searchParams.get("token");
 
@@ -167,7 +170,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const isTransfer = order.paymentMethod === "bank_transfer";
   const isPickup = order.fulfillmentType === "pickup";
   const canCancel = order.orderStatus === "pending_payment";
+  const isPayPal = order.paymentMethod === "paypal";
   const canUploadProof = isTransfer && order.paymentStatus === "pending" && !order.transferProofUrl;
+  const canPayWithPayPal = isPayPal && order.paymentStatus === "pending";
   const showTransferRejection = isTransfer && order.paymentStatus === "pending" && order.transferRejectionReason;
 
   // Timeline steps
@@ -565,6 +570,24 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
           </div>
         )}
 
+        {/* PayPal pending payment */}
+        {canPayWithPayPal && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-6">
+            <div className="text-center">
+              <p className="text-sm text-amber-800 font-medium mb-3">
+                Tu pedido está pendiente de pago
+              </p>
+              <Button
+                onClick={() => setPaypalModalOpen(true)}
+                className="gap-2"
+              >
+                <CreditCard className="h-4 w-4" />
+                Pagar con PayPal
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex gap-3">
           {canCancel && (
@@ -594,6 +617,32 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             </a>
           </Button>
         </div>
+
+        {/* PayPal Modal */}
+        {canPayWithPayPal && (
+          <PayPalProvider>
+            <PayPalCheckoutModal
+              isOpen={paypalModalOpen}
+              onClose={() => setPaypalModalOpen(false)}
+              orderId={order.id}
+              orderNumber={order.orderNumber}
+              totalCents={order.totalCents}
+              accessToken={(() => {
+                try {
+                  const tokens = localStorage.getItem("encanto-tokens");
+                  if (tokens) return JSON.parse(tokens).accessToken;
+                } catch { /* ignore */ }
+                return undefined;
+              })()}
+              guestToken={localStorage.getItem("encanto-guest-token") || undefined}
+              onSuccess={(paidOrder) => {
+                setOrder(paidOrder);
+                setPaypalModalOpen(false);
+              }}
+              onError={() => {}}
+            />
+          </PayPalProvider>
+        )}
       </div>
     </div>
   );

@@ -83,3 +83,19 @@ export async function claimGuestOrdersAction(
 ): Promise<{ claimedCount: number }> {
   return api.orders.claimGuestOrdersWithToken(accessToken);
 }
+
+export async function paypalCreateOrderAction(
+  orderId: string,
+  accessToken?: string,
+  guestToken?: string
+): Promise<{ paypalOrderId: string }> {
+  return api.orders.paypalCreateOrderWithTokens(orderId, accessToken, guestToken);
+}
+
+export async function paypalCaptureAction(
+  orderId: string,
+  accessToken?: string,
+  guestToken?: string
+): Promise<Order> {
+  return api.orders.paypalCaptureWithTokens(orderId, accessToken, guestToken);
+}
