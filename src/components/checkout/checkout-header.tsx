@@ -9,6 +9,7 @@ import { ArrowLeft, Lock, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const CHECKOUT_STORAGE_KEY = "encanto-checkout-form";
+const ORDER_CREATED_KEY = "encanto-order-created";
 
 export function CheckoutHeader() {
   const router = useRouter();
@@ -16,7 +17,13 @@ export function CheckoutHeader() {
 
   const handleBackClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    setShowConfirm(true);
+    const orderCreated = sessionStorage.getItem(ORDER_CREATED_KEY);
+    if (orderCreated) {
+      sessionStorage.removeItem(ORDER_CREATED_KEY);
+      router.push("/productos");
+    } else {
+      setShowConfirm(true);
+    }
   };
 
   const handleConfirmLeave = () => {

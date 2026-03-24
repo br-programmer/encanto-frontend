@@ -448,6 +448,7 @@ export interface CreateOrderRequest {
   deliveryReference?: string;
   occasionId?: string;
   isSurprise?: boolean;
+  isAnonymous?: boolean;
 }
 
 export interface PreviewOrderRequest {
@@ -492,6 +493,7 @@ export interface OrderPreview {
   cardMessageTotalCents: number;
   deliveryFeeCents: number;
   transferDiscountCents: number;
+  taxCents: number;
   totalCents: number;
   timeEstimate: TimeEstimate;
   warningMessage?: string;
@@ -572,11 +574,13 @@ export interface Order {
   deliveryTimeSlotId: string;
   occasionId: string | null;
   isSurprise: boolean;
+  isAnonymous: boolean;
   subtotalCents: number;
   addOnsTotalCents: number;
   cardMessageTotalCents: number;
   deliveryFeeCents: number;
   transferDiscountCents: number;
+  taxCents: number;
   totalCents: number;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;

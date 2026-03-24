@@ -24,6 +24,7 @@ interface OrderSummaryProps {
   isLoadingPreview?: boolean;
   isPickup?: boolean;
   preview?: OrderPreview | null;
+  forceExpanded?: boolean;
 }
 
 export function OrderSummary({
@@ -34,22 +35,25 @@ export function OrderSummary({
   isLoadingPreview = false,
   isPickup = false,
   preview,
+  forceExpanded = false,
 }: OrderSummaryProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const expanded = forceExpanded || isExpanded;
 
   const displaySubtotal = preview?.subtotalCents ?? subtotal;
   const displayAddOns = preview?.addOnsTotalCents ?? 0;
   const displayCardMessage = preview?.cardMessageTotalCents ?? 0;
   const displayShipping = isPickup ? 0 : (preview?.deliveryFeeCents ?? shippingCost);
   const displayDiscount = preview?.transferDiscountCents ?? transferDiscount;
-  const total = preview?.totalCents ?? (displaySubtotal + displayAddOns + displayCardMessage + displayShipping - displayDiscount);
+  const displayTax = preview?.taxCents ?? 0;
+  const total = preview?.totalCents ?? (displaySubtotal + displayAddOns + displayCardMessage + displayShipping - displayDiscount + displayTax);
 
   return (
     <div className="bg-background rounded-xl border border-border overflow-hidden">
       {/* Mobile toggle header */}
       <button
         className="w-full flex items-center justify-between p-4 lg:hidden"
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => setIsExpanded(!expanded)}
       >
         <div className="flex items-center gap-2">
           <ShoppingBag className="h-5 w-5 text-primary" />
@@ -60,7 +64,7 @@ export function OrderSummary({
         </div>
         <div className="flex items-center gap-2">
           <span className="font-medium">{formatPrice(total)}</span>
-          {isExpanded ? (
+          {expanded ? (
             <ChevronUp className="h-5 w-5 text-foreground-secondary" />
           ) : (
             <ChevronDown className="h-5 w-5 text-foreground-secondary" />
@@ -81,7 +85,7 @@ export function OrderSummary({
       <div
         className={cn(
           "lg:block",
-          isExpanded ? "block" : "hidden"
+          expanded ? "block" : "hidden"
         )}
       >
         {/* Items list */}
@@ -175,24 +179,28 @@ export function OrderSummary({
               <span>{formatPrice(displayCardMessage)}</span>
             </div>
           )}
-          <div className="flex justify-between text-sm">
-            <span className="text-foreground-secondary">
-              {isPickup ? "Retiro en tienda" : "Envío"}
-            </span>
-            <span>
-              {isPickup ? (
-                <span className="text-green-600">$0.00</span>
-              ) : displayShipping === 0 ? (
-                <span className="text-green-600">Gratis</span>
-              ) : (
-                formatPrice(displayShipping)
-              )}
-            </span>
-          </div>
+          {preview && !isPickup ? (
+            <div className="flex justify-between text-sm">
+              <span className="text-foreground-secondary">Envío</span>
+              <span>
+                {displayShipping === 0 ? (
+                  <span className="text-green-600">Gratis</span>
+                ) : (
+                  formatPrice(displayShipping)
+                )}
+              </span>
+            </div>
+          ) : null}
           {displayDiscount > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-green-600">Descuento transferencia</span>
               <span className="text-green-600">-{formatPrice(displayDiscount)}</span>
+            </div>
+          )}
+          {displayTax > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-foreground-secondary">IVA (15%)</span>
+              <span>{formatPrice(displayTax)}</span>
             </div>
           )}
           <div className="border-t border-border pt-3 flex justify-between font-medium text-lg">

@@ -16,39 +16,91 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const autoplayRef = useRef<NodeJS.Timeout | null>(null);
+  const isResettingRef = useRef(false);
 
-  const checkScroll = useCallback(() => {
+  // Duplicate products for seamless loop
+  const loopProducts = [...products, ...products, ...products];
+  const setCount = products.length;
+
+  const getCardWidth = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return 266;
+    const card = el.querySelector<HTMLElement>(":scope > div");
+    if (!card) return 266;
+    const gap = 16;
+    return card.offsetWidth + gap;
+  }, []);
+
+  // Start at the middle set
+  useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 2);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 2);
+    const cardWidth = getCardWidth();
+    el.scrollLeft = setCount * cardWidth;
+  }, [setCount, getCardWidth]);
+
+  const checkScroll = useCallback(() => {
+    if (isResettingRef.current) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(true);
+    setCanScrollRight(true);
   }, []);
+
+  // Handle infinite loop: when scrolling past the boundaries, jump to the middle set
+  const handleScrollEnd = useCallback(() => {
+    if (isResettingRef.current) return;
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const cardWidth = getCardWidth();
+    const oneSetWidth = setCount * cardWidth;
+    const currentScroll = el.scrollLeft;
+
+    if (currentScroll < oneSetWidth * 0.5) {
+      isResettingRef.current = true;
+      el.style.scrollBehavior = "auto";
+      el.scrollLeft = currentScroll + oneSetWidth;
+      el.style.scrollBehavior = "";
+      requestAnimationFrame(() => { isResettingRef.current = false; });
+    } else if (currentScroll > oneSetWidth * 2.5) {
+      isResettingRef.current = true;
+      el.style.scrollBehavior = "auto";
+      el.scrollLeft = currentScroll - oneSetWidth;
+      el.style.scrollBehavior = "";
+      requestAnimationFrame(() => { isResettingRef.current = false; });
+    }
+  }, [setCount, getCardWidth]);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    checkScroll();
-    el.addEventListener("scroll", checkScroll, { passive: true });
+
+    let scrollTimeout: NodeJS.Timeout;
+    const onScroll = () => {
+      checkScroll();
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(handleScrollEnd, 100);
+    };
+
+    el.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", checkScroll);
     return () => {
-      el.removeEventListener("scroll", checkScroll);
+      el.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", checkScroll);
+      clearTimeout(scrollTimeout);
     };
-  }, [checkScroll]);
+  }, [checkScroll, handleScrollEnd]);
 
   const scroll = useCallback((direction: "left" | "right") => {
     const el = scrollRef.current;
     if (!el) return;
-    const cardWidth = el.querySelector<HTMLElement>(":scope > div")?.offsetWidth || 250;
-    const gap = 16;
-    const scrollAmount = cardWidth + gap;
-
-    if (direction === "right" && el.scrollLeft >= el.scrollWidth - el.clientWidth - 2) {
-      el.scrollTo({ left: 0, behavior: "smooth" });
-    } else {
-      el.scrollBy({ left: direction === "left" ? -scrollAmount : scrollAmount, behavior: "smooth" });
-    }
-  }, []);
+    const cardWidth = getCardWidth();
+    el.scrollBy({
+      left: direction === "left" ? -cardWidth : cardWidth,
+      behavior: "smooth",
+    });
+  }, [getCardWidth]);
 
   // Autoplay
   useEffect(() => {
@@ -101,16 +153,15 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
         className="flex gap-4 lg:gap-5 overflow-x-auto scrollbar-hide scroll-smooth py-4 px-2 -mx-2"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        {products.map((product, i) => (
+        {loopProducts.map((product, i) => (
           <div
-            key={product.id}
+            key={`${product.id}-${i}`}
             className="flex-shrink-0 w-[45%] sm:w-[30%] lg:w-[23%]"
           >
             <ProductCard product={product} hideFeaturedBadge index={i} />
           </div>
         ))}
       </div>
-
     </div>
   );
 }

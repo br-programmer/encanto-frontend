@@ -32,6 +32,7 @@ import { useAddressesStore, type DeliveryAddress } from "@/stores/addresses-stor
 import { resendVerificationAction, uploadAvatarAction, deleteAvatarAction } from "@/actions/auth-actions";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 export default function PerfilPage() {
@@ -211,8 +212,67 @@ export default function PerfilPage() {
 
   if (!mounted || !_hasHydrated || authLoading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <Skeleton className="h-9 w-40 mb-6 sm:mb-8" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+          {/* Left column skeleton */}
+          <div className="lg:col-span-1">
+            <div className="bg-background rounded-xl border border-border p-4 sm:p-6">
+              <div className="flex flex-col items-center mb-6">
+                <Skeleton className="w-24 h-24 rounded-full mb-4" />
+                <Skeleton className="h-6 w-40 mb-1" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-5 w-5 rounded-full" />
+                  <div className="flex-1">
+                    <Skeleton className="h-3.5 w-12 mb-1" />
+                    <Skeleton className="h-4 w-48" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-5 w-5 rounded-full" />
+                  <div>
+                    <Skeleton className="h-3.5 w-16 mb-1" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6 pt-6 border-t border-border">
+                <Skeleton className="h-11 w-full rounded-lg" />
+              </div>
+              <div className="mt-4 pt-4 border-t border-border">
+                <Skeleton className="h-10 w-full rounded-lg" />
+              </div>
+            </div>
+          </div>
+          {/* Right column skeleton */}
+          <div className="lg:col-span-2">
+            <div className="bg-background rounded-xl border border-border p-4 sm:p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <Skeleton className="w-10 h-10 rounded-full" />
+                <div>
+                  <Skeleton className="h-5 w-48 mb-1" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+              </div>
+              <div className="space-y-4">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div key={i} className="p-3 sm:p-4 rounded-lg border border-border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Skeleton className="h-4 w-4" />
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                    <Skeleton className="h-4 w-56 mb-1" />
+                    <Skeleton className="h-4 w-full mb-1" />
+                    <Skeleton className="h-4 w-40" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -334,7 +394,7 @@ export default function PerfilPage() {
             {/* Quick Links */}
             <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border space-y-2">
               <Link
-                href="/perfil/pedidos"
+                href="/pedidos"
                 className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
