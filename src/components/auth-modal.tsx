@@ -168,11 +168,11 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
               <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <MailOpen className="h-10 w-10 text-amber-600" />
               </div>
-              <h2 className="text-xl font-semibold mb-2">¡Cuenta creada!</h2>
+              <h2 className="text-xl font-medium mb-2">¡Cuenta creada!</h2>
               <p className="text-foreground-secondary mb-4">
                 Hemos enviado un correo de verificación a:
               </p>
-              <p className="font-medium text-primary mb-6">{registeredEmail}</p>
+              <p className="font-normal text-primary mb-6">{registeredEmail}</p>
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 text-left">
                 <p className="text-sm text-amber-800">
                   <strong>Importante:</strong> Revisa tu bandeja de entrada y haz clic en el enlace de verificación para activar tu cuenta completamente.
@@ -197,7 +197,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
                     <UserPlus className="h-8 w-8 text-primary" />
                   )}
                 </div>
-                <h2 className="text-xl font-semibold">
+                <h2 className="text-xl font-medium">
                   {mode === "login" ? "Iniciar sesión" : "Crear cuenta"}
                 </h2>
                 <p className="text-sm text-foreground-secondary mt-1">
@@ -212,7 +212,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
             {mode === "login" ? (
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <label htmlFor="modal-loginEmail" className="block text-sm font-medium mb-2">
+                  <label htmlFor="modal-loginEmail" className="block text-sm font-normal mb-2">
                     Correo electrónico
                   </label>
                   <div className="relative">
@@ -230,7 +230,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
                 </div>
 
                 <div>
-                  <label htmlFor="modal-loginPassword" className="block text-sm font-medium mb-2">
+                  <label htmlFor="modal-loginPassword" className="block text-sm font-normal mb-2">
                     Contraseña
                   </label>
                   <div className="relative">
@@ -272,7 +272,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
                       setMode("register");
                       setError(null);
                     }}
-                    className="text-primary hover:underline font-medium"
+                    className="text-primary hover:underline font-normal"
                   >
                     Regístrate aquí
                   </button>
@@ -281,7 +281,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
             ) : (
               <form onSubmit={handleRegister} className="space-y-4">
                 <div>
-                  <label htmlFor="modal-registerName" className="block text-sm font-medium mb-2">
+                  <label htmlFor="modal-registerName" className="block text-sm font-normal mb-2">
                     Nombre completo <span className="text-destructive">*</span>
                   </label>
                   <div className="relative">
@@ -299,7 +299,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
                 </div>
 
                 <div>
-                  <label htmlFor="modal-registerEmail" className="block text-sm font-medium mb-2">
+                  <label htmlFor="modal-registerEmail" className="block text-sm font-normal mb-2">
                     Correo electrónico <span className="text-destructive">*</span>
                   </label>
                   <div className="relative">
@@ -317,7 +317,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
                 </div>
 
                 <div>
-                  <label htmlFor="modal-registerPhone" className="block text-sm font-medium mb-2">
+                  <label htmlFor="modal-registerPhone" className="block text-sm font-normal mb-2">
                     Teléfono <span className="text-destructive">*</span>
                   </label>
                   <div className="relative">
@@ -336,7 +336,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label htmlFor="modal-registerPassword" className="block text-sm font-medium mb-2">
+                    <label htmlFor="modal-registerPassword" className="block text-sm font-normal mb-2">
                       Contraseña <span className="text-destructive">*</span>
                     </label>
                     <div className="relative">
@@ -354,7 +354,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
                   </div>
 
                   <div>
-                    <label htmlFor="modal-registerConfirmPassword" className="block text-sm font-medium mb-2">
+                    <label htmlFor="modal-registerConfirmPassword" className="block text-sm font-normal mb-2">
                       Confirmar <span className="text-destructive">*</span>
                     </label>
                     <div className="relative">
@@ -397,7 +397,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
                       setMode("login");
                       setError(null);
                     }}
-                    className="text-primary hover:underline font-medium"
+                    className="text-primary hover:underline font-normal"
                   >
                     Inicia sesión
                   </button>

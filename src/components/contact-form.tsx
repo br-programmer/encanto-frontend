@@ -62,7 +62,7 @@ export function ContactForm() {
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Check className="h-8 w-8 text-green-600" />
         </div>
-        <h3 className="text-xl font-semibold mb-2">¡Mensaje enviado!</h3>
+        <h3 className="text-xl font-medium mb-2">¡Mensaje enviado!</h3>
         <p className="text-foreground-secondary mb-6">
           Gracias por contactarnos. Te responderemos pronto.
         </p>
@@ -78,7 +78,7 @@ export function ContactForm() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* Name */}
         <div>
-          <label htmlFor="name" className="block text-sm font-medium mb-2">
+          <label htmlFor="name" className="block text-sm font-normal mb-2">
             Nombre completo <span className="text-destructive">*</span>
           </label>
           <Input
@@ -94,7 +94,7 @@ export function ContactForm() {
 
         {/* Email */}
         <div>
-          <label htmlFor="email" className="block text-sm font-medium mb-2">
+          <label htmlFor="email" className="block text-sm font-normal mb-2">
             Correo electrónico <span className="text-destructive">*</span>
           </label>
           <Input
@@ -112,7 +112,7 @@ export function ContactForm() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* Phone */}
         <div>
-          <label htmlFor="phone" className="block text-sm font-medium mb-2">
+          <label htmlFor="phone" className="block text-sm font-normal mb-2">
             Teléfono
           </label>
           <Input
@@ -127,7 +127,7 @@ export function ContactForm() {
 
         {/* Subject */}
         <div>
-          <label htmlFor="subject" className="block text-sm font-medium mb-2">
+          <label htmlFor="subject" className="block text-sm font-normal mb-2">
             Asunto <span className="text-destructive">*</span>
           </label>
           <Select value={formData.subject} onValueChange={(value) => { setFormData((prev) => ({ ...prev, subject: value })); setError(null); }}>
@@ -147,7 +147,7 @@ export function ContactForm() {
 
       {/* Message */}
       <div>
-        <label htmlFor="message" className="block text-sm font-medium mb-2">
+        <label htmlFor="message" className="block text-sm font-normal mb-2">
           Mensaje <span className="text-destructive">*</span>
         </label>
         <Textarea

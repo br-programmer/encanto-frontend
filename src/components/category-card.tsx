@@ -32,7 +32,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
 
       {/* Content */}
       <div className="absolute bottom-0 left-0 right-0 p-4">
-        <h3 className="text-white text-lg font-semibold">{category.name}</h3>
+        <h3 className="text-white text-lg font-medium">{category.name}</h3>
         {category.description && (
           <p className="text-white/80 text-sm mt-1 line-clamp-2">
             {category.description}

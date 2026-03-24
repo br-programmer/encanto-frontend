@@ -4,7 +4,6 @@ export type {
   Category,
   Product,
   ProductImage,
-  Inventory,
   // Pagination
   PaginatedResponse,
   PaginationMeta,

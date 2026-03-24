@@ -134,7 +134,7 @@ export function SpecialDatesCarousel({
         <div className="absolute left-8 md:left-16 lg:left-24 top-1/2 -translate-y-1/2 pointer-events-none select-none">
           <span
             className={cn(
-              "text-[150px] md:text-[200px] lg:text-[280px] font-bold text-white/[0.08] leading-none transition-all duration-500",
+              "text-[150px] md:text-[200px] lg:text-[280px] font-semibold text-white/[0.08] leading-none transition-all duration-500",
               isTransitioning && "opacity-0 -translate-y-4"
             )}
           >
@@ -152,7 +152,7 @@ export function SpecialDatesCarousel({
                 <div className="mb-6">
                   <h2
                     className={cn(
-                      "text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight transition-all duration-500",
+                      "text-4xl md:text-5xl lg:text-6xl font-semibold text-white leading-tight transition-all duration-500",
                       isTransitioning && "opacity-0 translate-y-4"
                     )}
                   >

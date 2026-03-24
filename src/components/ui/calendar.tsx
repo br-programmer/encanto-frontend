@@ -19,7 +19,7 @@ function Calendar({
         months: "flex flex-col sm:flex-row gap-2",
         month: "flex flex-col gap-4",
         month_caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium capitalize",
+        caption_label: "text-sm font-normal capitalize",
         nav: "flex items-center gap-1",
         button_previous:
           "absolute left-1 top-0 inline-flex items-center justify-center rounded-md h-7 w-7 bg-transparent hover:bg-secondary text-foreground-secondary hover:text-foreground transition-colors",
@@ -34,8 +34,8 @@ function Calendar({
         day_button:
           "h-9 w-9 rounded-md font-normal hover:bg-secondary hover:text-foreground transition-colors cursor-pointer inline-flex items-center justify-center",
         selected:
-          "[&>.day_button]:bg-primary [&>.day_button]:text-white [&>.day_button]:hover:bg-primary/90 [&>.day_button]:font-semibold",
-        today: "[&>.day_button]:bg-secondary [&>.day_button]:font-semibold",
+          "[&>.day_button]:bg-primary [&>.day_button]:text-white [&>.day_button]:hover:bg-primary/90 [&>.day_button]:font-medium",
+        today: "[&>.day_button]:bg-secondary [&>.day_button]:font-medium",
         outside:
           "text-foreground-muted/50 [&>.day_button]:hover:bg-secondary/50",
         disabled:

@@ -153,7 +153,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
         <div className="max-w-md mx-auto text-center">
           <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Error</h1>
+          <h1 className="text-2xl font-semibold mb-2">Error</h1>
           <p className="text-foreground-secondary mb-6">{error || "Pedido no encontrado"}</p>
           <Button asChild>
             <Link href="/productos">Ir a productos</Link>
@@ -204,7 +204,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
           <div>
             <div className="flex items-center gap-3 mb-1">
               <Package className="h-6 w-6 text-primary" />
-              <h1 className="text-2xl font-bold">{order.orderNumber}</h1>
+              <h1 className="text-2xl font-semibold">{order.orderNumber}</h1>
             </div>
             <p className="text-sm text-foreground-secondary">
               Creado el {new Date(order.createdAt).toLocaleDateString("es-EC", {
@@ -216,7 +216,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               })}
             </p>
           </div>
-          <span className={cn("text-sm px-3 py-1.5 rounded-full font-medium", statusInfo.color)}>
+          <span className={cn("text-sm px-3 py-1.5 rounded-full font-normal", statusInfo.color)}>
             {statusInfo.label}
           </span>
         </div>
@@ -227,7 +227,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-amber-800">Transferencia rechazada</p>
+                <p className="text-sm font-normal text-amber-800">Transferencia rechazada</p>
                 <p className="text-sm text-amber-700 mt-1">{order.transferRejectionReason}</p>
               </div>
             </div>
@@ -237,7 +237,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         {/* Timeline */}
         {order.orderStatus !== "cancelled" && (
           <div className="bg-background rounded-xl border border-border p-6 mb-6">
-            <h2 className="font-semibold mb-6">Estado del pedido</h2>
+            <h2 className="font-medium mb-6">Estado del pedido</h2>
 
             {/* Mobile: vertical */}
             <div className="flex flex-col gap-0 sm:hidden">
@@ -246,7 +246,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                   <div className="flex flex-col items-center">
                     <div
                       className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0",
+                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-normal flex-shrink-0",
                         step.active
                           ? "bg-primary text-white"
                           : "bg-secondary text-foreground-muted"
@@ -266,7 +266,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                   <div className="pt-1">
                     <p className={cn(
                       "text-sm",
-                      step.active ? "text-foreground font-medium" : "text-foreground-muted"
+                      step.active ? "text-foreground font-normal" : "text-foreground-muted"
                     )}>
                       {step.label}
                     </p>
@@ -282,7 +282,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                   <div className="flex flex-col items-center flex-shrink-0">
                     <div
                       className={cn(
-                        "w-9 h-9 rounded-full flex items-center justify-center text-xs font-medium",
+                        "w-9 h-9 rounded-full flex items-center justify-center text-xs font-normal",
                         step.active
                           ? "bg-primary text-white"
                           : "bg-secondary text-foreground-muted"
@@ -292,7 +292,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                     </div>
                     <p className={cn(
                       "text-xs mt-2 text-center w-24",
-                      step.active ? "text-foreground font-medium" : "text-foreground-muted"
+                      step.active ? "text-foreground font-normal" : "text-foreground-muted"
                     )}>
                       {step.label}
                     </p>
@@ -314,7 +314,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         {/* Delivery Person */}
         {order.deliveryPerson && (
           <div className="bg-background rounded-xl border border-border p-6 mb-6">
-            <h2 className="font-semibold mb-4">Tu repartidor</h2>
+            <h2 className="font-medium mb-4">Tu repartidor</h2>
             <div className="flex items-start gap-4">
               <div className="w-14 h-14 rounded-full overflow-hidden bg-secondary/30 flex-shrink-0">
                 {order.deliveryPerson.avatarUrl ? (
@@ -332,7 +332,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium">{order.deliveryPerson.fullName}</p>
+                <p className="font-normal">{order.deliveryPerson.fullName}</p>
                 <a
                   href={`tel:${order.deliveryPerson.phone}`}
                   className="text-sm text-primary hover:underline inline-flex items-center gap-1 mt-1"
@@ -384,7 +384,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
 
         {/* Delivery / Pickup Info */}
         <div className="bg-background rounded-xl border border-border p-6 mb-6">
-          <h2 className="font-semibold mb-4">
+          <h2 className="font-medium mb-4">
             {isPickup ? "Información de retiro" : "Información de entrega"}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
@@ -392,36 +392,36 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               <p className="text-foreground-secondary">
                 {isPickup ? "Quien retira" : "Destinatario"}
               </p>
-              <p className="font-medium">{order.recipientName}</p>
+              <p className="font-normal">{order.recipientName}</p>
             </div>
             {order.recipientPhone && (
               <div>
                 <p className="text-foreground-secondary">Teléfono</p>
-                <p className="font-medium">{order.recipientPhone}</p>
+                <p className="font-normal">{order.recipientPhone}</p>
               </div>
             )}
             {!isPickup && order.deliveryAddress && (
               <div className="sm:col-span-2">
                 <p className="text-foreground-secondary">Dirección</p>
-                <p className="font-medium">{order.deliveryAddress}, {order.deliveryCity}</p>
+                <p className="font-normal">{order.deliveryAddress}, {order.deliveryCity}</p>
               </div>
             )}
             {!isPickup && order.deliveryReference && (
               <div className="sm:col-span-2">
                 <p className="text-foreground-secondary">Referencia</p>
-                <p className="font-medium">{order.deliveryReference}</p>
+                <p className="font-normal">{order.deliveryReference}</p>
               </div>
             )}
             {!isPickup && order.deliveryZone && (
               <div>
                 <p className="text-foreground-secondary">Zona de entrega</p>
-                <p className="font-medium">{order.deliveryZone.zoneName}</p>
+                <p className="font-normal">{order.deliveryZone.zoneName}</p>
               </div>
             )}
             <div>
               <p className="text-foreground-secondary">
                 {isPickup ? "Fecha de retiro" : "Fecha"}</p>
-              <p className="font-medium">
+              <p className="font-normal">
                 {new Date(order.deliveryDate + "T00:00:00").toLocaleDateString("es-EC", {
                   weekday: "long",
                   day: "numeric",
@@ -434,14 +434,14 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               <p className="text-foreground-secondary">
                 {isPickup ? "Horario de retiro" : "Horario"}
               </p>
-              <p className="font-medium">{getTimeSlotLabel()}</p>
+              <p className="font-normal">{getTimeSlotLabel()}</p>
             </div>
           </div>
         </div>
 
         {/* Products */}
         <div className="bg-background rounded-xl border border-border p-6 mb-6">
-          <h2 className="font-semibold mb-4">Productos</h2>
+          <h2 className="font-medium mb-4">Productos</h2>
           <div className="space-y-4">
             {order.items.map((item) => (
               <div key={item.id} className="flex items-start gap-4">
@@ -462,8 +462,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between gap-2">
-                    <p className="font-medium text-sm">{item.productNameSnapshot}</p>
-                    <p className="font-medium text-sm flex-shrink-0">{formatPrice(item.lineTotalCents)}</p>
+                    <p className="font-normal text-sm">{item.productNameSnapshot}</p>
+                    <p className="font-normal text-sm flex-shrink-0">{formatPrice(item.lineTotalCents)}</p>
                   </div>
                   <p className="text-xs text-foreground-secondary">Cantidad: {item.quantity}</p>
                   {item.addOns.length > 0 && (
@@ -513,7 +513,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 <span className="text-green-600">-{formatPrice(order.transferDiscountCents)}</span>
               </div>
             )}
-            <div className="flex justify-between font-semibold text-lg border-t border-border pt-2">
+            <div className="flex justify-between font-medium text-lg border-t border-border pt-2">
               <span>Total</span>
               <span className="text-primary">{formatPrice(order.totalCents)}</span>
             </div>
@@ -522,15 +522,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
 
         {/* Payment Info */}
         <div className="bg-background rounded-xl border border-border p-6 mb-6">
-          <h2 className="font-semibold mb-4">Pago</h2>
+          <h2 className="font-medium mb-4">Pago</h2>
           <div className="text-sm space-y-2">
             <div className="flex justify-between">
               <span className="text-foreground-secondary">Método</span>
-              <span className="font-medium">{PAYMENT_METHOD_LABELS[order.paymentMethod] || order.paymentMethod}</span>
+              <span className="font-normal">{PAYMENT_METHOD_LABELS[order.paymentMethod] || order.paymentMethod}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-foreground-secondary">Estado del pago</span>
-              <span className="font-medium">{order.paymentStatus === "paid" ? "Confirmado" : order.paymentStatus === "awaiting_verification" ? "Verificando comprobante" : "Pendiente"}</span>
+              <span className="font-normal">{order.paymentStatus === "paid" ? "Confirmado" : order.paymentStatus === "awaiting_verification" ? "Verificando comprobante" : "Pendiente"}</span>
             </div>
           </div>
         </div>
@@ -550,7 +550,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         {/* Transfer proof already uploaded - awaiting verification */}
         {isTransfer && order.paymentStatus === "awaiting_verification" && order.transferProofUrl && (
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-            <p className="text-sm text-blue-800 font-medium">
+            <p className="text-sm text-blue-800 font-normal">
               Comprobante de pago subido. Estamos verificando tu transferencia.
             </p>
           </div>
@@ -559,7 +559,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         {/* Transfer proof uploaded and paid */}
         {isTransfer && order.paymentStatus === "paid" && order.transferProofUrl && (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
-            <p className="text-sm text-green-800 font-medium">
+            <p className="text-sm text-green-800 font-normal">
               Pago verificado correctamente.
             </p>
           </div>

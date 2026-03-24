@@ -44,7 +44,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
             </Link>
           )}
           <span className="text-foreground-muted">/</span>
-          <span className="text-sm text-foreground font-medium truncate">
+          <span className="text-sm text-foreground font-normal truncate">
             {currentItem.label}
           </span>
         </nav>
@@ -73,7 +73,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
                   {item.label}
                 </Link>
               ) : (
-                <span className="text-foreground font-medium truncate max-w-[150px] lg:max-w-[250px]">
+                <span className="text-foreground font-normal truncate max-w-[150px] lg:max-w-[250px]">
                   {item.label}
                 </span>
               )}

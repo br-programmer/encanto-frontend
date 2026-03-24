@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCartStore } from "@/stores/cart-store";
 import { useToast } from "@/components/ui/toast";
-import { formatPrice, calculateDiscount, isInStock, getPrimaryImage, cn } from "@/lib/utils";
+import { formatPrice, calculateDiscount, getPrimaryImage, cn } from "@/lib/utils";
 import type { Product, AddOn, AddOnCategory, CartItemAddOn } from "@/types";
 
 interface SelectedAddOn {
@@ -32,8 +32,7 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
   const { addToast } = useToast();
 
   const discount = calculateDiscount(product.priceCents, product.comparePriceCents);
-  const stock = product.stock ?? product.inventory?.quantity ?? 0;
-  const inStock = isInStock(stock);
+  const inStock = product.inStock;
   const primaryImage = getPrimaryImage(product.images);
 
   // Group add-ons by category
@@ -69,7 +68,7 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
     setQuantity((prev) => {
       const newValue = prev + delta;
       if (newValue < 1) return 1;
-      if (newValue > stock) return stock;
+      if (product.availableQuantity != null && newValue > product.availableQuantity) return product.availableQuantity;
       return newValue;
     });
   };
@@ -166,7 +165,7 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
       {/* Price */}
       <div className="mt-6">
         <div className="flex items-baseline gap-3">
-          <span className="text-3xl font-bold text-primary">
+          <span className="text-3xl font-semibold text-primary">
             {formatPrice(product.priceCents)}
           </span>
           {product.comparePriceCents && (
@@ -194,14 +193,14 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
           }`}
         />
         <span className="text-sm text-foreground-secondary">
-          {inStock ? `${stock} disponibles` : "Sin stock"}
+          {inStock ? (product.availableQuantity != null ? `${product.availableQuantity} disponibles` : "Disponible") : "Sin stock"}
         </span>
       </div>
 
       {/* Add-ons Selection */}
       {inStock && addOns.length > 0 && (
         <div className="mt-6">
-          <h3 className="text-sm font-semibold mb-3">Complementa tu pedido</h3>
+          <h3 className="text-sm font-medium mb-3">Complementa tu pedido</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {visibleAddOns.map((addOn) => {
               const selected = selectedAddOns.get(addOn.id);
@@ -236,8 +235,8 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{addOn.name}</p>
-                    <p className="text-sm text-primary font-semibold">
+                    <p className="text-sm font-normal truncate">{addOn.name}</p>
+                    <p className="text-sm text-primary font-medium">
                       +{formatPrice(addOn.priceCents)}
                     </p>
                   </div>
@@ -250,7 +249,7 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
                       >
                         <Minus className="h-3 w-3" />
                       </button>
-                      <span className="w-6 text-center text-sm font-medium">{selected.quantity}</span>
+                      <span className="w-6 text-center text-sm font-normal">{selected.quantity}</span>
                       <button
                         type="button"
                         onClick={() => handleAddOnQuantity(addOn.id, 1)}
@@ -272,7 +271,7 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
             <button
               type="button"
               onClick={() => setShowAllAddOns(true)}
-              className="mt-3 text-sm text-primary font-medium hover:underline flex items-center gap-1"
+              className="mt-3 text-sm text-primary font-normal hover:underline flex items-center gap-1"
             >
               Ver todos los complementos ({allAddOnsFlat.length})
             </button>
@@ -310,7 +309,7 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
         <div className="mt-6 space-y-4">
           {/* Quantity */}
           <div className="flex items-center gap-2 sm:gap-4">
-            <span className="text-sm font-medium">Cantidad:</span>
+            <span className="text-sm font-normal">Cantidad:</span>
             <div className="flex items-center border border-border rounded-lg">
               <button
                 onClick={() => handleQuantityChange(-1)}
@@ -320,10 +319,10 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
               >
                 <Minus className="h-4 w-4" />
               </button>
-              <span className="w-12 text-center font-medium">{quantity}</span>
+              <span className="w-12 text-center font-normal">{quantity}</span>
               <button
                 onClick={() => handleQuantityChange(1)}
-                disabled={quantity >= stock}
+                disabled={product.availableQuantity != null && quantity >= product.availableQuantity}
                 className="p-3 hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 aria-label="Aumentar cantidad"
               >
@@ -345,7 +344,7 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
                   <span>{formatPrice(addOn.priceCents * q)}</span>
                 </div>
               ))}
-              <div className="flex justify-between font-semibold border-t border-border pt-1">
+              <div className="flex justify-between font-medium border-t border-border pt-1">
                 <span>Total</span>
                 <span className="text-primary">{formatPrice(totalPrice)}</span>
               </div>
@@ -357,9 +356,11 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
             size="lg"
             className="w-full"
             onClick={handleAddToCart}
-            disabled={isAdded}
+            disabled={!inStock || isAdded}
           >
-            {isAdded ? (
+            {!inStock ? (
+              "Agotado"
+            ) : isAdded ? (
               <>
                 <Check className="h-5 w-5 mr-2" />
                 Agregado al carrito
@@ -379,7 +380,7 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
         <div className="flex items-start gap-3">
           <Truck className="h-5 w-5 text-primary mt-0.5" />
           <div>
-            <p className="font-medium text-sm">Envío el mismo día</p>
+            <p className="font-normal text-sm">Envío el mismo día</p>
             <p className="text-sm text-foreground-secondary mt-1">
               Pedidos antes de las 2pm se entregan el mismo día en Manta.
             </p>

@@ -49,7 +49,7 @@ export function Footer() {
 
           {/* Tienda */}
           <div>
-            <h3 className="text-sm font-semibold text-foreground mb-4">
+            <h3 className="text-sm font-medium text-foreground mb-4">
               Tienda
             </h3>
             <ul className="space-y-3">
@@ -68,7 +68,7 @@ export function Footer() {
 
           {/* Empresa */}
           <div>
-            <h3 className="text-sm font-semibold text-foreground mb-4">
+            <h3 className="text-sm font-medium text-foreground mb-4">
               Empresa
             </h3>
             <ul className="space-y-3">
@@ -87,7 +87,7 @@ export function Footer() {
 
           {/* Contacto */}
           <div>
-            <h3 className="text-sm font-semibold text-foreground mb-4">
+            <h3 className="text-sm font-medium text-foreground mb-4">
               Contacto
             </h3>
             <ul className="space-y-3">

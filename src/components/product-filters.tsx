@@ -103,7 +103,7 @@ export function ProductFilters({
     <div className="space-y-6">
       {/* Search */}
       <div>
-        <h3 className="font-medium mb-3">Buscar</h3>
+        <h3 className="font-normal mb-3">Buscar</h3>
         <form onSubmit={handleSearchSubmit} className="relative">
           <input
             type="text"
@@ -118,7 +118,7 @@ export function ProductFilters({
 
       {/* Categories */}
       <div>
-        <h3 className="font-medium mb-3">Categorías</h3>
+        <h3 className="font-normal mb-3">Categorías</h3>
         <div className="space-y-1">
           <button
             onClick={() => {
@@ -152,7 +152,7 @@ export function ProductFilters({
                   checked={isSelected}
                   onCheckedChange={() => handleCategoryToggle(category.slug)}
                 />
-                <span className={cn(isSelected && "font-medium")}>{category.name}</span>
+                <span className={cn(isSelected && "font-normal")}>{category.name}</span>
               </label>
             );
           })}
@@ -161,7 +161,7 @@ export function ProductFilters({
 
       {/* Price Range */}
       <div>
-        <h3 className="font-medium mb-3">Precio</h3>
+        <h3 className="font-normal mb-3">Precio</h3>
         <form onSubmit={handlePriceSubmit} className="space-y-3">
           <div className="flex gap-2 items-center">
             <input
@@ -248,7 +248,7 @@ export function ProductFilters({
           />
           <div className="absolute right-0 top-0 bottom-0 w-[85vw] max-w-xs sm:max-w-sm bg-background p-4 sm:p-6 overflow-y-auto shadow-xl">
             <div className="flex items-center justify-between mb-4 sm:mb-6">
-              <h2 className="text-base sm:text-lg font-semibold">Filtros</h2>
+              <h2 className="text-base sm:text-lg font-medium">Filtros</h2>
               <Button
                 variant="ghost"
                 size="icon"

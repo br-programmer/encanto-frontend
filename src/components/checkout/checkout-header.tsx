@@ -76,7 +76,7 @@ export function CheckoutHeader() {
                     <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-base">
+                    <h3 className="font-medium text-base">
                       ¿Salir del checkout?
                     </h3>
                     <p className="text-sm text-foreground-secondary mt-1">

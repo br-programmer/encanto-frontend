@@ -154,12 +154,12 @@ export function NextSpecialDate({ specialDates }: NextSpecialDateProps) {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 bg-primary/90 text-white dark:text-gray-900 px-4 py-2 rounded-full mb-6 backdrop-blur-sm">
               <CalendarHeart className="h-4 w-4" />
-              <span className="text-sm font-medium">Próxima fecha especial</span>
+              <span className="text-sm font-normal">Próxima fecha especial</span>
             </div>
 
             {/* Countdown */}
             <div className="mb-4 flex items-baseline gap-3">
-              <span className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold text-white font-serif leading-none">
+              <span className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-semibold text-white font-serif leading-none">
                 {daysUntil}
               </span>
               <span className="text-2xl sm:text-3xl text-white/80 font-light">
@@ -168,7 +168,7 @@ export function NextSpecialDate({ specialDates }: NextSpecialDateProps) {
             </div>
 
             {/* Title */}
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 font-serif">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-white mb-2 font-serif">
               {specialDate.name}
             </h2>
 

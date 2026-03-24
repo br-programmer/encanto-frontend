@@ -197,7 +197,7 @@ export function ScrollRotate3D({
                 transform: `translateY(${(1 - introOpacity) * -30}px)`,
               }}
             >
-              <p className="text-primary font-medium text-sm uppercase tracking-[0.3em] mb-4">
+              <p className="text-primary font-normal text-sm uppercase tracking-[0.3em] mb-4">
                 Vista 360°
               </p>
               <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-foreground mb-4">
@@ -252,7 +252,7 @@ export function ScrollRotate3D({
               style={{ width: `${scrollProgress * 100}%` }}
             />
           </div>
-          <span className="text-foreground-secondary text-sm font-medium tabular-nums">
+          <span className="text-foreground-secondary text-sm font-normal tabular-nums">
             {String(currentFrame + 1).padStart(2, "0")}/{DEMO_MODE ? DEMO_IMAGES.length : totalFrames}
           </span>
         </div>

@@ -90,7 +90,7 @@ export function ScrollRevealSection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <RevealItem className="text-center mb-16 sm:mb-24">
-          <p className="text-primary font-medium text-sm sm:text-base uppercase tracking-wider mb-4">
+          <p className="text-primary font-normal text-sm sm:text-base uppercase tracking-wider mb-4">
             Cómo funciona
           </p>
           <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl lg:text-6xl mb-6">
@@ -127,7 +127,7 @@ export function ScrollRevealSection() {
                   />
                   {/* Number overlay */}
                   <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
-                    <span className="text-7xl sm:text-8xl md:text-9xl font-bold text-white/20 font-serif leading-none">
+                    <span className="text-7xl sm:text-8xl md:text-9xl font-semibold text-white/20 font-serif leading-none">
                       {step.number}
                     </span>
                   </div>
@@ -165,7 +165,7 @@ export function ScrollRevealSection() {
           </p>
           <a
             href="/productos"
-            className="inline-flex items-center justify-center h-14 px-10 bg-primary hover:bg-primary-hover text-white rounded-full text-lg font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            className="inline-flex items-center justify-center h-14 px-10 bg-primary hover:bg-primary-hover text-white rounded-full text-lg font-normal transition-all duration-300 hover:scale-105 hover:shadow-lg"
           >
             Explorar arreglos
           </a>

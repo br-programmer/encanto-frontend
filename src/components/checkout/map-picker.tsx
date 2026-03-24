@@ -261,7 +261,7 @@ export function MapPicker({ latitude, longitude, onLocationChange, zones = [], s
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium">
+        <label className="block text-sm font-normal">
           Ubicación de entrega <span className="text-destructive">*</span>
         </label>
         <Button
@@ -318,9 +318,9 @@ export function MapPicker({ latitude, longitude, onLocationChange, zones = [], s
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-green-600 flex-shrink-0" />
-              <span className="text-sm font-medium text-green-800">{zoneResult.zoneName}</span>
+              <span className="text-sm font-normal text-green-800">{zoneResult.zoneName}</span>
             </div>
-            <span className="text-sm font-semibold text-green-800">
+            <span className="text-sm font-medium text-green-800">
               {formatPrice(zoneResult.deliveryFeeCents)} envío
             </span>
           </div>

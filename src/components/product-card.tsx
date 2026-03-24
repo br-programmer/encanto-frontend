@@ -23,7 +23,7 @@ export function ProductCard({ product, hideFeaturedBadge = false }: ProductCardP
     ? Math.round((1 - product.priceCents / product.comparePriceCents!) * 100)
     : 0;
 
-  const isOutOfStock = product.inventory?.quantity === 0;
+  const isOutOfStock = !product.inStock;
 
   const handleAddToCart = () => {
     addItem({
@@ -72,13 +72,13 @@ export function ProductCard({ product, hideFeaturedBadge = false }: ProductCardP
       {/* Info */}
       <div className="p-3 sm:p-4">
         <Link href={`/productos/${product.slug}`}>
-          <h3 className="font-medium text-sm sm:text-base text-foreground line-clamp-2 hover:text-primary transition-colors">
+          <h3 className="font-normal text-sm sm:text-base text-foreground line-clamp-2 hover:text-primary transition-colors">
             {product.name}
           </h3>
         </Link>
 
         <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5 sm:gap-2">
-          <span className="text-base sm:text-lg font-semibold text-primary">
+          <span className="text-base sm:text-lg font-medium text-primary">
             {formatPrice(product.priceCents)}
           </span>
           {hasDiscount && (
