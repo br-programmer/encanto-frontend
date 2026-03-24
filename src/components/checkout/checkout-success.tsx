@@ -240,6 +240,12 @@ export function CheckoutSuccess({
                 <span className="text-green-600">-{formatPrice(order.transferDiscountCents)}</span>
               </div>
             )}
+            {order.taxCents > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-foreground-secondary">IVA (15%)</span>
+                <span>{formatPrice(order.taxCents)}</span>
+              </div>
+            )}
             <div className="border-t border-border pt-3 flex justify-between font-medium text-lg">
               <span>Total</span>
               <span className="text-primary">{formatPrice(order.totalCents)}</span>

@@ -42,7 +42,8 @@ export function OrderSummary({
   const displayCardMessage = preview?.cardMessageTotalCents ?? 0;
   const displayShipping = isPickup ? 0 : (preview?.deliveryFeeCents ?? shippingCost);
   const displayDiscount = preview?.transferDiscountCents ?? transferDiscount;
-  const total = preview?.totalCents ?? (displaySubtotal + displayAddOns + displayCardMessage + displayShipping - displayDiscount);
+  const displayTax = preview?.taxCents ?? 0;
+  const total = preview?.totalCents ?? (displaySubtotal + displayAddOns + displayCardMessage + displayShipping - displayDiscount + displayTax);
 
   return (
     <div className="bg-background rounded-xl border border-border overflow-hidden">
@@ -193,6 +194,12 @@ export function OrderSummary({
             <div className="flex justify-between text-sm">
               <span className="text-green-600">Descuento transferencia</span>
               <span className="text-green-600">-{formatPrice(displayDiscount)}</span>
+            </div>
+          )}
+          {displayTax > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-foreground-secondary">IVA (15%)</span>
+              <span>{formatPrice(displayTax)}</span>
             </div>
           )}
           <div className="border-t border-border pt-3 flex justify-between font-medium text-lg">

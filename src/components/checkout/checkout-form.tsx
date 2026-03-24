@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, CreditCard, Building2, Gift, User, LogOut, Check, LogIn, UserPlus, ChevronRight, MapPin, Plus, Bookmark, AlertTriangle, Percent, Truck, Store, MessageSquare, Package } from "lucide-react";
+import { Loader2, CreditCard, Building2, Gift, EyeOff, User, LogOut, Check, LogIn, UserPlus, ChevronRight, MapPin, Plus, Bookmark, AlertTriangle, Percent, Truck, Store, MessageSquare, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,6 +48,7 @@ interface FormData {
   deliveryReference: string;
   occasionId: string;
   isSurprise: boolean;
+  isAnonymous: boolean;
   differentBuyer: boolean;
   paymentMethod: string;
   latitude: number;
@@ -70,6 +71,7 @@ const initialFormData: FormData = {
   deliveryReference: "",
   occasionId: "",
   isSurprise: true,
+  isAnonymous: false,
   differentBuyer: false,
   paymentMethod: "",
   latitude: -0.95,
@@ -572,6 +574,7 @@ export function CheckoutForm() {
         ...(formData.recipientPhone.trim() ? { recipientPhone: normalizePhone(formData.recipientPhone) } : {}),
         occasionId: formData.occasionId || undefined,
         isSurprise: formData.isSurprise,
+        isAnonymous: formData.isAnonymous,
       };
 
       // Only send guest token if user is NOT logged in
@@ -1351,21 +1354,38 @@ export function CheckoutForm() {
                     {/* Checkboxes */}
                     <div className="space-y-3">
                       {!isPickup && (
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <Checkbox
-                            checked={formData.isSurprise}
-                            onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isSurprise: checked === true }))}
-                          />
-                          <div className="flex items-center gap-2">
-                            <Gift className="h-5 w-5 text-primary flex-shrink-0" />
-                            <div>
-                              <span className="text-sm font-normal">Es una entrega sorpresa</span>
-                              <p className="text-xs text-foreground-secondary">
-                                No revelaremos el contenido al destinatario antes de la entrega
-                              </p>
+                        <>
+                          <label className="flex items-center gap-3 cursor-pointer">
+                            <Checkbox
+                              checked={formData.isSurprise}
+                              onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isSurprise: checked === true }))}
+                            />
+                            <div className="flex items-center gap-2">
+                              <Gift className="h-5 w-5 text-primary flex-shrink-0" />
+                              <div>
+                                <span className="text-sm font-normal">Es una entrega sorpresa</span>
+                                <p className="text-xs text-foreground-secondary">
+                                  No contactaremos al destinatario antes de la entrega
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        </label>
+                          </label>
+                          <label className="flex items-center gap-3 cursor-pointer">
+                            <Checkbox
+                              checked={formData.isAnonymous}
+                              onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isAnonymous: checked === true }))}
+                            />
+                            <div className="flex items-center gap-2">
+                              <EyeOff className="h-5 w-5 text-primary flex-shrink-0" />
+                              <div>
+                                <span className="text-sm font-normal">Envío anónimo</span>
+                                <p className="text-xs text-foreground-secondary">
+                                  El destinatario no sabrá quién le envió el pedido
+                                </p>
+                              </div>
+                            </div>
+                          </label>
+                        </>
                       )}
 
                       {user && (

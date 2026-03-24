@@ -4,7 +4,7 @@ import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Package, ChevronLeft, AlertTriangle, Phone, Bike, Car, User } from "lucide-react";
+import { Loader2, Package, ChevronLeft, AlertTriangle, Phone, Bike, Car, User, Gift, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TransferProofUpload } from "@/components/orders/transfer-proof-upload";
 import { getOrderByOrderNumberAction, cancelOrderAction, getOrderPageDataAction } from "@/actions/order-actions";
@@ -436,6 +436,22 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               </p>
               <p className="font-normal">{getTimeSlotLabel()}</p>
             </div>
+            {!isPickup && (order.isSurprise || order.isAnonymous) && (
+              <div className="sm:col-span-2 flex flex-wrap gap-3 pt-1">
+                {order.isSurprise && (
+                  <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+                    <Gift className="h-3.5 w-3.5" />
+                    Entrega sorpresa
+                  </span>
+                )}
+                {order.isAnonymous && (
+                  <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+                    <EyeOff className="h-3.5 w-3.5" />
+                    Envío anónimo
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -511,6 +527,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               <div className="flex justify-between text-sm">
                 <span className="text-green-600">Descuento transferencia</span>
                 <span className="text-green-600">-{formatPrice(order.transferDiscountCents)}</span>
+              </div>
+            )}
+            {order.taxCents > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-foreground-secondary">IVA (15%)</span>
+                <span>{formatPrice(order.taxCents)}</span>
               </div>
             )}
             <div className="flex justify-between font-medium text-lg border-t border-border pt-2">
