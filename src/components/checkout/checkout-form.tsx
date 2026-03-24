@@ -730,7 +730,7 @@ export function CheckoutForm() {
                   <User className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold">Datos del cliente</h2>
+                  <h2 className="text-xl font-medium">Datos del cliente</h2>
                   <p className="text-sm text-foreground-secondary">
                     Elige cómo deseas continuar
                   </p>
@@ -746,7 +746,7 @@ export function CheckoutForm() {
                   <div className="flex items-center gap-3">
                     <LogIn className="h-5 w-5 text-primary" />
                     <div>
-                      <p className="font-medium">Iniciar sesión</p>
+                      <p className="font-normal">Iniciar sesión</p>
                       <p className="text-sm text-foreground-secondary">
                         Ya tengo una cuenta
                       </p>
@@ -763,7 +763,7 @@ export function CheckoutForm() {
                   <div className="flex items-center gap-3">
                     <UserPlus className="h-5 w-5 text-primary" />
                     <div>
-                      <p className="font-medium">Crear cuenta</p>
+                      <p className="font-normal">Crear cuenta</p>
                       <p className="text-sm text-foreground-secondary">
                         Registrarme para futuras compras
                       </p>
@@ -780,7 +780,7 @@ export function CheckoutForm() {
                   <div className="flex items-center gap-3">
                     <User className="h-5 w-5 text-foreground-secondary" />
                     <div>
-                      <p className="font-medium">Continuar como invitado</p>
+                      <p className="font-normal">Continuar como invitado</p>
                       <p className="text-sm text-foreground-secondary">
                         Sin crear cuenta
                       </p>
@@ -801,7 +801,7 @@ export function CheckoutForm() {
                         <Check className="h-5 w-5 text-green-600" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium truncate">Conectado como {user.fullName}</p>
+                        <p className="font-normal truncate">Conectado como {user.fullName}</p>
                         <p className="text-sm text-foreground-secondary truncate">{user.email}</p>
                       </div>
                     </div>
@@ -827,7 +827,7 @@ export function CheckoutForm() {
                         <User className="h-5 w-5 text-foreground-secondary" />
                       </div>
                       <div>
-                        <p className="font-medium">Comprando como invitado</p>
+                        <p className="font-normal">Comprando como invitado</p>
                         <p className="text-sm text-foreground-secondary">
                           Completa tus datos a continuación
                         </p>
@@ -846,7 +846,7 @@ export function CheckoutForm() {
                   {/* Guest sender info */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="senderName" className="block text-sm font-medium mb-2">
+                      <label htmlFor="senderName" className="block text-sm font-normal mb-2">
                         Tu nombre <span className="text-destructive">*</span>
                       </label>
                       <Input
@@ -859,7 +859,7 @@ export function CheckoutForm() {
                       />
                     </div>
                     <div>
-                      <label htmlFor="senderPhone" className="block text-sm font-medium mb-2">
+                      <label htmlFor="senderPhone" className="block text-sm font-normal mb-2">
                         Tu teléfono <span className="text-destructive">*</span>
                       </label>
                       <Input
@@ -872,7 +872,7 @@ export function CheckoutForm() {
                       />
                     </div>
                     <div className="sm:col-span-2">
-                      <label htmlFor="senderEmail" className="block text-sm font-medium mb-2">
+                      <label htmlFor="senderEmail" className="block text-sm font-normal mb-2">
                         Tu correo electrónico <span className="text-destructive">*</span>
                       </label>
                       <Input
@@ -892,7 +892,7 @@ export function CheckoutForm() {
               <form onSubmit={handleSubmit} className="space-y-8" id="checkout-form">
                 {/* Fulfillment Type Toggle */}
                 <div className="bg-background rounded-xl border border-border p-6">
-                  <h2 className="text-xl font-semibold mb-4">Tipo de entrega</h2>
+                  <h2 className="text-xl font-medium mb-4">Tipo de entrega</h2>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
@@ -905,7 +905,7 @@ export function CheckoutForm() {
                       )}
                     >
                       <Truck className={cn("h-6 w-6", formData.fulfillmentType === "delivery" ? "text-primary" : "text-foreground-muted")} />
-                      <span className={cn("text-sm font-medium", formData.fulfillmentType === "delivery" ? "text-primary" : "text-foreground-secondary")}>
+                      <span className={cn("text-sm font-normal", formData.fulfillmentType === "delivery" ? "text-primary" : "text-foreground-secondary")}>
                         Envío a domicilio
                       </span>
                     </button>
@@ -920,7 +920,7 @@ export function CheckoutForm() {
                       )}
                     >
                       <Store className={cn("h-6 w-6", formData.fulfillmentType === "pickup" ? "text-primary" : "text-foreground-muted")} />
-                      <span className={cn("text-sm font-medium", formData.fulfillmentType === "pickup" ? "text-primary" : "text-foreground-secondary")}>
+                      <span className={cn("text-sm font-normal", formData.fulfillmentType === "pickup" ? "text-primary" : "text-foreground-secondary")}>
                         Retiro en tienda
                       </span>
                     </button>
@@ -928,7 +928,7 @@ export function CheckoutForm() {
                 </div>
 
                 <div className="bg-background rounded-xl border border-border p-6">
-                  <h2 className="text-xl font-semibold mb-6">
+                  <h2 className="text-xl font-medium mb-6">
                     {isPickup ? "Información de retiro" : "Información de entrega"}
                   </h2>
 
@@ -936,7 +936,7 @@ export function CheckoutForm() {
                   {!isPickup && addresses.length > 0 && (
                     <div className="mb-6">
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-medium text-foreground-secondary">Direcciones guardadas</h3>
+                        <h3 className="text-sm font-normal text-foreground-secondary">Direcciones guardadas</h3>
                         <button
                           type="button"
                           onClick={handleNewAddress}
@@ -963,7 +963,7 @@ export function CheckoutForm() {
                               <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-medium text-sm">{addr.label}</span>
+                                  <span className="font-normal text-sm">{addr.label}</span>
                                   {addr.isDefault && (
                                     <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
                                       Predeterminada
@@ -988,7 +988,7 @@ export function CheckoutForm() {
                     {/* Recipient info */}
                     <div className={cn("grid gap-4", isPickup ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
                       <div>
-                        <label htmlFor="recipientName" className="block text-sm font-medium mb-2">
+                        <label htmlFor="recipientName" className="block text-sm font-normal mb-2">
                           {isPickup ? "Nombre de quien retira" : "Nombre del destinatario"} <span className="text-destructive">*</span>
                         </label>
                         <Input
@@ -1002,7 +1002,7 @@ export function CheckoutForm() {
                       </div>
                       {!isPickup && (
                         <div>
-                          <label htmlFor="recipientPhone" className="block text-sm font-medium mb-2">
+                          <label htmlFor="recipientPhone" className="block text-sm font-normal mb-2">
                             Teléfono del destinatario <span className="text-destructive">*</span>
                           </label>
                           <Input
@@ -1020,7 +1020,7 @@ export function CheckoutForm() {
                     {/* Pickup: branch selector + info */}
                     {isPickup && (
                       <div>
-                        <label className="block text-sm font-medium mb-2">
+                        <label className="block text-sm font-normal mb-2">
                           Sucursal de retiro <span className="text-destructive">*</span>
                         </label>
                         {branches.length > 1 ? (
@@ -1038,7 +1038,7 @@ export function CheckoutForm() {
                           </Select>
                         ) : branches.length === 1 ? (
                           <div className="p-3 bg-secondary/30 rounded-lg">
-                            <p className="font-medium text-sm">{branches[0].name}</p>
+                            <p className="font-normal text-sm">{branches[0].name}</p>
                             {branches[0].address && (
                               <p className="text-sm text-foreground-secondary mt-1">{branches[0].address}</p>
                             )}
@@ -1052,7 +1052,7 @@ export function CheckoutForm() {
                       <>
                         {/* Address */}
                         <div>
-                          <label htmlFor="address" className="block text-sm font-medium mb-2">
+                          <label htmlFor="address" className="block text-sm font-normal mb-2">
                             Dirección de entrega <span className="text-destructive">*</span>
                           </label>
                           <Input
@@ -1068,7 +1068,7 @@ export function CheckoutForm() {
                         {/* City and Branch */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label htmlFor="cityId" className="block text-sm font-medium mb-2">
+                            <label htmlFor="cityId" className="block text-sm font-normal mb-2">
                               Ciudad <span className="text-destructive">*</span>
                             </label>
                             <Select value={formData.cityId} onValueChange={(v) => handleSelectChange("cityId", v)}>
@@ -1088,7 +1088,7 @@ export function CheckoutForm() {
                           {/* Branch selector - only show if multiple branches */}
                           {branches.length > 1 && (
                             <div>
-                              <label htmlFor="branchId" className="block text-sm font-medium mb-2">
+                              <label htmlFor="branchId" className="block text-sm font-normal mb-2">
                                 Sucursal <span className="text-destructive">*</span>
                               </label>
                               <Select value={formData.branchId} onValueChange={(v) => handleSelectChange("branchId", v)}>
@@ -1110,7 +1110,7 @@ export function CheckoutForm() {
                         {/* Delivery zone selector */}
                         {zones.length > 0 && (
                           <div>
-                            <label className="block text-sm font-medium mb-2">
+                            <label className="block text-sm font-normal mb-2">
                               Zona de entrega <span className="text-destructive">*</span>
                             </label>
                             <Select value={formData.deliveryZoneId} onValueChange={(v) => handleSelectChange("deliveryZoneId", v)}>
@@ -1143,7 +1143,7 @@ export function CheckoutForm() {
                     {/* Reference / Notes - delivery only */}
                     {!isPickup && (
                       <div>
-                        <label htmlFor="deliveryReference" className="block text-sm font-medium mb-2">
+                        <label htmlFor="deliveryReference" className="block text-sm font-normal mb-2">
                           Referencia de ubicación
                         </label>
                         <Textarea
@@ -1160,7 +1160,7 @@ export function CheckoutForm() {
                     {/* Date and time */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="deliveryDate" className="block text-sm font-medium mb-2">
+                        <label htmlFor="deliveryDate" className="block text-sm font-normal mb-2">
                           {isPickup ? "Fecha de retiro" : "Fecha de entrega"} <span className="text-destructive">*</span>
                         </label>
                         <DatePicker
@@ -1174,7 +1174,7 @@ export function CheckoutForm() {
                         />
                       </div>
                       <div>
-                        <label htmlFor="deliveryTimeSlotId" className="block text-sm font-medium mb-2">
+                        <label htmlFor="deliveryTimeSlotId" className="block text-sm font-normal mb-2">
                           {isPickup ? "Horario de retiro" : "Horario de entrega"} <span className="text-destructive">*</span>
                         </label>
                         <Select value={formData.deliveryTimeSlotId} onValueChange={(v) => handleSelectChange("deliveryTimeSlotId", v)}>
@@ -1203,7 +1203,7 @@ export function CheckoutForm() {
                     {/* Occasion */}
                     {occasions.length > 0 && (
                       <div>
-                        <label htmlFor="occasionId" className="block text-sm font-medium mb-2">
+                        <label htmlFor="occasionId" className="block text-sm font-normal mb-2">
                           Ocasión
                         </label>
                         <Select value={formData.occasionId} onValueChange={(v) => handleSelectChange("occasionId", v)}>
@@ -1225,7 +1225,7 @@ export function CheckoutForm() {
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <MessageSquare className="h-4 w-4 text-primary" />
-                        <label className="block text-sm font-medium">
+                        <label className="block text-sm font-normal">
                           Personaliza tu pedido
                         </label>
                         <span className="text-xs text-foreground-secondary">(opcional)</span>
@@ -1233,7 +1233,7 @@ export function CheckoutForm() {
                       <div className="space-y-4">
                         {items.map((item) => (
                           <div key={item.product.id} className="p-3 bg-secondary/20 rounded-lg space-y-3">
-                            <p className="text-sm font-semibold text-foreground">
+                            <p className="text-sm font-medium text-foreground">
                               {item.product.name}
                             </p>
 
@@ -1247,7 +1247,7 @@ export function CheckoutForm() {
                                         <span className="text-foreground-secondary">
                                           + {addOn.name}{addOn.quantity > 1 ? ` x${addOn.quantity}` : ""}
                                         </span>
-                                        <span className="text-primary font-medium">
+                                        <span className="text-primary font-normal">
                                           {formatPrice(addOn.priceCents * addOn.quantity)}
                                         </span>
                                       </div>
@@ -1319,7 +1319,7 @@ export function CheckoutForm() {
                           <div className="flex items-center gap-2">
                             <Bookmark className="h-4 w-4 text-primary" />
                             <div>
-                              <span className="text-sm font-medium">Guardar esta dirección</span>
+                              <span className="text-sm font-normal">Guardar esta dirección</span>
                               <p className="text-xs text-foreground-secondary">
                                 Para futuros pedidos
                               </p>
@@ -1329,7 +1329,7 @@ export function CheckoutForm() {
 
                         {saveAddress && (
                           <div>
-                            <label htmlFor="addressLabel" className="block text-sm font-medium mb-2">
+                            <label htmlFor="addressLabel" className="block text-sm font-normal mb-2">
                               Etiqueta de la dirección
                             </label>
                             <Select value={addressLabel} onValueChange={setAddressLabel}>
@@ -1359,7 +1359,7 @@ export function CheckoutForm() {
                           <div className="flex items-center gap-2">
                             <Gift className="h-5 w-5 text-primary flex-shrink-0" />
                             <div>
-                              <span className="text-sm font-medium">Es una entrega sorpresa</span>
+                              <span className="text-sm font-normal">Es una entrega sorpresa</span>
                               <p className="text-xs text-foreground-secondary">
                                 No revelaremos el contenido al destinatario antes de la entrega
                               </p>
@@ -1377,7 +1377,7 @@ export function CheckoutForm() {
                           <div className="flex items-center gap-2">
                             <User className="h-5 w-5 text-primary flex-shrink-0" />
                             <div>
-                              <span className="text-sm font-medium">El comprador es diferente al usuario de la cuenta</span>
+                              <span className="text-sm font-normal">El comprador es diferente al usuario de la cuenta</span>
                               <p className="text-xs text-foreground-secondary">
                                 Agrega los datos del comprador
                               </p>
@@ -1391,7 +1391,7 @@ export function CheckoutForm() {
                     {formData.differentBuyer && user && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-secondary/30 rounded-lg">
                         <div>
-                          <label htmlFor="senderName" className="block text-sm font-medium mb-2">
+                          <label htmlFor="senderName" className="block text-sm font-normal mb-2">
                             Nombre del comprador <span className="text-destructive">*</span>
                           </label>
                           <Input
@@ -1404,7 +1404,7 @@ export function CheckoutForm() {
                           />
                         </div>
                         <div>
-                          <label htmlFor="senderPhone" className="block text-sm font-medium mb-2">
+                          <label htmlFor="senderPhone" className="block text-sm font-normal mb-2">
                             Teléfono del comprador <span className="text-destructive">*</span>
                           </label>
                           <Input
@@ -1423,7 +1423,7 @@ export function CheckoutForm() {
 
                 {/* Payment Method */}
                 <div className="bg-background rounded-xl border border-border p-6">
-                  <h2 className="text-xl font-semibold mb-6">Método de pago</h2>
+                  <h2 className="text-xl font-medium mb-6">Método de pago</h2>
 
                   <div className="space-y-3">
                     {paymentMethods.map((method) => {
@@ -1457,7 +1457,7 @@ export function CheckoutForm() {
                           </div>
                           <method.icon className={cn("h-5 w-5 flex-shrink-0", isSelected ? "text-primary" : "text-foreground-secondary")} />
                           <div className="flex-1">
-                            <span className="font-medium">{method.label}</span>
+                            <span className="font-normal">{method.label}</span>
                             {isTransfer && orderSettings && (
                               <span className="ml-2 inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
                                 <Percent className="h-3 w-3" />
@@ -1476,7 +1476,7 @@ export function CheckoutForm() {
                   {/* Bank accounts info when transfer selected */}
                   {formData.paymentMethod === "bank_transfer" && bankAccounts.length > 0 && (
                     <div className="mt-4 p-4 bg-secondary/30 rounded-lg">
-                      <h3 className="text-sm font-medium mb-3">Cuentas para transferencia</h3>
+                      <h3 className="text-sm font-normal mb-3">Cuentas para transferencia</h3>
                       <div className="space-y-3">
                         {bankAccounts.map((account) => (
                           <BankAccountCard key={account.id} account={account} />
@@ -1576,7 +1576,7 @@ function BankAccountCard({ account }: { account: BankAccount }) {
 
   return (
     <div className="p-3 bg-background rounded-lg border border-border text-sm">
-      <p className="font-medium">{account.bankName}</p>
+      <p className="font-normal">{account.bankName}</p>
       <p className="text-foreground-secondary">
         {accountTypeLabel} — {account.accountNumber}
       </p>

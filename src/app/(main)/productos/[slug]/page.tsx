@@ -43,7 +43,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
     api.addOnCategories.active(),
     api.addOns.list(),
   ]);
-
   const relatedProducts = relatedData.result
     .filter((p) => p.id !== product.id)
     .slice(0, 4);
@@ -77,8 +76,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <h2 className="text-2xl font-serif mb-6">Productos Relacionados</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-              {relatedProducts.map((relatedProduct) => (
-                <ProductCard key={relatedProduct.id} product={relatedProduct} />
+              {relatedProducts.map((relatedProduct, i) => (
+                <ProductCard key={relatedProduct.id} product={relatedProduct} index={i} />
               ))}
             </div>
           </div>

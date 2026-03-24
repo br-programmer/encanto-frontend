@@ -32,7 +32,7 @@ export function FaqAccordion({ questions }: FaqAccordionProps) {
             className="w-full flex items-center justify-between p-4 text-left hover:bg-secondary/30 transition-colors"
             aria-expanded={openIndex === index}
           >
-            <span className="font-medium pr-4">{item.question}</span>
+            <span className="font-normal pr-4">{item.question}</span>
             <ChevronDown
               className={cn(
                 "h-5 w-5 flex-shrink-0 text-foreground-muted transition-transform duration-200",

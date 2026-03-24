@@ -34,7 +34,7 @@ export default function PrivacidadPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-serif mb-4">2. Información que Recopilamos</h2>
 
-            <h3 className="text-lg font-semibold mb-2">2.1 Información proporcionada por usted</h3>
+            <h3 className="text-lg font-medium mb-2">2.1 Información proporcionada por usted</h3>
             <p className="text-foreground-secondary mb-4">
               Recopilamos la información que usted nos proporciona directamente, incluyendo:
             </p>
@@ -48,7 +48,7 @@ export default function PrivacidadPage() {
               <li>Información del destinatario de los arreglos</li>
             </ul>
 
-            <h3 className="text-lg font-semibold mb-2">2.2 Información recopilada automáticamente</h3>
+            <h3 className="text-lg font-medium mb-2">2.2 Información recopilada automáticamente</h3>
             <p className="text-foreground-secondary mb-4">
               Cuando visita nuestro sitio web, podemos recopilar automáticamente:
             </p>

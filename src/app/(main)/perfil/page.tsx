@@ -223,7 +223,7 @@ export default function PerfilPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6 sm:mb-8">Mi Perfil</h1>
+      <h1 className="text-2xl md:text-3xl font-semibold mb-6 sm:mb-8">Mi Perfil</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         {/* Left Column - User Info */}
@@ -274,7 +274,7 @@ export default function PerfilPage() {
                   )}
                 </div>
               </div>
-              <h2 className="text-xl font-semibold text-center">{user.fullName}</h2>
+              <h2 className="text-xl font-medium text-center">{user.fullName}</h2>
               <p className="text-sm text-foreground-secondary">Cliente</p>
             </div>
 
@@ -308,7 +308,7 @@ export default function PerfilPage() {
                   Tu correo electrónico no está verificado. Verifica tu cuenta para acceder a todas las funcionalidades.
                 </p>
                 {verificationSent ? (
-                  <p className="text-sm text-green-700 font-medium">
+                  <p className="text-sm text-green-700 font-normal">
                     Correo de verificación enviado. Revisa tu bandeja de entrada.
                   </p>
                 ) : (
@@ -339,7 +339,7 @@ export default function PerfilPage() {
               >
                 <div className="flex items-center gap-3">
                   <Package className="h-5 w-5 text-primary" />
-                  <span className="text-sm font-medium">Mis pedidos</span>
+                  <span className="text-sm font-normal">Mis pedidos</span>
                 </div>
                 <ChevronRight className="h-4 w-4 text-foreground-secondary" />
               </Link>
@@ -367,7 +367,7 @@ export default function PerfilPage() {
                   <MapPin className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-lg sm:text-xl font-semibold">Direcciones de entrega</h2>
+                  <h2 className="text-lg sm:text-xl font-medium">Direcciones de entrega</h2>
                   <p className="text-sm text-foreground-secondary">
                     {addresses.length} {addresses.length === 1 ? "dirección guardada" : "direcciones guardadas"}
                   </p>
@@ -397,13 +397,13 @@ export default function PerfilPage() {
             {/* Address Form */}
             {showAddressForm && (
               <div className="mb-6 p-3 sm:p-4 bg-secondary/30 rounded-lg border border-border">
-                <h3 className="font-medium mb-4">
+                <h3 className="font-normal mb-4">
                   {editingAddress ? "Editar dirección" : "Nueva dirección"}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Label */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">Etiqueta</label>
+                    <label className="block text-sm font-normal mb-2">Etiqueta</label>
                     <Select value={addressFormData.label} onValueChange={(value) => setAddressFormData({ ...addressFormData, label: value })}>
                       <SelectTrigger>
                         <SelectValue />
@@ -418,7 +418,7 @@ export default function PerfilPage() {
 
                   {/* Recipient Name */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">
+                    <label className="block text-sm font-normal mb-2">
                       Nombre del destinatario <span className="text-destructive">*</span>
                     </label>
                     <Input
@@ -431,7 +431,7 @@ export default function PerfilPage() {
 
                   {/* Phone */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">
+                    <label className="block text-sm font-normal mb-2">
                       Teléfono <span className="text-destructive">*</span>
                     </label>
                     <Input
@@ -444,7 +444,7 @@ export default function PerfilPage() {
 
                   {/* City */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">Ciudad</label>
+                    <label className="block text-sm font-normal mb-2">Ciudad</label>
                     <Select value={addressFormData.city} onValueChange={(value) => setAddressFormData({ ...addressFormData, city: value })}>
                       <SelectTrigger>
                         <SelectValue />
@@ -459,7 +459,7 @@ export default function PerfilPage() {
 
                   {/* Address */}
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium mb-2">
+                    <label className="block text-sm font-normal mb-2">
                       Dirección <span className="text-destructive">*</span>
                     </label>
                     <Input
@@ -472,7 +472,7 @@ export default function PerfilPage() {
 
                   {/* Zone */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">
+                    <label className="block text-sm font-normal mb-2">
                       Zona/Sector <span className="text-destructive">*</span>
                     </label>
                     <Input
@@ -485,7 +485,7 @@ export default function PerfilPage() {
 
                   {/* Notes */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">Notas adicionales</label>
+                    <label className="block text-sm font-normal mb-2">Notas adicionales</label>
                     <Input
                       type="text"
                       value={addressFormData.notes}
@@ -558,7 +558,7 @@ export default function PerfilPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
                           {getLabelIcon(address.label)}
-                          <span className="font-medium">{address.label}</span>
+                          <span className="font-normal">{address.label}</span>
                           {address.isDefault && (
                             <span className="inline-flex items-center gap-1 text-xs bg-primary text-white px-2 py-0.5 rounded-full">
                               <Star className="h-3 w-3" />

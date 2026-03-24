@@ -87,8 +87,8 @@ export default async function Home() {
 
           {featuredProducts.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} hideFeaturedBadge />
+              {featuredProducts.map((product, i) => (
+                <ProductCard key={product.id} product={product} hideFeaturedBadge index={i} />
               ))}
             </div>
           ) : (
@@ -123,7 +123,7 @@ export default async function Home() {
               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                 <Truck className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               </div>
-              <h3 className="text-base sm:text-lg font-semibold mb-2">Envío el Mismo Día</h3>
+              <h3 className="text-base sm:text-lg font-medium mb-2">Envío el Mismo Día</h3>
               <p className="text-foreground-secondary text-xs sm:text-sm">
                 Pedidos antes de las 2pm se entregan el mismo día en Manta.
               </p>
@@ -133,7 +133,7 @@ export default async function Home() {
               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                 <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               </div>
-              <h3 className="text-base sm:text-lg font-semibold mb-2">Flores Frescas</h3>
+              <h3 className="text-base sm:text-lg font-medium mb-2">Flores Frescas</h3>
               <p className="text-foreground-secondary text-xs sm:text-sm">
                 Seleccionamos las mejores flores cada día para garantizar frescura y calidad.
               </p>
@@ -143,7 +143,7 @@ export default async function Home() {
               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                 <Gift className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               </div>
-              <h3 className="text-base sm:text-lg font-semibold mb-2">Tarjeta Dedicatoria</h3>
+              <h3 className="text-base sm:text-lg font-medium mb-2">Tarjeta Dedicatoria</h3>
               <p className="text-foreground-secondary text-xs sm:text-sm">
                 Incluye un mensaje personalizado para hacer tu regalo más especial.
               </p>

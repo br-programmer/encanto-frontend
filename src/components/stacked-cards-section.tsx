@@ -65,7 +65,7 @@ export function StackedCardsSection() {
       {/* Intro - NOT sticky, just a regular section */}
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-black">
         <div className="text-center px-4">
-          <p className="text-primary font-medium text-sm sm:text-base uppercase tracking-[0.3em] mb-6">
+          <p className="text-primary font-normal text-sm sm:text-base uppercase tracking-[0.3em] mb-6">
             Colección por ocasión
           </p>
           <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-foreground mb-8">
@@ -148,7 +148,7 @@ export function StackedCardsSection() {
                     {/* CTA Button */}
                     <Button
                       size="lg"
-                      className="h-12 sm:h-14 px-8 sm:px-10 rounded-full text-base font-medium bg-white text-gray-900 hover:bg-white/90 transition-all duration-300 hover:scale-105"
+                      className="h-12 sm:h-14 px-8 sm:px-10 rounded-full text-base font-normal bg-white text-gray-900 hover:bg-white/90 transition-all duration-300 hover:scale-105"
                       asChild
                     >
                       <Link href={card.link}>
@@ -158,7 +158,7 @@ export function StackedCardsSection() {
                   </div>
 
                   {/* Card Number - positioned absolutely */}
-                  <span className="absolute bottom-20 sm:bottom-24 md:bottom-32 right-4 sm:right-8 lg:right-16 text-[5rem] sm:text-[8rem] md:text-[10rem] lg:text-[14rem] font-bold font-serif text-white/[0.05] leading-none pointer-events-none">
+                  <span className="absolute bottom-20 sm:bottom-24 md:bottom-32 right-4 sm:right-8 lg:right-16 text-[5rem] sm:text-[8rem] md:text-[10rem] lg:text-[14rem] font-semibold font-serif text-white/[0.05] leading-none pointer-events-none">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                 </div>
@@ -182,7 +182,7 @@ export function StackedCardsSection() {
           </h3>
           <Button
             size="lg"
-            className="h-14 px-12 rounded-full text-lg font-medium bg-primary hover:bg-primary-hover text-white transition-all duration-300 hover:scale-105"
+            className="h-14 px-12 rounded-full text-lg font-normal bg-primary hover:bg-primary-hover text-white transition-all duration-300 hover:scale-105"
             asChild
           >
             <Link href="/productos">

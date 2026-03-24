@@ -141,7 +141,7 @@ export function AddOnsModal({
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-border">
             <div>
-              <h3 className="font-semibold text-lg">Agregar complementos</h3>
+              <h3 className="font-medium text-lg">Agregar complementos</h3>
               <p className="text-sm text-foreground-secondary truncate">
                 {productName}
               </p>
@@ -181,11 +181,11 @@ export function AddOnsModal({
                     title={isCollapsed ? "Expandir categoría" : "Colapsar categoría"}
                   >
                     <div className="flex items-center gap-2">
-                      <p className="text-xs font-medium text-foreground-secondary uppercase tracking-wide group-hover:text-foreground transition-colors">
+                      <p className="text-xs font-normal text-foreground-secondary uppercase tracking-wide group-hover:text-foreground transition-colors">
                         {category.name}
                       </p>
                       {selectedInCategory > 0 && (
-                        <span className="text-[10px] bg-primary text-white min-w-5 h-5 inline-flex items-center justify-center rounded-full font-medium">
+                        <span className="text-[10px] bg-primary text-white min-w-5 h-5 inline-flex items-center justify-center rounded-full font-normal">
                           {selectedInCategory}
                         </span>
                       )}
@@ -233,8 +233,8 @@ export function AddOnsModal({
                           )}
 
                           {/* Info */}
-                          <p className="text-xs font-medium line-clamp-2 mb-1">{addOn.name}</p>
-                          <p className="text-xs text-primary font-semibold">
+                          <p className="text-xs font-normal line-clamp-2 mb-1">{addOn.name}</p>
+                          <p className="text-xs text-primary font-medium">
                             +{formatPrice(addOn.priceCents)}
                           </p>
 
@@ -251,7 +251,7 @@ export function AddOnsModal({
                               >
                                 <Minus className="h-3 w-3" />
                               </button>
-                              <span className="w-6 text-center text-sm font-medium">
+                              <span className="w-6 text-center text-sm font-normal">
                                 {entry.quantity}
                               </span>
                               <button
@@ -283,7 +283,7 @@ export function AddOnsModal({
                 <span className="text-foreground-secondary">
                   {selected.size} complemento{selected.size !== 1 ? "s" : ""}
                 </span>
-                <span className="font-semibold text-primary">
+                <span className="font-medium text-primary">
                   +{formatPrice(selectedTotal)}
                 </span>
               </div>

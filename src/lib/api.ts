@@ -111,13 +111,6 @@ export interface ProductImage {
   createdAt: string;
 }
 
-export interface Inventory {
-  id: string;
-  productId: string;
-  quantity: number;
-  lowStockThreshold: number;
-}
-
 export interface Product {
   id: string;
   name: string;
@@ -127,14 +120,23 @@ export interface Product {
   comparePriceCents: number | null;
   sku: string | null;
   categoryId: string | null;
+  branchId: string | null;
+  includesCard: boolean;
+  cardMessageFeeCents: number | null;
   isActive: boolean;
   isFeatured: boolean;
+  preparationMinutes: number;
   createdAt: string;
   updatedAt: string;
   images: ProductImage[];
-  inventory: Inventory | null;
   category?: Category;
-  stock?: number;
+  // Computed fields
+  inStock: boolean;
+  availableQuantity: number | null;
+  hasRecipe: boolean;
+  materialCostCents: number | null;
+  displayPriceCents: number;
+  transferPriceCents: number;
 }
 
 export interface ProductFilters {

@@ -28,8 +28,8 @@ export function FloatingCartButton() {
       )}
     >
       <ShoppingBag className="h-5 w-5" />
-      <span className="font-medium text-sm">Ver carrito</span>
-      <span className="flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-white text-primary text-xs font-bold">
+      <span className="font-normal text-sm">Ver carrito</span>
+      <span className="flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-white text-primary text-xs font-semibold">
         {count > 99 ? "99+" : count}
       </span>
     </button>

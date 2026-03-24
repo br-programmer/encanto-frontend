@@ -53,13 +53,13 @@ export function OrderSummary({
       >
         <div className="flex items-center gap-2">
           <ShoppingBag className="h-5 w-5 text-primary" />
-          <span className="font-semibold">Resumen del pedido</span>
+          <span className="font-medium">Resumen del pedido</span>
           <span className="text-sm text-foreground-secondary">
             ({items.length} {items.length === 1 ? "item" : "items"})
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="font-semibold">{formatPrice(total)}</span>
+          <span className="font-medium">{formatPrice(total)}</span>
           {isExpanded ? (
             <ChevronUp className="h-5 w-5 text-foreground-secondary" />
           ) : (
@@ -71,7 +71,7 @@ export function OrderSummary({
       {/* Desktop header */}
       <div className="hidden lg:flex items-center gap-2 p-6 border-b border-border">
         <ShoppingBag className="h-5 w-5 text-primary" />
-        <h2 className="font-semibold text-lg">Resumen del pedido</h2>
+        <h2 className="font-medium text-lg">Resumen del pedido</h2>
         {isLoadingPreview && (
           <Loader2 className="h-4 w-4 animate-spin text-foreground-secondary ml-auto" />
         )}
@@ -114,7 +114,7 @@ export function OrderSummary({
                 <div className="flex-1 min-w-0">
                   <Link
                     href={`/productos/${item.product.slug}`}
-                    className="font-medium text-sm hover:text-primary transition-colors line-clamp-2"
+                    className="font-normal text-sm hover:text-primary transition-colors line-clamp-2"
                   >
                     {item.product.name}
                   </Link>
@@ -143,7 +143,7 @@ export function OrderSummary({
 
                 {/* Price - use preview price if available */}
                 <div className="text-right">
-                  <p className="font-semibold text-sm">
+                  <p className="font-medium text-sm">
                     {formatPrice(previewItem?.lineTotalCents ?? item.product.priceCents * item.quantity)}
                   </p>
                   {item.quantity > 1 && (
@@ -195,7 +195,7 @@ export function OrderSummary({
               <span className="text-green-600">-{formatPrice(displayDiscount)}</span>
             </div>
           )}
-          <div className="border-t border-border pt-3 flex justify-between font-semibold text-lg">
+          <div className="border-t border-border pt-3 flex justify-between font-medium text-lg">
             <span>Total</span>
             <span className="text-primary">{formatPrice(total)}</span>
           </div>
@@ -203,7 +203,7 @@ export function OrderSummary({
           {/* Time estimate breakdown */}
           {preview?.timeEstimate && preview.timeEstimate.totalEstimatedMinutes > 0 && (
             <div className="pt-3 mt-1 border-t border-border">
-              <div className="flex items-center gap-2 text-sm font-semibold">
+              <div className="flex items-center gap-2 text-sm font-medium">
                 <Clock className="h-4 w-4 text-primary flex-shrink-0" />
                 <span>Tiempo estimado: ~{formatTime(preview.timeEstimate.totalEstimatedMinutes)}</span>
               </div>
@@ -211,19 +211,19 @@ export function OrderSummary({
                 {preview.timeEstimate.queueWaitMinutes > 0 && (
                   <div className="flex justify-between">
                     <span>Cola de espera</span>
-                    <span className="font-medium">~{formatTime(preview.timeEstimate.queueWaitMinutes)}</span>
+                    <span className="font-normal">~{formatTime(preview.timeEstimate.queueWaitMinutes)}</span>
                   </div>
                 )}
                 {preview.timeEstimate.preparationMinutes > 0 && (
                   <div className="flex justify-between">
                     <span>Preparación</span>
-                    <span className="font-medium">~{formatTime(preview.timeEstimate.preparationMinutes)}</span>
+                    <span className="font-normal">~{formatTime(preview.timeEstimate.preparationMinutes)}</span>
                   </div>
                 )}
                 {!isPickup && preview.timeEstimate.travelMinutes > 0 && (
                   <div className="flex justify-between">
                     <span>Traslado</span>
-                    <span className="font-medium">~{formatTime(preview.timeEstimate.travelMinutes)}</span>
+                    <span className="font-normal">~{formatTime(preview.timeEstimate.travelMinutes)}</span>
                   </div>
                 )}
               </div>

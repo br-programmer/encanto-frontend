@@ -113,7 +113,7 @@ export function Header() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="text-sm font-medium text-foreground-secondary hover:text-primary transition-colors"
+                  className="text-sm font-normal text-foreground-secondary hover:text-primary transition-colors"
                 >
                   {item.name}
                 </Link>
@@ -158,7 +158,7 @@ export function Header() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <span className="text-sm font-medium text-primary">
+                          <span className="text-sm font-normal text-primary">
                             {displayUser.fullName?.charAt(0)?.toUpperCase() || "U"}
                           </span>
                         )}
@@ -179,13 +179,13 @@ export function Header() {
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <span className="text-sm font-medium text-primary">
+                              <span className="text-sm font-normal text-primary">
                                 {displayUser.fullName?.charAt(0)?.toUpperCase() || "U"}
                               </span>
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium truncate">{displayUser.fullName || ""}</p>
+                            <p className="text-sm font-normal truncate">{displayUser.fullName || ""}</p>
                             <p className="text-xs text-foreground-secondary truncate">
                               {displayUser.email}
                             </p>
@@ -260,7 +260,7 @@ export function Header() {
               >
                 <ShoppingBag className="h-5 w-5" />
                 {itemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-[11px] font-medium text-white flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-[11px] font-normal text-white flex items-center justify-center">
                     {itemCount > 99 ? "99+" : itemCount}
                   </span>
                 )}
@@ -329,7 +329,7 @@ export function Header() {
               setMobileMenuOpen(false);
               setSearchOpen(true);
             }}
-            className="w-full flex items-center gap-3 px-3 py-3 text-base font-medium text-foreground-secondary hover:text-primary hover:bg-secondary rounded-lg transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-3 text-base font-normal text-foreground-secondary hover:text-primary hover:bg-secondary rounded-lg transition-colors"
           >
             <Search className="h-5 w-5" />
             Buscar productos
@@ -341,7 +341,7 @@ export function Header() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="block px-3 py-3 text-base font-medium text-foreground-secondary hover:text-primary hover:bg-secondary rounded-lg transition-colors"
+                className="block px-3 py-3 text-base font-normal text-foreground-secondary hover:text-primary hover:bg-secondary rounded-lg transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {item.name}
@@ -356,7 +356,7 @@ export function Header() {
             <div className="space-y-1">
               <Link
                 href="/perfil"
-                className="w-full flex items-center gap-3 px-3 py-3 text-base font-medium text-foreground-secondary hover:text-primary hover:bg-secondary rounded-lg transition-colors"
+                className="w-full flex items-center gap-3 px-3 py-3 text-base font-normal text-foreground-secondary hover:text-primary hover:bg-secondary rounded-lg transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <UserCircle className="h-5 w-5" />
@@ -364,7 +364,7 @@ export function Header() {
               </Link>
               <Link
                 href="/perfil/pedidos"
-                className="w-full flex items-center gap-3 px-3 py-3 text-base font-medium text-foreground-secondary hover:text-primary hover:bg-secondary rounded-lg transition-colors"
+                className="w-full flex items-center gap-3 px-3 py-3 text-base font-normal text-foreground-secondary hover:text-primary hover:bg-secondary rounded-lg transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <Package className="h-5 w-5" />
@@ -372,7 +372,7 @@ export function Header() {
               </Link>
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-3 py-3 text-base font-medium text-destructive hover:bg-destructive/5 rounded-lg transition-colors"
+                className="w-full flex items-center gap-3 px-3 py-3 text-base font-normal text-destructive hover:bg-destructive/5 rounded-lg transition-colors"
               >
                 <LogOut className="h-5 w-5" />
                 Cerrar sesión
@@ -382,14 +382,14 @@ export function Header() {
             <div className="space-y-1">
               <button
                 onClick={handleOpenLogin}
-                className="w-full flex items-center gap-3 px-3 py-3 text-base font-medium text-foreground-secondary hover:text-primary hover:bg-secondary rounded-lg transition-colors"
+                className="w-full flex items-center gap-3 px-3 py-3 text-base font-normal text-foreground-secondary hover:text-primary hover:bg-secondary rounded-lg transition-colors"
               >
                 <LogIn className="h-5 w-5" />
                 Iniciar sesión
               </button>
               <button
                 onClick={handleOpenRegister}
-                className="w-full flex items-center gap-3 px-3 py-3 text-base font-medium text-foreground-secondary hover:text-primary hover:bg-secondary rounded-lg transition-colors"
+                className="w-full flex items-center gap-3 px-3 py-3 text-base font-normal text-foreground-secondary hover:text-primary hover:bg-secondary rounded-lg transition-colors"
               >
                 <UserPlus className="h-5 w-5" />
                 Crear cuenta
@@ -412,13 +412,13 @@ export function Header() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-sm font-medium text-primary">
+                  <span className="text-sm font-normal text-primary">
                     {displayUser.fullName?.charAt(0)?.toUpperCase() || "U"}
                   </span>
                 )}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{displayUser.fullName || ""}</p>
+                <p className="text-sm font-normal truncate">{displayUser.fullName || ""}</p>
                 <p className="text-xs text-foreground-secondary truncate">{displayUser.email}</p>
               </div>
             </div>

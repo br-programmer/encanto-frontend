@@ -97,7 +97,7 @@ export default function MisPedidosPage() {
             Volver al perfil
           </Link>
         </Button>
-        <h1 className="text-2xl md:text-3xl font-bold text-center">Mis Pedidos</h1>
+        <h1 className="text-2xl md:text-3xl font-semibold text-center">Mis Pedidos</h1>
       </div>
 
       {isLoading ? (
@@ -128,20 +128,20 @@ export default function MisPedidosPage() {
                   className="block bg-background rounded-xl border border-border p-4 sm:p-6 hover:border-primary/50 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-3 mb-2">
-                    <p className="font-semibold text-sm sm:text-base">{order.orderNumber}</p>
-                    <p className="font-semibold text-base sm:text-lg text-primary flex-shrink-0">
+                    <p className="font-medium text-sm sm:text-base">{order.orderNumber}</p>
+                    <p className="font-medium text-base sm:text-lg text-primary flex-shrink-0">
                       {formatPrice(order.totalCents)}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2 mb-3">
-                    <span className={cn("text-xs px-2 py-1 rounded-full font-medium", orderStatus.color)}>
+                    <span className={cn("text-xs px-2 py-1 rounded-full font-normal", orderStatus.color)}>
                       {orderStatus.label}
                     </span>
-                    <span className={cn("text-xs px-2 py-1 rounded-full font-medium", paymentStatus.color)}>
+                    <span className={cn("text-xs px-2 py-1 rounded-full font-normal", paymentStatus.color)}>
                       {paymentStatus.label}
                     </span>
                     <span className={cn(
-                      "text-xs px-2 py-1 rounded-full font-medium inline-flex items-center gap-1",
+                      "text-xs px-2 py-1 rounded-full font-normal inline-flex items-center gap-1",
                       order.fulfillmentType === "pickup" ? "bg-cyan-100 text-cyan-800" : "bg-orange-100 text-orange-800"
                     )}>
                       {order.fulfillmentType === "pickup" ? <Store className="h-3 w-3" /> : <Truck className="h-3 w-3" />}

@@ -36,7 +36,7 @@ export default function ContactoPage() {
                 <MapPin className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold mb-1">Ubicación</h3>
+                <h3 className="font-medium mb-1">Ubicación</h3>
                 <p className="text-foreground-secondary text-sm">
                   Calle 22<br />
                   Manta, Ecuador
@@ -50,7 +50,7 @@ export default function ContactoPage() {
                 <Phone className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold mb-1">Teléfono</h3>
+                <h3 className="font-medium mb-1">Teléfono</h3>
                 <a
                   href="tel:+593982742191"
                   className="text-foreground-secondary text-sm hover:text-primary transition-colors"
@@ -66,7 +66,7 @@ export default function ContactoPage() {
                 <Instagram className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold mb-1">Instagram</h3>
+                <h3 className="font-medium mb-1">Instagram</h3>
                 <a
                   href="https://www.instagram.com/encantofloristeria_ecu"
                   target="_blank"
@@ -84,7 +84,7 @@ export default function ContactoPage() {
                 <Clock className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold mb-1">Horario</h3>
+                <h3 className="font-medium mb-1">Horario</h3>
                 <p className="text-foreground-secondary text-sm">
                   Lunes - Sábado: 9:00 - 19:00<br />
                   Domingos: Cerrado
@@ -96,7 +96,7 @@ export default function ContactoPage() {
             <div className="p-6 bg-green-50 rounded-xl border border-green-200">
               <div className="flex items-center gap-3 mb-3">
                 <MessageCircle className="h-6 w-6 text-green-600" />
-                <h3 className="font-semibold text-green-800">WhatsApp</h3>
+                <h3 className="font-medium text-green-800">WhatsApp</h3>
               </div>
               <p className="text-sm text-green-700 mb-4">
                 Para una respuesta más rápida, escríbenos por WhatsApp.
