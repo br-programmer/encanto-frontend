@@ -21,6 +21,7 @@ const MapPicker = dynamic(() => import("./map-picker").then(m => ({ default: m.M
   ),
 });
 import { CheckoutSuccess } from "./checkout-success";
+import { PayPalCheckoutModal } from "./paypal-checkout";
 import { AddOnsModal } from "./add-ons-modal";
 import { AuthModal } from "@/components/auth-modal";
 import { useCartStore } from "@/stores/cart-store";
@@ -88,6 +89,13 @@ const paymentMethods = [
     available: true,
   },
   {
+    value: "paypal",
+    label: "PayPal",
+    description: "Paga con tarjeta o cuenta PayPal",
+    icon: CreditCard,
+    available: !!process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID,
+  },
+  {
     value: "datafast",
     label: "Tarjeta de crédito/débito",
     description: "Próximamente",
@@ -139,6 +147,8 @@ export function CheckoutForm() {
   const [orderPreview, setOrderPreview] = useState<OrderPreview | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
+  const [pendingPayPal, setPendingPayPal] = useState(false);
+  const [paypalTokens, setPaypalTokens] = useState<{ accessToken?: string; guestToken?: string }>({});
   const [specialDateWarning, setSpecialDateWarning] = useState<string | null>(null);
   const [sessionExpired, setSessionExpired] = useState(false);
   const previewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -229,10 +239,10 @@ export function CheckoutForm() {
 
   // Redirect to products if cart is empty
   useEffect(() => {
-    if (mounted && items.length === 0 && !isSubmitted) {
+    if (mounted && items.length === 0 && !isSubmitted && !pendingPayPal) {
       router.push("/productos");
     }
-  }, [mounted, items.length, isSubmitted, router]);
+  }, [mounted, items.length, isSubmitted, pendingPayPal, router]);
 
   // Check special date when delivery date changes
   useEffect(() => {
@@ -613,7 +623,16 @@ export function CheckoutForm() {
       clearCart();
       clearSavedFormData();
       sessionStorage.setItem("encanto-order-created", "true");
-      setIsSubmitted(true);
+
+      if (formData.paymentMethod === "paypal") {
+        setPaypalTokens({
+          accessToken: validAccessToken,
+          guestToken: order.guestToken || guestToken,
+        });
+        setPendingPayPal(true);
+      } else {
+        setIsSubmitted(true);
+      }
     } catch (err) {
       if (err instanceof Error) {
         // Server Actions serialize errors - extract message
@@ -700,14 +719,72 @@ export function CheckoutForm() {
 
   // Show success view
   if (isSubmitted && createdOrder) {
+    const canReopenPayPal = createdOrder.paymentMethod === "paypal" && createdOrder.paymentStatus !== "paid";
     return (
-      <CheckoutSuccess
-        order={createdOrder}
-        bankAccounts={bankAccounts}
-        orderSettings={orderSettings}
-        timeSlots={timeSlots}
-        onNewOrder={handleNewOrder}
-      />
+      <>
+        <CheckoutSuccess
+          order={createdOrder}
+          bankAccounts={bankAccounts}
+          orderSettings={orderSettings}
+          timeSlots={timeSlots}
+          onNewOrder={handleNewOrder}
+          onPayPal={canReopenPayPal ? () => setPendingPayPal(true) : undefined}
+        />
+        {canReopenPayPal && (
+          <PayPalCheckoutModal
+            isOpen={pendingPayPal}
+            onClose={() => setPendingPayPal(false)}
+            orderId={createdOrder.id}
+            orderNumber={createdOrder.orderNumber}
+            totalCents={createdOrder.totalCents}
+            accessToken={paypalTokens.accessToken}
+            guestToken={paypalTokens.guestToken}
+            onSuccess={(paidOrder) => {
+              setCreatedOrder(paidOrder);
+              setPendingPayPal(false);
+            }}
+            onError={(msg) => {
+              setError(msg);
+            }}
+          />
+        )}
+      </>
+    );
+  }
+
+  // Show PayPal modal over CheckoutSuccess while waiting for payment
+  if (pendingPayPal && createdOrder) {
+    return (
+      <>
+        <CheckoutSuccess
+          order={createdOrder}
+          bankAccounts={bankAccounts}
+          orderSettings={orderSettings}
+          timeSlots={timeSlots}
+          onNewOrder={handleNewOrder}
+          onPayPal={() => setPendingPayPal(true)}
+        />
+        <PayPalCheckoutModal
+          isOpen={pendingPayPal}
+          onClose={() => {
+            setPendingPayPal(false);
+            setIsSubmitted(true);
+          }}
+          orderId={createdOrder.id}
+          orderNumber={createdOrder.orderNumber}
+          totalCents={createdOrder.totalCents}
+          accessToken={paypalTokens.accessToken}
+          guestToken={paypalTokens.guestToken}
+          onSuccess={(paidOrder) => {
+            setCreatedOrder(paidOrder);
+            setPendingPayPal(false);
+            setIsSubmitted(true);
+          }}
+          onError={(msg) => {
+            setError(msg);
+          }}
+        />
+      </>
     );
   }
 

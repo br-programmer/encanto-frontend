@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Package, ArrowRight, Upload, Loader2, Building2, Copy, CheckCircle2 } from "lucide-react";
+import { Check, Package, ArrowRight, Upload, Loader2, Building2, Copy, CheckCircle2, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { uploadTransferProofAction } from "@/actions/order-actions";
@@ -14,6 +14,7 @@ interface CheckoutSuccessProps {
   orderSettings: OrderSettings | null;
   timeSlots: DeliveryTimeSlot[];
   onNewOrder: () => void;
+  onPayPal?: () => void;
 }
 
 export function CheckoutSuccess({
@@ -22,6 +23,7 @@ export function CheckoutSuccess({
   orderSettings,
   timeSlots,
   onNewOrder,
+  onPayPal,
 }: CheckoutSuccessProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -101,11 +103,15 @@ export function CheckoutSuccess({
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <Check className="h-10 w-10 text-green-600" />
           </div>
-          <h1 className="text-3xl font-serif mb-2">¡Pedido recibido!</h1>
+          <h1 className="text-3xl font-serif mb-2">
+            {order.paymentStatus === "paid" ? "¡Pago confirmado!" : "¡Pedido recibido!"}
+          </h1>
           <p className="text-foreground-secondary text-lg">
-            {isTransfer
-              ? "Realiza la transferencia y sube tu comprobante para confirmar el pedido."
-              : "Gracias por tu compra. Te contactaremos pronto para confirmar los detalles."}
+            {order.paymentStatus === "paid"
+              ? "Tu pago ha sido confirmado. Te contactaremos pronto para confirmar los detalles."
+              : isTransfer
+                ? "Realiza la transferencia y sube tu comprobante para confirmar el pedido."
+                : "Gracias por tu compra. Te contactaremos pronto para confirmar los detalles."}
           </p>
         </div>
 
@@ -339,8 +345,21 @@ export function CheckoutSuccess({
           </div>
         )}
 
+        {/* PayPal pending payment */}
+        {order.paymentMethod === "paypal" && order.paymentStatus !== "paid" && onPayPal && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-6 text-center">
+            <p className="text-sm text-amber-800 font-normal mb-3">
+              Tu pedido está pendiente de pago
+            </p>
+            <Button onClick={onPayPal} className="gap-2">
+              <CreditCard className="h-4 w-4" />
+              Pagar con PayPal
+            </Button>
+          </div>
+        )}
+
         {/* Next steps info */}
-        {!isTransfer && (
+        {!isTransfer && order.paymentMethod !== "paypal" && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
             <h3 className="font-normal text-amber-800 mb-2">Próximos pasos</h3>
             <ul className="text-sm text-amber-700 space-y-1">

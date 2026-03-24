@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, useRef, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Package, ChevronLeft, AlertTriangle, Phone, Bike, Car, User, Gift, EyeOff } from "lucide-react";
+import { Loader2, Package, ChevronLeft, AlertTriangle, Phone, Bike, Car, User, CreditCard, Gift, EyeOff, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TransferProofUpload } from "@/components/orders/transfer-proof-upload";
+import { PayPalProvider } from "@/components/checkout/paypal-provider";
+import { PayPalCheckoutModal } from "@/components/checkout/paypal-checkout";
 import { getOrderByOrderNumberAction, cancelOrderAction, getOrderPageDataAction } from "@/actions/order-actions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice, cn } from "@/lib/utils";
@@ -45,6 +47,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [paypalModalOpen, setPaypalModalOpen] = useState(false);
+  const actionRef = useRef<HTMLDivElement>(null);
 
   const urlToken = searchParams.get("token");
 
@@ -95,10 +101,26 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
     fetchData();
   }, [orderNumber, urlToken]);
 
+  // Auto-scroll to action section when order has pending action
+  useEffect(() => {
+    if (!order || isLoading) return;
+    const isTransfer = order.paymentMethod === "bank_transfer";
+    const isPayPal = order.paymentMethod === "paypal";
+    const needsAction =
+      (isTransfer && order.paymentStatus === "pending" && !order.transferProofUrl) ||
+      (isPayPal && order.paymentStatus === "pending");
+    if (needsAction && actionRef.current) {
+      setTimeout(() => {
+        actionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 300);
+    }
+  }, [order, isLoading]);
+
   const handleCancel = async () => {
-    if (!order || !confirm("¿Estás seguro de cancelar este pedido?")) return;
+    if (!order) return;
 
     setIsCancelling(true);
+    setCancelError(null);
     try {
       const accessToken = (() => {
         try {
@@ -110,10 +132,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
       const guestToken = localStorage.getItem("encanto-guest-token") || undefined;
       const updated = await cancelOrderAction(order.id, accessToken, guestToken);
       setOrder(updated);
+      setShowCancelModal(false);
     } catch (err) {
-      if (err instanceof Error) {
-        alert(err.message || "Error al cancelar el pedido");
-      }
+      setCancelError(err instanceof Error ? err.message : "Error al cancelar el pedido");
     } finally {
       setIsCancelling(false);
     }
@@ -332,7 +353,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const isTransfer = order.paymentMethod === "bank_transfer";
   const isPickup = order.fulfillmentType === "pickup";
   const canCancel = order.orderStatus === "pending_payment";
+  const isPayPal = order.paymentMethod === "paypal";
   const canUploadProof = isTransfer && order.paymentStatus === "pending" && !order.transferProofUrl;
+  const canPayWithPayPal = isPayPal && order.paymentStatus === "pending";
   const showTransferRejection = isTransfer && order.paymentStatus === "pending" && order.transferRejectionReason;
 
   // Timeline steps
@@ -721,7 +744,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
 
         {/* Transfer proof upload */}
         {canUploadProof && (
-          <div className="mb-6">
+          <div ref={actionRef} className="mb-6">
             <TransferProofUpload
               orderId={order.id}
               bankAccounts={bankAccounts}
@@ -749,23 +772,33 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
           </div>
         )}
 
+        {/* PayPal pending payment */}
+        {canPayWithPayPal && (
+          <div ref={!canUploadProof ? actionRef : undefined} className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-6">
+            <div className="text-center">
+              <p className="text-sm text-amber-800 font-medium mb-3">
+                Tu pedido está pendiente de pago
+              </p>
+              <Button
+                onClick={() => setPaypalModalOpen(true)}
+                className="gap-2"
+              >
+                <CreditCard className="h-4 w-4" />
+                Pagar con PayPal
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex gap-3">
           {canCancel && (
             <Button
               variant="outline"
               className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={handleCancel}
-              disabled={isCancelling}
+              onClick={() => setShowCancelModal(true)}
             >
-              {isCancelling ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Cancelando...
-                </>
-              ) : (
-                "Cancelar pedido"
-              )}
+              Cancelar pedido
             </Button>
           )}
           <Button variant="outline" asChild>
@@ -778,6 +811,89 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             </a>
           </Button>
         </div>
+
+        {/* PayPal Modal */}
+        {canPayWithPayPal && (
+          <PayPalProvider>
+            <PayPalCheckoutModal
+              isOpen={paypalModalOpen}
+              onClose={() => setPaypalModalOpen(false)}
+              orderId={order.id}
+              orderNumber={order.orderNumber}
+              totalCents={order.totalCents}
+              accessToken={(() => {
+                try {
+                  const tokens = localStorage.getItem("encanto-tokens");
+                  if (tokens) return JSON.parse(tokens).accessToken;
+                } catch { /* ignore */ }
+                return undefined;
+              })()}
+              guestToken={localStorage.getItem("encanto-guest-token") || undefined}
+              onSuccess={(paidOrder) => {
+                setOrder(paidOrder);
+                setPaypalModalOpen(false);
+              }}
+              onError={() => {}}
+            />
+          </PayPalProvider>
+        )}
+        {/* Cancel confirmation modal */}
+        {showCancelModal && (
+          <div className="fixed inset-0 z-[100]">
+            <div className="absolute inset-0 bg-black/50" />
+            <div className="absolute inset-0 flex items-center justify-center p-4">
+              <div className="relative w-full max-w-sm bg-background rounded-xl shadow-xl p-6" onClick={(e) => e.stopPropagation()}>
+                {!isCancelling && (
+                  <button
+                    onClick={() => setShowCancelModal(false)}
+                    className="absolute right-4 top-4 p-1 text-foreground-secondary hover:text-foreground transition-colors"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                )}
+                <div className="text-center mb-5">
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <AlertTriangle className="h-6 w-6 text-destructive" />
+                  </div>
+                  <h3 className="text-lg font-normal">¿Cancelar este pedido?</h3>
+                  <p className="text-sm text-foreground-secondary mt-1">
+                    Esta acción no se puede deshacer. El pedido <span className="font-normal">{order.orderNumber}</span> será cancelado.
+                  </p>
+                </div>
+                {cancelError && (
+                  <div className="p-3 bg-destructive/10 text-destructive rounded-lg text-sm mb-4">
+                    {cancelError}
+                  </div>
+                )}
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setShowCancelModal(false)}
+                    disabled={isCancelling}
+                  >
+                    Volver
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={handleCancel}
+                    disabled={isCancelling}
+                  >
+                    {isCancelling ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Cancelando...
+                      </>
+                    ) : (
+                      "Sí, cancelar"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

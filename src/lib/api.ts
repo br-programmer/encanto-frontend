@@ -1154,6 +1154,35 @@ export const api = {
       fetchApiWithToken<ResultResponse<{ claimedCount: number }>>("/orders/claim-guest-orders", accessToken, {
         method: "POST",
       }).then(r => r.result),
+
+    // PayPal
+    paypalCreateOrder: (orderId: string) => {
+      const authHeader = getAuthHeader();
+      const guestHeader = getGuestTokenHeader();
+      return fetchApi<ResultResponse<{ paypalOrderId: string }>>(`/orders/${orderId}/paypal/create-order`, {
+        method: "POST",
+        headers: { ...authHeader, ...guestHeader },
+      }).then(r => r.result);
+    },
+
+    paypalCapture: (orderId: string) => {
+      const authHeader = getAuthHeader();
+      const guestHeader = getGuestTokenHeader();
+      return fetchApi<ResultResponse<Order>>(`/orders/${orderId}/paypal/capture`, {
+        method: "POST",
+        headers: { ...authHeader, ...guestHeader },
+      }).then(r => r.result);
+    },
+
+    paypalCreateOrderWithTokens: (orderId: string, accessToken?: string, guestToken?: string) =>
+      fetchApiWithTokens<ResultResponse<{ paypalOrderId: string }>>(`/orders/${orderId}/paypal/create-order`, {
+        method: "POST",
+      }, accessToken, guestToken).then(r => r.result),
+
+    paypalCaptureWithTokens: (orderId: string, accessToken?: string, guestToken?: string) =>
+      fetchApiWithTokens<ResultResponse<Order>>(`/orders/${orderId}/paypal/capture`, {
+        method: "POST",
+      }, accessToken, guestToken).then(r => r.result),
   },
 
   // Delivery Addresses
