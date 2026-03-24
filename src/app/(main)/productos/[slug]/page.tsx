@@ -31,7 +31,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
   let product;
   try {
     product = await api.products.getBySlug(slug);
-    console.log("[ProductDetail] raw:", JSON.stringify(product, null, 2));
   } catch {
     notFound();
   }
@@ -44,10 +43,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
     api.addOnCategories.active(),
     api.addOns.list(),
   ]);
-  console.log("[ProductDetail:related] raw:", JSON.stringify(relatedData.result, null, 2));
-  console.log("[ProductDetail:addOnCategories] raw:", JSON.stringify(addOnCategories, null, 2));
-  console.log("[ProductDetail:addOns] raw:", JSON.stringify(addOns, null, 2));
-
   const relatedProducts = relatedData.result
     .filter((p) => p.id !== product.id)
     .slice(0, 4);
