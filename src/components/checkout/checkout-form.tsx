@@ -78,19 +78,7 @@ const initialFormData: FormData = {
   longitude: -80.73,
 };
 
-// Normalize phone to E.164 format (Ecuador default)
-function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  // Already has country code
-  if (digits.startsWith("593") && digits.length >= 12) return `+${digits}`;
-  // Local format starting with 0 (e.g. 0987654321)
-  if (digits.startsWith("0") && digits.length === 10) return `+593${digits.slice(1)}`;
-  // Without leading 0 (e.g. 987654321)
-  if (digits.length === 9 && digits.startsWith("9")) return `+593${digits}`;
-  // Already has + prefix
-  if (phone.startsWith("+")) return phone.replace(/\s/g, "");
-  return phone.replace(/\s/g, "");
-}
+import { PhoneInput, normalizePhoneValue } from "@/components/ui/phone-input";
 
 const paymentMethods = [
   {
@@ -152,6 +140,7 @@ export function CheckoutForm() {
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [specialDateWarning, setSpecialDateWarning] = useState<string | null>(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const previewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { items, totalPrice, clearCart, updateItemCardMessage, updateItemAddOns } = useCartStore();
@@ -569,21 +558,35 @@ export function CheckoutForm() {
         })),
         senderName,
         senderEmail,
-        senderPhone: normalizePhone(senderPhone),
+        senderPhone: normalizePhoneValue(senderPhone),
         recipientName: formData.recipientName,
-        ...(formData.recipientPhone.trim() ? { recipientPhone: normalizePhone(formData.recipientPhone) } : {}),
+        ...(formData.recipientPhone.trim() ? { recipientPhone: normalizePhoneValue(formData.recipientPhone) } : {}),
         occasionId: formData.occasionId || undefined,
         isSurprise: formData.isSurprise,
         isAnonymous: formData.isAnonymous,
       };
 
-      // Only send guest token if user is NOT logged in
-      const guestToken = !tokens?.accessToken && typeof window !== "undefined"
-        ? localStorage.getItem("encanto-guest-token") || undefined
-        : undefined;
+      // Ensure token is valid before sending
+      let validAccessToken: string | undefined;
+      let guestToken: string | undefined;
+
+      if (user) {
+        const { getValidAccessToken } = useAuthStore.getState();
+        validAccessToken = await getValidAccessToken();
+        if (!validAccessToken) {
+          setSessionExpired(true);
+          setIsSubmitting(false);
+          return;
+        }
+      } else {
+        guestToken = typeof window !== "undefined"
+          ? localStorage.getItem("encanto-guest-token") || undefined
+          : undefined;
+      }
+
       const order = await createOrderAction(
         orderData,
-        tokens?.accessToken,
+        validAccessToken,
         guestToken
       );
 
@@ -609,6 +612,7 @@ export function CheckoutForm() {
       setCreatedOrder(order);
       clearCart();
       clearSavedFormData();
+      sessionStorage.setItem("encanto-order-created", "true");
       setIsSubmitted(true);
     } catch (err) {
       if (err instanceof Error) {
@@ -721,7 +725,16 @@ export function CheckoutForm() {
     : "Descuento por transferencia";
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div>
+      {/* Page header */}
+      <div className="py-8 sm:py-10">
+        <h1 className="text-3xl sm:text-4xl font-serif text-center mb-2">Finalizar compra</h1>
+        <p className="text-foreground-secondary text-center">
+          Completa los datos de entrega para recibir tu pedido
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
       {/* Left column - Forms */}
       <div className="lg:col-span-7 xl:col-span-8">
         <div className="space-y-8">
@@ -865,13 +878,11 @@ export function CheckoutForm() {
                       <label htmlFor="senderPhone" className="block text-sm font-normal mb-2">
                         Tu teléfono <span className="text-destructive">*</span>
                       </label>
-                      <Input
-                        type="tel"
+                      <PhoneInput
                         id="senderPhone"
                         name="senderPhone"
                         value={formData.senderPhone}
-                        onChange={handleChange}
-                        placeholder="+593 99 999 9999"
+                        onChange={(val) => setFormData((prev) => ({ ...prev, senderPhone: val }))}
                       />
                     </div>
                     <div className="sm:col-span-2">
@@ -1008,13 +1019,11 @@ export function CheckoutForm() {
                           <label htmlFor="recipientPhone" className="block text-sm font-normal mb-2">
                             Teléfono del destinatario <span className="text-destructive">*</span>
                           </label>
-                          <Input
-                            type="tel"
+                          <PhoneInput
                             id="recipientPhone"
                             name="recipientPhone"
                             value={formData.recipientPhone}
-                            onChange={handleChange}
-                            placeholder="+593 99 999 9999"
+                            onChange={(val) => setFormData((prev) => ({ ...prev, recipientPhone: val }))}
                           />
                         </div>
                       )}
@@ -1427,13 +1436,11 @@ export function CheckoutForm() {
                           <label htmlFor="senderPhone" className="block text-sm font-normal mb-2">
                             Teléfono del comprador <span className="text-destructive">*</span>
                           </label>
-                          <Input
-                            type="tel"
+                          <PhoneInput
                             id="senderPhone"
                             name="senderPhone"
                             value={formData.senderPhone}
-                            onChange={handleChange}
-                            placeholder="+593 99 999 9999"
+                            onChange={(val) => setFormData((prev) => ({ ...prev, senderPhone: val }))}
                           />
                         </div>
                       </div>
@@ -1516,24 +1523,6 @@ export function CheckoutForm() {
                   </div>
                 )}
 
-                {/* Submit button - visible on mobile */}
-                <div className="lg:hidden">
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full h-14 text-base"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                        Procesando...
-                      </>
-                    ) : (
-                      "Confirmar pedido"
-                    )}
-                  </Button>
-                </div>
               </form>
             </>
           )}
@@ -1551,7 +1540,33 @@ export function CheckoutForm() {
             isLoadingPreview={isLoadingPreview}
             isPickup={isPickup}
             preview={orderPreview}
+            forceExpanded={!!orderPreview}
           />
+
+          {/* Submit button - mobile (below summary) */}
+          {!showAuthSection && (
+            <div className="lg:hidden">
+              <Button
+                type="submit"
+                form="checkout-form"
+                size="lg"
+                className="w-full h-14 text-base"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Procesando...
+                  </>
+                ) : (
+                  "Confirmar pedido"
+                )}
+              </Button>
+              <p className="text-xs text-foreground-secondary text-center mt-3">
+                Al confirmar, aceptas nuestras políticas de envío y devolución
+              </p>
+            </div>
+          )}
 
           {/* Submit button - visible on desktop, only when form is shown */}
           {!showAuthSection && (
@@ -1583,9 +1598,60 @@ export function CheckoutForm() {
       {/* Auth Modal */}
       <AuthModal
         isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
+        onClose={() => {
+          setAuthModalOpen(false);
+          // If session had expired and user logged back in, clear the flag
+          if (sessionExpired && useAuthStore.getState().tokens?.accessToken) {
+            setSessionExpired(false);
+          }
+        }}
         initialMode={authModalMode}
       />
+
+      {/* Session Expired Modal */}
+      {sessionExpired && (
+        <div className="fixed inset-0 z-[100]">
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <div className="relative w-full max-w-sm bg-background rounded-xl shadow-xl p-6">
+              <div className="text-center mb-5">
+                <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <AlertTriangle className="h-6 w-6 text-amber-600" />
+                </div>
+                <h3 className="text-lg font-normal">Tu sesión ha expirado</h3>
+                <p className="text-sm text-foreground-secondary mt-1">
+                  ¿Cómo deseas continuar con tu pedido?
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    setSessionExpired(false);
+                    logout();
+                    setAuthModalMode("login");
+                    setAuthModalOpen(true);
+                  }}
+                >
+                  Iniciar sesión
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setSessionExpired(false);
+                    logout();
+                    setIsGuestCheckout(true);
+                  }}
+                >
+                  Continuar como invitado
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
     </div>
   );
 }

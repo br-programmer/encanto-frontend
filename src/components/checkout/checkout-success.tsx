@@ -222,18 +222,18 @@ export function CheckoutSuccess({
                 <span>{formatPrice(order.addOnsTotalCents)}</span>
               </div>
             )}
-            <div className="flex justify-between text-sm">
-              <span className="text-foreground-secondary">
-                {order.fulfillmentType === "pickup" ? "Retiro en tienda" : "Envío"}
-              </span>
-              <span>
-                {order.fulfillmentType === "pickup" || order.deliveryFeeCents === 0 ? (
-                  <span className="text-green-600">{order.fulfillmentType === "pickup" ? "$0.00" : "Gratis"}</span>
-                ) : (
-                  formatPrice(order.deliveryFeeCents)
-                )}
-              </span>
-            </div>
+            {order.fulfillmentType !== "pickup" && (
+              <div className="flex justify-between text-sm">
+                <span className="text-foreground-secondary">Envío</span>
+                <span>
+                  {order.deliveryFeeCents === 0 ? (
+                    <span className="text-green-600">Gratis</span>
+                  ) : (
+                    formatPrice(order.deliveryFeeCents)
+                  )}
+                </span>
+              </div>
+            )}
             {order.transferDiscountCents > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-green-600">Descuento transferencia</span>

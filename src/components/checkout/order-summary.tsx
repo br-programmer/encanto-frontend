@@ -24,6 +24,7 @@ interface OrderSummaryProps {
   isLoadingPreview?: boolean;
   isPickup?: boolean;
   preview?: OrderPreview | null;
+  forceExpanded?: boolean;
 }
 
 export function OrderSummary({
@@ -34,8 +35,10 @@ export function OrderSummary({
   isLoadingPreview = false,
   isPickup = false,
   preview,
+  forceExpanded = false,
 }: OrderSummaryProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const expanded = forceExpanded || isExpanded;
 
   const displaySubtotal = preview?.subtotalCents ?? subtotal;
   const displayAddOns = preview?.addOnsTotalCents ?? 0;
@@ -50,7 +53,7 @@ export function OrderSummary({
       {/* Mobile toggle header */}
       <button
         className="w-full flex items-center justify-between p-4 lg:hidden"
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => setIsExpanded(!expanded)}
       >
         <div className="flex items-center gap-2">
           <ShoppingBag className="h-5 w-5 text-primary" />
@@ -61,7 +64,7 @@ export function OrderSummary({
         </div>
         <div className="flex items-center gap-2">
           <span className="font-medium">{formatPrice(total)}</span>
-          {isExpanded ? (
+          {expanded ? (
             <ChevronUp className="h-5 w-5 text-foreground-secondary" />
           ) : (
             <ChevronDown className="h-5 w-5 text-foreground-secondary" />
@@ -82,7 +85,7 @@ export function OrderSummary({
       <div
         className={cn(
           "lg:block",
-          isExpanded ? "block" : "hidden"
+          expanded ? "block" : "hidden"
         )}
       >
         {/* Items list */}
@@ -176,15 +179,11 @@ export function OrderSummary({
               <span>{formatPrice(displayCardMessage)}</span>
             </div>
           )}
-          {preview ? (
+          {preview && !isPickup ? (
             <div className="flex justify-between text-sm">
-              <span className="text-foreground-secondary">
-                {isPickup ? "Retiro en tienda" : "Envío"}
-              </span>
+              <span className="text-foreground-secondary">Envío</span>
               <span>
-                {isPickup ? (
-                  <span className="text-green-600">$0.00</span>
-                ) : displayShipping === 0 ? (
+                {displayShipping === 0 ? (
                   <span className="text-green-600">Gratis</span>
                 ) : (
                   formatPrice(displayShipping)

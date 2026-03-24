@@ -200,7 +200,7 @@ export function Header() {
                           Mi Perfil
                         </Link>
                         <Link
-                          href="/perfil/pedidos"
+                          href="/pedidos"
                           onClick={() => setUserMenuOpen(false)}
                           className="w-full flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
                         >
@@ -363,7 +363,7 @@ export function Header() {
                 Mi Perfil
               </Link>
               <Link
-                href="/perfil/pedidos"
+                href="/pedidos"
                 className="w-full flex items-center gap-3 px-3 py-3 text-base font-normal text-foreground-secondary hover:text-primary hover:bg-secondary rounded-lg transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >

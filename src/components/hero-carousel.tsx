@@ -42,7 +42,9 @@ export function HeroCarousel({
 }: HeroCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
   const goToSlide = useCallback((index: number) => {
     setCurrentIndex(index);
@@ -58,7 +60,7 @@ export function HeroCarousel({
 
   // Autoplay
   useEffect(() => {
-    if (banners.length <= 1 || isHovered) return;
+    if (banners.length <= 1 || isHovered || isDragging) return;
 
     timeoutRef.current = setTimeout(goToNext, autoplayDelay);
 
@@ -67,7 +69,35 @@ export function HeroCarousel({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [currentIndex, autoplayDelay, goToNext, banners.length, isHovered]);
+  }, [currentIndex, autoplayDelay, goToNext, banners.length, isHovered, isDragging]);
+
+  // Touch/drag handlers
+  const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
+    const point = "touches" in e ? e.touches[0] : e;
+    touchStartRef.current = { x: point.clientX, y: point.clientY, time: Date.now() };
+    setIsDragging(true);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!touchStartRef.current) return;
+
+    const point = "changedTouches" in e ? e.changedTouches[0] : e;
+    const dx = point.clientX - touchStartRef.current.x;
+    const dy = point.clientY - touchStartRef.current.y;
+    const dt = Date.now() - touchStartRef.current.time;
+
+    // Only swipe if horizontal movement is greater than vertical (not scrolling)
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40 && dt < 500) {
+      if (dx < 0) {
+        goToNext();
+      } else {
+        goToPrevious();
+      }
+    }
+
+    touchStartRef.current = null;
+    setIsDragging(false);
+  };
 
   if (banners.length === 0) return null;
 
@@ -76,16 +106,24 @@ export function HeroCarousel({
       <div
         className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 overflow-hidden"
         onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseLeave={() => { setIsHovered(false); setIsDragging(false); }}
       >
       {/* Slides Container */}
-      <div className="relative aspect-[4/3] sm:aspect-[16/7] md:aspect-[16/6] lg:aspect-[16/6] overflow-hidden">
+      <div
+        className="relative aspect-[4/3] sm:aspect-[16/7] md:aspect-[16/6] lg:aspect-[16/6] overflow-hidden touch-pan-y"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleTouchStart}
+        onMouseUp={handleTouchEnd}
+      >
         {banners.map((banner, index) => (
           <Link
             key={banner.id}
             href={banner.link}
+            draggable={false}
+            onClick={(e) => { if (isDragging) e.preventDefault(); }}
             className={cn(
-              "absolute inset-0 transition-opacity duration-700",
+              "absolute inset-0 transition-opacity duration-700 select-none",
               index === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
             )}
           >
@@ -94,7 +132,7 @@ export function HeroCarousel({
               src={banner.imageUrl}
               alt={banner.alt}
               fill
-              className="object-cover hidden sm:block"
+              className="object-cover hidden sm:block pointer-events-none"
               priority={index === 0}
               sizes="100vw"
             />
@@ -103,7 +141,7 @@ export function HeroCarousel({
               src={banner.imageUrlMobile || banner.imageUrl}
               alt={banner.alt}
               fill
-              className="object-cover sm:hidden"
+              className="object-cover sm:hidden pointer-events-none"
               priority={index === 0}
               sizes="100vw"
             />
@@ -116,7 +154,7 @@ export function HeroCarousel({
         <>
           <button
             onClick={goToPrevious}
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all opacity-0 group-hover:opacity-100 hover:scale-105"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105"
             style={{ opacity: isHovered ? 1 : 0 }}
             aria-label="Anterior"
           >
@@ -124,7 +162,7 @@ export function HeroCarousel({
           </button>
           <button
             onClick={goToNext}
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all opacity-0 group-hover:opacity-100 hover:scale-105"
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-105"
             style={{ opacity: isHovered ? 1 : 0 }}
             aria-label="Siguiente"
           >

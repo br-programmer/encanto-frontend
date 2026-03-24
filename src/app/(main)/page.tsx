@@ -4,22 +4,17 @@ import { Button } from "@/components/ui/button";
 import { FeaturedProductsCarousel } from "@/components/featured-products-carousel";
 import { InstagramFeed } from "@/components/instagram-feed";
 import { HeroCarousel } from "@/components/hero-carousel";
-import { NextSpecialDate } from "@/components/next-special-date";
 import { ScrollRevealSection } from "@/components/scroll-reveal-section";
-import { StackedCardsSection } from "@/components/stacked-cards-section";
 import { api } from "@/lib/api";
 
 export default async function Home() {
-  // Fetch categories, featured products, Instagram feed, and special dates in parallel
-  const [productsResponse, specialDatesResponse, instagramResponse] = await Promise.all([
+  const [productsResponse, instagramResponse] = await Promise.all([
     api.products.featured(8),
-    api.specialDates.list({ isActive: true, limit: 20 }).catch(() => ({ result: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } })),
     api.instagram.feed({ limit: 6 }).catch(() => ({ result: [], meta: { total: 0, cachedAt: "", expiresAt: "" } })),
   ]);
 
   const featuredProducts = productsResponse.result;
   const instagramPosts = instagramResponse.result;
-  const specialDates = specialDatesResponse.result;
 
   return (
     <div className="flex flex-col">
@@ -59,9 +54,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      {/* Next Special Date Parallax */}
-      <NextSpecialDate specialDates={specialDates} />
 
       {/* Features Section */}
       <section className="py-10 sm:py-16 bg-background">
@@ -107,13 +99,10 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Stacked Cards Section - Apple AirPods Style */}
-      <StackedCardsSection />
-
       {/* Instagram Feed */}
       <InstagramFeed posts={instagramPosts} instagramUrl="https://www.instagram.com/encantofloristeria_ecu" />
 
-      {/* Scroll Reveal Section - Apple Style */}
+      {/* Scroll Reveal Section */}
       <ScrollRevealSection />
 
       {/* WhatsApp CTA */}
