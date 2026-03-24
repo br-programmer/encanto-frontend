@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, CreditCard, Building2, Gift, User, LogOut, Check, LogIn, UserPlus, ChevronRight, MapPin, Plus, Bookmark, AlertTriangle, Percent, Truck, Store, MessageSquare, Package } from "lucide-react";
+import { Loader2, CreditCard, Building2, Gift, EyeOff, User, LogOut, Check, LogIn, UserPlus, ChevronRight, MapPin, Plus, Bookmark, AlertTriangle, Percent, Truck, Store, MessageSquare, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,6 +49,7 @@ interface FormData {
   deliveryReference: string;
   occasionId: string;
   isSurprise: boolean;
+  isAnonymous: boolean;
   differentBuyer: boolean;
   paymentMethod: string;
   latitude: number;
@@ -71,25 +72,14 @@ const initialFormData: FormData = {
   deliveryReference: "",
   occasionId: "",
   isSurprise: true,
+  isAnonymous: false,
   differentBuyer: false,
   paymentMethod: "",
   latitude: -0.95,
   longitude: -80.73,
 };
 
-// Normalize phone to E.164 format (Ecuador default)
-function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  // Already has country code
-  if (digits.startsWith("593") && digits.length >= 12) return `+${digits}`;
-  // Local format starting with 0 (e.g. 0987654321)
-  if (digits.startsWith("0") && digits.length === 10) return `+593${digits.slice(1)}`;
-  // Without leading 0 (e.g. 987654321)
-  if (digits.length === 9 && digits.startsWith("9")) return `+593${digits}`;
-  // Already has + prefix
-  if (phone.startsWith("+")) return phone.replace(/\s/g, "");
-  return phone.replace(/\s/g, "");
-}
+import { PhoneInput, normalizePhoneValue } from "@/components/ui/phone-input";
 
 const paymentMethods = [
   {
@@ -160,6 +150,7 @@ export function CheckoutForm() {
   const [pendingPayPal, setPendingPayPal] = useState(false);
   const [paypalTokens, setPaypalTokens] = useState<{ accessToken?: string; guestToken?: string }>({});
   const [specialDateWarning, setSpecialDateWarning] = useState<string | null>(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const previewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { items, totalPrice, clearCart, updateItemCardMessage, updateItemAddOns } = useCartStore();
@@ -577,20 +568,35 @@ export function CheckoutForm() {
         })),
         senderName,
         senderEmail,
-        senderPhone: normalizePhone(senderPhone),
+        senderPhone: normalizePhoneValue(senderPhone),
         recipientName: formData.recipientName,
-        ...(formData.recipientPhone.trim() ? { recipientPhone: normalizePhone(formData.recipientPhone) } : {}),
+        ...(formData.recipientPhone.trim() ? { recipientPhone: normalizePhoneValue(formData.recipientPhone) } : {}),
         occasionId: formData.occasionId || undefined,
         isSurprise: formData.isSurprise,
+        isAnonymous: formData.isAnonymous,
       };
 
-      // Only send guest token if user is NOT logged in
-      const guestToken = !tokens?.accessToken && typeof window !== "undefined"
-        ? localStorage.getItem("encanto-guest-token") || undefined
-        : undefined;
+      // Ensure token is valid before sending
+      let validAccessToken: string | undefined;
+      let guestToken: string | undefined;
+
+      if (user) {
+        const { getValidAccessToken } = useAuthStore.getState();
+        validAccessToken = await getValidAccessToken();
+        if (!validAccessToken) {
+          setSessionExpired(true);
+          setIsSubmitting(false);
+          return;
+        }
+      } else {
+        guestToken = typeof window !== "undefined"
+          ? localStorage.getItem("encanto-guest-token") || undefined
+          : undefined;
+      }
+
       const order = await createOrderAction(
         orderData,
-        tokens?.accessToken,
+        validAccessToken,
         guestToken
       );
 
@@ -616,10 +622,11 @@ export function CheckoutForm() {
       setCreatedOrder(order);
       clearCart();
       clearSavedFormData();
+      sessionStorage.setItem("encanto-order-created", "true");
 
       if (formData.paymentMethod === "paypal") {
         setPaypalTokens({
-          accessToken: tokens?.accessToken,
+          accessToken: validAccessToken,
           guestToken: order.guestToken || guestToken,
         });
         setPendingPayPal(true);
@@ -769,7 +776,16 @@ export function CheckoutForm() {
     : "Descuento por transferencia";
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div>
+      {/* Page header */}
+      <div className="py-8 sm:py-10">
+        <h1 className="text-3xl sm:text-4xl font-serif text-center mb-2">Finalizar compra</h1>
+        <p className="text-foreground-secondary text-center">
+          Completa los datos de entrega para recibir tu pedido
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
       {/* Left column - Forms */}
       <div className="lg:col-span-7 xl:col-span-8">
         <div className="space-y-8">
@@ -781,7 +797,7 @@ export function CheckoutForm() {
                   <User className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold">Datos del cliente</h2>
+                  <h2 className="text-xl font-medium">Datos del cliente</h2>
                   <p className="text-sm text-foreground-secondary">
                     Elige cómo deseas continuar
                   </p>
@@ -797,7 +813,7 @@ export function CheckoutForm() {
                   <div className="flex items-center gap-3">
                     <LogIn className="h-5 w-5 text-primary" />
                     <div>
-                      <p className="font-medium">Iniciar sesión</p>
+                      <p className="font-normal">Iniciar sesión</p>
                       <p className="text-sm text-foreground-secondary">
                         Ya tengo una cuenta
                       </p>
@@ -814,7 +830,7 @@ export function CheckoutForm() {
                   <div className="flex items-center gap-3">
                     <UserPlus className="h-5 w-5 text-primary" />
                     <div>
-                      <p className="font-medium">Crear cuenta</p>
+                      <p className="font-normal">Crear cuenta</p>
                       <p className="text-sm text-foreground-secondary">
                         Registrarme para futuras compras
                       </p>
@@ -831,7 +847,7 @@ export function CheckoutForm() {
                   <div className="flex items-center gap-3">
                     <User className="h-5 w-5 text-foreground-secondary" />
                     <div>
-                      <p className="font-medium">Continuar como invitado</p>
+                      <p className="font-normal">Continuar como invitado</p>
                       <p className="text-sm text-foreground-secondary">
                         Sin crear cuenta
                       </p>
@@ -852,7 +868,7 @@ export function CheckoutForm() {
                         <Check className="h-5 w-5 text-green-600" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium truncate">Conectado como {user.fullName}</p>
+                        <p className="font-normal truncate">Conectado como {user.fullName}</p>
                         <p className="text-sm text-foreground-secondary truncate">{user.email}</p>
                       </div>
                     </div>
@@ -878,7 +894,7 @@ export function CheckoutForm() {
                         <User className="h-5 w-5 text-foreground-secondary" />
                       </div>
                       <div>
-                        <p className="font-medium">Comprando como invitado</p>
+                        <p className="font-normal">Comprando como invitado</p>
                         <p className="text-sm text-foreground-secondary">
                           Completa tus datos a continuación
                         </p>
@@ -897,7 +913,7 @@ export function CheckoutForm() {
                   {/* Guest sender info */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="senderName" className="block text-sm font-medium mb-2">
+                      <label htmlFor="senderName" className="block text-sm font-normal mb-2">
                         Tu nombre <span className="text-destructive">*</span>
                       </label>
                       <Input
@@ -910,20 +926,18 @@ export function CheckoutForm() {
                       />
                     </div>
                     <div>
-                      <label htmlFor="senderPhone" className="block text-sm font-medium mb-2">
+                      <label htmlFor="senderPhone" className="block text-sm font-normal mb-2">
                         Tu teléfono <span className="text-destructive">*</span>
                       </label>
-                      <Input
-                        type="tel"
+                      <PhoneInput
                         id="senderPhone"
                         name="senderPhone"
                         value={formData.senderPhone}
-                        onChange={handleChange}
-                        placeholder="+593 99 999 9999"
+                        onChange={(val) => setFormData((prev) => ({ ...prev, senderPhone: val }))}
                       />
                     </div>
                     <div className="sm:col-span-2">
-                      <label htmlFor="senderEmail" className="block text-sm font-medium mb-2">
+                      <label htmlFor="senderEmail" className="block text-sm font-normal mb-2">
                         Tu correo electrónico <span className="text-destructive">*</span>
                       </label>
                       <Input
@@ -943,7 +957,7 @@ export function CheckoutForm() {
               <form onSubmit={handleSubmit} className="space-y-8" id="checkout-form">
                 {/* Fulfillment Type Toggle */}
                 <div className="bg-background rounded-xl border border-border p-6">
-                  <h2 className="text-xl font-semibold mb-4">Tipo de entrega</h2>
+                  <h2 className="text-xl font-medium mb-4">Tipo de entrega</h2>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
@@ -956,7 +970,7 @@ export function CheckoutForm() {
                       )}
                     >
                       <Truck className={cn("h-6 w-6", formData.fulfillmentType === "delivery" ? "text-primary" : "text-foreground-muted")} />
-                      <span className={cn("text-sm font-medium", formData.fulfillmentType === "delivery" ? "text-primary" : "text-foreground-secondary")}>
+                      <span className={cn("text-sm font-normal", formData.fulfillmentType === "delivery" ? "text-primary" : "text-foreground-secondary")}>
                         Envío a domicilio
                       </span>
                     </button>
@@ -971,7 +985,7 @@ export function CheckoutForm() {
                       )}
                     >
                       <Store className={cn("h-6 w-6", formData.fulfillmentType === "pickup" ? "text-primary" : "text-foreground-muted")} />
-                      <span className={cn("text-sm font-medium", formData.fulfillmentType === "pickup" ? "text-primary" : "text-foreground-secondary")}>
+                      <span className={cn("text-sm font-normal", formData.fulfillmentType === "pickup" ? "text-primary" : "text-foreground-secondary")}>
                         Retiro en tienda
                       </span>
                     </button>
@@ -979,7 +993,7 @@ export function CheckoutForm() {
                 </div>
 
                 <div className="bg-background rounded-xl border border-border p-6">
-                  <h2 className="text-xl font-semibold mb-6">
+                  <h2 className="text-xl font-medium mb-6">
                     {isPickup ? "Información de retiro" : "Información de entrega"}
                   </h2>
 
@@ -987,7 +1001,7 @@ export function CheckoutForm() {
                   {!isPickup && addresses.length > 0 && (
                     <div className="mb-6">
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-medium text-foreground-secondary">Direcciones guardadas</h3>
+                        <h3 className="text-sm font-normal text-foreground-secondary">Direcciones guardadas</h3>
                         <button
                           type="button"
                           onClick={handleNewAddress}
@@ -1014,7 +1028,7 @@ export function CheckoutForm() {
                               <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-medium text-sm">{addr.label}</span>
+                                  <span className="font-normal text-sm">{addr.label}</span>
                                   {addr.isDefault && (
                                     <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
                                       Predeterminada
@@ -1039,7 +1053,7 @@ export function CheckoutForm() {
                     {/* Recipient info */}
                     <div className={cn("grid gap-4", isPickup ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
                       <div>
-                        <label htmlFor="recipientName" className="block text-sm font-medium mb-2">
+                        <label htmlFor="recipientName" className="block text-sm font-normal mb-2">
                           {isPickup ? "Nombre de quien retira" : "Nombre del destinatario"} <span className="text-destructive">*</span>
                         </label>
                         <Input
@@ -1053,16 +1067,14 @@ export function CheckoutForm() {
                       </div>
                       {!isPickup && (
                         <div>
-                          <label htmlFor="recipientPhone" className="block text-sm font-medium mb-2">
+                          <label htmlFor="recipientPhone" className="block text-sm font-normal mb-2">
                             Teléfono del destinatario <span className="text-destructive">*</span>
                           </label>
-                          <Input
-                            type="tel"
+                          <PhoneInput
                             id="recipientPhone"
                             name="recipientPhone"
                             value={formData.recipientPhone}
-                            onChange={handleChange}
-                            placeholder="+593 99 999 9999"
+                            onChange={(val) => setFormData((prev) => ({ ...prev, recipientPhone: val }))}
                           />
                         </div>
                       )}
@@ -1071,7 +1083,7 @@ export function CheckoutForm() {
                     {/* Pickup: branch selector + info */}
                     {isPickup && (
                       <div>
-                        <label className="block text-sm font-medium mb-2">
+                        <label className="block text-sm font-normal mb-2">
                           Sucursal de retiro <span className="text-destructive">*</span>
                         </label>
                         {branches.length > 1 ? (
@@ -1089,7 +1101,7 @@ export function CheckoutForm() {
                           </Select>
                         ) : branches.length === 1 ? (
                           <div className="p-3 bg-secondary/30 rounded-lg">
-                            <p className="font-medium text-sm">{branches[0].name}</p>
+                            <p className="font-normal text-sm">{branches[0].name}</p>
                             {branches[0].address && (
                               <p className="text-sm text-foreground-secondary mt-1">{branches[0].address}</p>
                             )}
@@ -1103,7 +1115,7 @@ export function CheckoutForm() {
                       <>
                         {/* Address */}
                         <div>
-                          <label htmlFor="address" className="block text-sm font-medium mb-2">
+                          <label htmlFor="address" className="block text-sm font-normal mb-2">
                             Dirección de entrega <span className="text-destructive">*</span>
                           </label>
                           <Input
@@ -1119,7 +1131,7 @@ export function CheckoutForm() {
                         {/* City and Branch */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label htmlFor="cityId" className="block text-sm font-medium mb-2">
+                            <label htmlFor="cityId" className="block text-sm font-normal mb-2">
                               Ciudad <span className="text-destructive">*</span>
                             </label>
                             <Select value={formData.cityId} onValueChange={(v) => handleSelectChange("cityId", v)}>
@@ -1139,7 +1151,7 @@ export function CheckoutForm() {
                           {/* Branch selector - only show if multiple branches */}
                           {branches.length > 1 && (
                             <div>
-                              <label htmlFor="branchId" className="block text-sm font-medium mb-2">
+                              <label htmlFor="branchId" className="block text-sm font-normal mb-2">
                                 Sucursal <span className="text-destructive">*</span>
                               </label>
                               <Select value={formData.branchId} onValueChange={(v) => handleSelectChange("branchId", v)}>
@@ -1161,7 +1173,7 @@ export function CheckoutForm() {
                         {/* Delivery zone selector */}
                         {zones.length > 0 && (
                           <div>
-                            <label className="block text-sm font-medium mb-2">
+                            <label className="block text-sm font-normal mb-2">
                               Zona de entrega <span className="text-destructive">*</span>
                             </label>
                             <Select value={formData.deliveryZoneId} onValueChange={(v) => handleSelectChange("deliveryZoneId", v)}>
@@ -1194,7 +1206,7 @@ export function CheckoutForm() {
                     {/* Reference / Notes - delivery only */}
                     {!isPickup && (
                       <div>
-                        <label htmlFor="deliveryReference" className="block text-sm font-medium mb-2">
+                        <label htmlFor="deliveryReference" className="block text-sm font-normal mb-2">
                           Referencia de ubicación
                         </label>
                         <Textarea
@@ -1211,7 +1223,7 @@ export function CheckoutForm() {
                     {/* Date and time */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="deliveryDate" className="block text-sm font-medium mb-2">
+                        <label htmlFor="deliveryDate" className="block text-sm font-normal mb-2">
                           {isPickup ? "Fecha de retiro" : "Fecha de entrega"} <span className="text-destructive">*</span>
                         </label>
                         <DatePicker
@@ -1225,7 +1237,7 @@ export function CheckoutForm() {
                         />
                       </div>
                       <div>
-                        <label htmlFor="deliveryTimeSlotId" className="block text-sm font-medium mb-2">
+                        <label htmlFor="deliveryTimeSlotId" className="block text-sm font-normal mb-2">
                           {isPickup ? "Horario de retiro" : "Horario de entrega"} <span className="text-destructive">*</span>
                         </label>
                         <Select value={formData.deliveryTimeSlotId} onValueChange={(v) => handleSelectChange("deliveryTimeSlotId", v)}>
@@ -1254,7 +1266,7 @@ export function CheckoutForm() {
                     {/* Occasion */}
                     {occasions.length > 0 && (
                       <div>
-                        <label htmlFor="occasionId" className="block text-sm font-medium mb-2">
+                        <label htmlFor="occasionId" className="block text-sm font-normal mb-2">
                           Ocasión
                         </label>
                         <Select value={formData.occasionId} onValueChange={(v) => handleSelectChange("occasionId", v)}>
@@ -1276,7 +1288,7 @@ export function CheckoutForm() {
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <MessageSquare className="h-4 w-4 text-primary" />
-                        <label className="block text-sm font-medium">
+                        <label className="block text-sm font-normal">
                           Personaliza tu pedido
                         </label>
                         <span className="text-xs text-foreground-secondary">(opcional)</span>
@@ -1284,7 +1296,7 @@ export function CheckoutForm() {
                       <div className="space-y-4">
                         {items.map((item) => (
                           <div key={item.product.id} className="p-3 bg-secondary/20 rounded-lg space-y-3">
-                            <p className="text-sm font-semibold text-foreground">
+                            <p className="text-sm font-medium text-foreground">
                               {item.product.name}
                             </p>
 
@@ -1298,7 +1310,7 @@ export function CheckoutForm() {
                                         <span className="text-foreground-secondary">
                                           + {addOn.name}{addOn.quantity > 1 ? ` x${addOn.quantity}` : ""}
                                         </span>
-                                        <span className="text-primary font-medium">
+                                        <span className="text-primary font-normal">
                                           {formatPrice(addOn.priceCents * addOn.quantity)}
                                         </span>
                                       </div>
@@ -1370,7 +1382,7 @@ export function CheckoutForm() {
                           <div className="flex items-center gap-2">
                             <Bookmark className="h-4 w-4 text-primary" />
                             <div>
-                              <span className="text-sm font-medium">Guardar esta dirección</span>
+                              <span className="text-sm font-normal">Guardar esta dirección</span>
                               <p className="text-xs text-foreground-secondary">
                                 Para futuros pedidos
                               </p>
@@ -1380,7 +1392,7 @@ export function CheckoutForm() {
 
                         {saveAddress && (
                           <div>
-                            <label htmlFor="addressLabel" className="block text-sm font-medium mb-2">
+                            <label htmlFor="addressLabel" className="block text-sm font-normal mb-2">
                               Etiqueta de la dirección
                             </label>
                             <Select value={addressLabel} onValueChange={setAddressLabel}>
@@ -1402,21 +1414,38 @@ export function CheckoutForm() {
                     {/* Checkboxes */}
                     <div className="space-y-3">
                       {!isPickup && (
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <Checkbox
-                            checked={formData.isSurprise}
-                            onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isSurprise: checked === true }))}
-                          />
-                          <div className="flex items-center gap-2">
-                            <Gift className="h-5 w-5 text-primary flex-shrink-0" />
-                            <div>
-                              <span className="text-sm font-medium">Es una entrega sorpresa</span>
-                              <p className="text-xs text-foreground-secondary">
-                                No revelaremos el contenido al destinatario antes de la entrega
-                              </p>
+                        <>
+                          <label className="flex items-center gap-3 cursor-pointer">
+                            <Checkbox
+                              checked={formData.isSurprise}
+                              onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isSurprise: checked === true }))}
+                            />
+                            <div className="flex items-center gap-2">
+                              <Gift className="h-5 w-5 text-primary flex-shrink-0" />
+                              <div>
+                                <span className="text-sm font-normal">Es una entrega sorpresa</span>
+                                <p className="text-xs text-foreground-secondary">
+                                  No contactaremos al destinatario antes de la entrega
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        </label>
+                          </label>
+                          <label className="flex items-center gap-3 cursor-pointer">
+                            <Checkbox
+                              checked={formData.isAnonymous}
+                              onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isAnonymous: checked === true }))}
+                            />
+                            <div className="flex items-center gap-2">
+                              <EyeOff className="h-5 w-5 text-primary flex-shrink-0" />
+                              <div>
+                                <span className="text-sm font-normal">Envío anónimo</span>
+                                <p className="text-xs text-foreground-secondary">
+                                  El destinatario no sabrá quién le envió el pedido
+                                </p>
+                              </div>
+                            </div>
+                          </label>
+                        </>
                       )}
 
                       {user && (
@@ -1428,7 +1457,7 @@ export function CheckoutForm() {
                           <div className="flex items-center gap-2">
                             <User className="h-5 w-5 text-primary flex-shrink-0" />
                             <div>
-                              <span className="text-sm font-medium">El comprador es diferente al usuario de la cuenta</span>
+                              <span className="text-sm font-normal">El comprador es diferente al usuario de la cuenta</span>
                               <p className="text-xs text-foreground-secondary">
                                 Agrega los datos del comprador
                               </p>
@@ -1442,7 +1471,7 @@ export function CheckoutForm() {
                     {formData.differentBuyer && user && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-secondary/30 rounded-lg">
                         <div>
-                          <label htmlFor="senderName" className="block text-sm font-medium mb-2">
+                          <label htmlFor="senderName" className="block text-sm font-normal mb-2">
                             Nombre del comprador <span className="text-destructive">*</span>
                           </label>
                           <Input
@@ -1455,16 +1484,14 @@ export function CheckoutForm() {
                           />
                         </div>
                         <div>
-                          <label htmlFor="senderPhone" className="block text-sm font-medium mb-2">
+                          <label htmlFor="senderPhone" className="block text-sm font-normal mb-2">
                             Teléfono del comprador <span className="text-destructive">*</span>
                           </label>
-                          <Input
-                            type="tel"
+                          <PhoneInput
                             id="senderPhone"
                             name="senderPhone"
                             value={formData.senderPhone}
-                            onChange={handleChange}
-                            placeholder="+593 99 999 9999"
+                            onChange={(val) => setFormData((prev) => ({ ...prev, senderPhone: val }))}
                           />
                         </div>
                       </div>
@@ -1474,7 +1501,7 @@ export function CheckoutForm() {
 
                 {/* Payment Method */}
                 <div className="bg-background rounded-xl border border-border p-6">
-                  <h2 className="text-xl font-semibold mb-6">Método de pago</h2>
+                  <h2 className="text-xl font-medium mb-6">Método de pago</h2>
 
                   <div className="space-y-3">
                     {paymentMethods.map((method) => {
@@ -1508,7 +1535,7 @@ export function CheckoutForm() {
                           </div>
                           <method.icon className={cn("h-5 w-5 flex-shrink-0", isSelected ? "text-primary" : "text-foreground-secondary")} />
                           <div className="flex-1">
-                            <span className="font-medium">{method.label}</span>
+                            <span className="font-normal">{method.label}</span>
                             {isTransfer && orderSettings && (
                               <span className="ml-2 inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
                                 <Percent className="h-3 w-3" />
@@ -1527,7 +1554,7 @@ export function CheckoutForm() {
                   {/* Bank accounts info when transfer selected */}
                   {formData.paymentMethod === "bank_transfer" && bankAccounts.length > 0 && (
                     <div className="mt-4 p-4 bg-secondary/30 rounded-lg">
-                      <h3 className="text-sm font-medium mb-3">Cuentas para transferencia</h3>
+                      <h3 className="text-sm font-normal mb-3">Cuentas para transferencia</h3>
                       <div className="space-y-3">
                         {bankAccounts.map((account) => (
                           <BankAccountCard key={account.id} account={account} />
@@ -1547,24 +1574,6 @@ export function CheckoutForm() {
                   </div>
                 )}
 
-                {/* Submit button - visible on mobile */}
-                <div className="lg:hidden">
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full h-14 text-base"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                        Procesando...
-                      </>
-                    ) : (
-                      "Confirmar pedido"
-                    )}
-                  </Button>
-                </div>
               </form>
             </>
           )}
@@ -1582,7 +1591,33 @@ export function CheckoutForm() {
             isLoadingPreview={isLoadingPreview}
             isPickup={isPickup}
             preview={orderPreview}
+            forceExpanded={!!orderPreview}
           />
+
+          {/* Submit button - mobile (below summary) */}
+          {!showAuthSection && (
+            <div className="lg:hidden">
+              <Button
+                type="submit"
+                form="checkout-form"
+                size="lg"
+                className="w-full h-14 text-base"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Procesando...
+                  </>
+                ) : (
+                  "Confirmar pedido"
+                )}
+              </Button>
+              <p className="text-xs text-foreground-secondary text-center mt-3">
+                Al confirmar, aceptas nuestras políticas de envío y devolución
+              </p>
+            </div>
+          )}
 
           {/* Submit button - visible on desktop, only when form is shown */}
           {!showAuthSection && (
@@ -1614,10 +1649,60 @@ export function CheckoutForm() {
       {/* Auth Modal */}
       <AuthModal
         isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
+        onClose={() => {
+          setAuthModalOpen(false);
+          // If session had expired and user logged back in, clear the flag
+          if (sessionExpired && useAuthStore.getState().tokens?.accessToken) {
+            setSessionExpired(false);
+          }
+        }}
         initialMode={authModalMode}
       />
 
+      {/* Session Expired Modal */}
+      {sessionExpired && (
+        <div className="fixed inset-0 z-[100]">
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <div className="relative w-full max-w-sm bg-background rounded-xl shadow-xl p-6">
+              <div className="text-center mb-5">
+                <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <AlertTriangle className="h-6 w-6 text-amber-600" />
+                </div>
+                <h3 className="text-lg font-normal">Tu sesión ha expirado</h3>
+                <p className="text-sm text-foreground-secondary mt-1">
+                  ¿Cómo deseas continuar con tu pedido?
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    setSessionExpired(false);
+                    logout();
+                    setAuthModalMode("login");
+                    setAuthModalOpen(true);
+                  }}
+                >
+                  Iniciar sesión
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setSessionExpired(false);
+                    logout();
+                    setIsGuestCheckout(true);
+                  }}
+                >
+                  Continuar como invitado
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
     </div>
   );
 }
@@ -1628,7 +1713,7 @@ function BankAccountCard({ account }: { account: BankAccount }) {
 
   return (
     <div className="p-3 bg-background rounded-lg border border-border text-sm">
-      <p className="font-medium">{account.bankName}</p>
+      <p className="font-normal">{account.bankName}</p>
       <p className="text-foreground-secondary">
         {accountTypeLabel} — {account.accountNumber}
       </p>

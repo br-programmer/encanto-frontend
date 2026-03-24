@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, XCircle, Loader2, Mail } from "lucide-react";
@@ -11,6 +11,18 @@ import { verifyEmailAction } from "@/actions/auth-actions";
 type VerificationStatus = "loading" | "success" | "error";
 
 export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
+  );
+}
+
+function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const [status, setStatus] = useState<VerificationStatus>("loading");
@@ -48,7 +60,7 @@ export default function VerifyEmailPage() {
             <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
               <Loader2 className="h-10 w-10 text-primary animate-spin" />
             </div>
-            <h1 className="text-2xl font-semibold mb-2">Verificando tu correo</h1>
+            <h1 className="text-2xl font-medium mb-2">Verificando tu correo</h1>
             <p className="text-foreground-secondary">
               Por favor espera mientras verificamos tu dirección de correo electrónico...
             </p>
@@ -60,7 +72,7 @@ export default function VerifyEmailPage() {
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle2 className="h-10 w-10 text-green-600" />
             </div>
-            <h1 className="text-2xl font-semibold mb-2">Correo verificado</h1>
+            <h1 className="text-2xl font-medium mb-2">Correo verificado</h1>
             <p className="text-foreground-secondary mb-8">
               Tu dirección de correo electrónico ha sido verificada exitosamente.
               Ahora puedes disfrutar de todas las funcionalidades de tu cuenta.
@@ -85,7 +97,7 @@ export default function VerifyEmailPage() {
             <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <XCircle className="h-10 w-10 text-red-600" />
             </div>
-            <h1 className="text-2xl font-semibold mb-2">Error de verificación</h1>
+            <h1 className="text-2xl font-medium mb-2">Error de verificación</h1>
             <p className="text-foreground-secondary mb-4">
               {errorMessage}
             </p>

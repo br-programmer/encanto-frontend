@@ -4,23 +4,25 @@ import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Package, ChevronLeft, AlertTriangle, Phone, Bike, Car, User, CreditCard } from "lucide-react";
+import { Loader2, Package, ChevronLeft, AlertTriangle, Phone, Bike, Car, User, CreditCard, Gift, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TransferProofUpload } from "@/components/orders/transfer-proof-upload";
 import { PayPalProvider } from "@/components/checkout/paypal-provider";
 import { PayPalCheckoutModal } from "@/components/checkout/paypal-checkout";
 import { getOrderByOrderNumberAction, cancelOrderAction, getOrderPageDataAction } from "@/actions/order-actions";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice, cn } from "@/lib/utils";
 import type { Order, BankAccount, DeliveryTimeSlot } from "@/lib/api";
 
+const STATUS_COLOR = "bg-primary/10 text-primary";
 const ORDER_STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending_payment: { label: "Pendiente de pago", color: "bg-amber-100 text-amber-800" },
-  paid: { label: "Pagado", color: "bg-blue-100 text-blue-800" },
-  preparing: { label: "En preparación", color: "bg-purple-100 text-purple-800" },
-  delivery_assigned: { label: "Repartidor asignado", color: "bg-indigo-100 text-indigo-800" },
-  out_for_delivery: { label: "En camino", color: "bg-violet-100 text-violet-800" },
+  pending_payment: { label: "Pendiente de pago", color: STATUS_COLOR },
+  paid: { label: "Pagado", color: STATUS_COLOR },
+  preparing: { label: "En preparación", color: STATUS_COLOR },
+  delivery_assigned: { label: "Repartidor asignado", color: STATUS_COLOR },
+  out_for_delivery: { label: "En camino", color: STATUS_COLOR },
   delivered: { label: "Entregado", color: "bg-green-100 text-green-800" },
-  ready_for_pickup: { label: "Listo para retirar", color: "bg-indigo-100 text-indigo-800" },
+  ready_for_pickup: { label: "Listo para retirar", color: STATUS_COLOR },
   picked_up: { label: "Retirado", color: "bg-green-100 text-green-800" },
   cancelled: { label: "Cancelado", color: "bg-red-100 text-red-800" },
 };
@@ -79,14 +81,14 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         console.error("Error fetching order:", err);
         if (err instanceof Error) {
           if (err.message.includes("404")) {
-            setError("Pedido no encontrado");
+            setError("not_found");
           } else if (err.message.includes("403")) {
-            setError("No tienes permiso para ver este pedido");
+            setError("no_access");
           } else {
-            setError("Error al cargar el pedido");
+            setError("generic");
           }
         } else {
-          setError("Error al cargar el pedido");
+          setError("generic");
         }
       } finally {
         setIsLoading(false);
@@ -145,22 +147,185 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="py-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Skeleton className="h-8 w-28 mb-8" />
+        </div>
+
+        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+          {/* Header */}
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <div className="flex items-center gap-3 mb-1">
+                <Skeleton className="h-6 w-6 rounded" />
+                <Skeleton className="h-7 w-48" />
+              </div>
+              <Skeleton className="h-4 w-56 mt-1" />
+            </div>
+            <Skeleton className="h-7 w-32 rounded-full" />
+          </div>
+
+          {/* Timeline */}
+          <div className="bg-background rounded-xl border border-border p-6 mb-6">
+            <Skeleton className="h-5 w-36 mb-6" />
+            <div className="hidden sm:flex items-center gap-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center flex-1 last:flex-none">
+                  <div className="flex flex-col items-center">
+                    <Skeleton className="w-9 h-9 rounded-full" />
+                    <Skeleton className="h-3 w-16 mt-2" />
+                  </div>
+                  {i < 4 && <Skeleton className="flex-1 h-0.5 mx-2" />}
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-col gap-4 sm:hidden">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className="w-8 h-8 rounded-full flex-shrink-0" />
+                  <Skeleton className="h-4 w-28" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Delivery info */}
+          <div className="bg-background rounded-xl border border-border p-6 mb-6">
+            <Skeleton className="h-5 w-44 mb-4" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Skeleton className="h-3.5 w-24 mb-1" />
+                <Skeleton className="h-4 w-36" />
+              </div>
+              <div>
+                <Skeleton className="h-3.5 w-16 mb-1" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+              <div className="sm:col-span-2">
+                <Skeleton className="h-3.5 w-20 mb-1" />
+                <Skeleton className="h-4 w-64" />
+              </div>
+              <div>
+                <Skeleton className="h-3.5 w-12 mb-1" />
+                <Skeleton className="h-4 w-44" />
+              </div>
+              <div>
+                <Skeleton className="h-3.5 w-16 mb-1" />
+                <Skeleton className="h-4 w-36" />
+              </div>
+            </div>
+          </div>
+
+          {/* Products */}
+          <div className="bg-background rounded-xl border border-border p-6 mb-6">
+            <Skeleton className="h-5 w-24 mb-4" />
+            <div className="space-y-4">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="flex items-start gap-4">
+                  <Skeleton className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="flex justify-between gap-2">
+                      <Skeleton className="h-4 w-40" />
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                    <Skeleton className="h-3.5 w-20 mt-1" />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-border mt-4 pt-4 space-y-2">
+              <div className="flex justify-between">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-14" />
+              </div>
+              <div className="flex justify-between">
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-4 w-14" />
+              </div>
+              <div className="flex justify-between border-t border-border pt-2">
+                <Skeleton className="h-6 w-12" />
+                <Skeleton className="h-6 w-16" />
+              </div>
+            </div>
+          </div>
+
+          {/* Payment */}
+          <div className="bg-background rounded-xl border border-border p-6 mb-6">
+            <Skeleton className="h-5 w-12 mb-4" />
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-36" />
+              </div>
+              <div className="flex justify-between">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3">
+            <Skeleton className="h-10 w-36" />
+            <Skeleton className="h-10 w-48" />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error || !order) {
+    const isNoAccess = error === "no_access";
+    const isNotFound = error === "not_found";
+
     return (
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-16">
         <div className="max-w-md mx-auto text-center">
-          <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Error</h1>
-          <p className="text-foreground-secondary mb-6">{error || "Pedido no encontrado"}</p>
-          <Button asChild>
-            <Link href="/productos">Ir a productos</Link>
-          </Button>
+          {isNoAccess ? (
+            <>
+              <Package className="h-12 w-12 text-foreground-muted mx-auto mb-4" />
+              <h1 className="text-2xl font-semibold mb-2">Pedido no disponible</h1>
+              <p className="text-foreground-secondary mb-6">
+                No pudimos mostrar este pedido. Si crees que es un error, contáctanos por WhatsApp.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button asChild>
+                  <Link href="/productos">Ver productos</Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <a
+                    href="https://wa.me/593982742191?text=Hola!%20No%20puedo%20ver%20mi%20pedido"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Contactar por WhatsApp
+                  </a>
+                </Button>
+              </div>
+            </>
+          ) : isNotFound ? (
+            <>
+              <Package className="h-12 w-12 text-foreground-muted mx-auto mb-4" />
+              <h1 className="text-2xl font-semibold mb-2">Pedido no encontrado</h1>
+              <p className="text-foreground-secondary mb-6">
+                No pudimos encontrar este pedido. Verifica el número o revisa tus pedidos desde tu perfil.
+              </p>
+              <Button asChild>
+                <Link href="/productos">Ver productos</Link>
+              </Button>
+            </>
+          ) : (
+            <>
+              <AlertTriangle className="h-12 w-12 text-foreground-muted mx-auto mb-4" />
+              <h1 className="text-2xl font-semibold mb-2">Algo salió mal</h1>
+              <p className="text-foreground-secondary mb-6">
+                No pudimos cargar tu pedido. Por favor intenta de nuevo en unos momentos.
+              </p>
+              <Button asChild>
+                <Link href="/productos">Ver productos</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     );
@@ -193,23 +358,25 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
       ];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <div>
+    <div className="py-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/perfil/pedidos">
+            <Link href="/pedidos">
               <ChevronLeft className="h-4 w-4 mr-1" />
               Mis pedidos
             </Link>
           </Button>
         </div>
+      </div>
 
+      <div className="mx-auto max-w-3xl px-4 sm:px-6">
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
             <div className="flex items-center gap-3 mb-1">
               <Package className="h-6 w-6 text-primary" />
-              <h1 className="text-2xl font-bold">{order.orderNumber}</h1>
+              <h1 className="text-2xl font-semibold">{order.orderNumber}</h1>
             </div>
             <p className="text-sm text-foreground-secondary">
               Creado el {new Date(order.createdAt).toLocaleDateString("es-EC", {
@@ -221,7 +388,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               })}
             </p>
           </div>
-          <span className={cn("text-sm px-3 py-1.5 rounded-full font-medium", statusInfo.color)}>
+          <span className={cn("text-sm px-3 py-1.5 rounded-full font-normal", statusInfo.color)}>
             {statusInfo.label}
           </span>
         </div>
@@ -232,7 +399,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-amber-800">Transferencia rechazada</p>
+                <p className="text-sm font-normal text-amber-800">Transferencia rechazada</p>
                 <p className="text-sm text-amber-700 mt-1">{order.transferRejectionReason}</p>
               </div>
             </div>
@@ -242,7 +409,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         {/* Timeline */}
         {order.orderStatus !== "cancelled" && (
           <div className="bg-background rounded-xl border border-border p-6 mb-6">
-            <h2 className="font-semibold mb-6">Estado del pedido</h2>
+            <h2 className="font-medium mb-6">Estado del pedido</h2>
 
             {/* Mobile: vertical */}
             <div className="flex flex-col gap-0 sm:hidden">
@@ -251,7 +418,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                   <div className="flex flex-col items-center">
                     <div
                       className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0",
+                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-normal flex-shrink-0",
                         step.active
                           ? "bg-primary text-white"
                           : "bg-secondary text-foreground-muted"
@@ -271,7 +438,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                   <div className="pt-1">
                     <p className={cn(
                       "text-sm",
-                      step.active ? "text-foreground font-medium" : "text-foreground-muted"
+                      step.active ? "text-foreground font-normal" : "text-foreground-muted"
                     )}>
                       {step.label}
                     </p>
@@ -287,7 +454,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                   <div className="flex flex-col items-center flex-shrink-0">
                     <div
                       className={cn(
-                        "w-9 h-9 rounded-full flex items-center justify-center text-xs font-medium",
+                        "w-9 h-9 rounded-full flex items-center justify-center text-xs font-normal",
                         step.active
                           ? "bg-primary text-white"
                           : "bg-secondary text-foreground-muted"
@@ -297,7 +464,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                     </div>
                     <p className={cn(
                       "text-xs mt-2 text-center w-24",
-                      step.active ? "text-foreground font-medium" : "text-foreground-muted"
+                      step.active ? "text-foreground font-normal" : "text-foreground-muted"
                     )}>
                       {step.label}
                     </p>
@@ -319,7 +486,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         {/* Delivery Person */}
         {order.deliveryPerson && (
           <div className="bg-background rounded-xl border border-border p-6 mb-6">
-            <h2 className="font-semibold mb-4">Tu repartidor</h2>
+            <h2 className="font-medium mb-4">Tu repartidor</h2>
             <div className="flex items-start gap-4">
               <div className="w-14 h-14 rounded-full overflow-hidden bg-secondary/30 flex-shrink-0">
                 {order.deliveryPerson.avatarUrl ? (
@@ -337,7 +504,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium">{order.deliveryPerson.fullName}</p>
+                <p className="font-normal">{order.deliveryPerson.fullName}</p>
                 <a
                   href={`tel:${order.deliveryPerson.phone}`}
                   className="text-sm text-primary hover:underline inline-flex items-center gap-1 mt-1"
@@ -389,7 +556,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
 
         {/* Delivery / Pickup Info */}
         <div className="bg-background rounded-xl border border-border p-6 mb-6">
-          <h2 className="font-semibold mb-4">
+          <h2 className="font-medium mb-4">
             {isPickup ? "Información de retiro" : "Información de entrega"}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
@@ -397,36 +564,36 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               <p className="text-foreground-secondary">
                 {isPickup ? "Quien retira" : "Destinatario"}
               </p>
-              <p className="font-medium">{order.recipientName}</p>
+              <p className="font-normal">{order.recipientName}</p>
             </div>
             {order.recipientPhone && (
               <div>
                 <p className="text-foreground-secondary">Teléfono</p>
-                <p className="font-medium">{order.recipientPhone}</p>
+                <p className="font-normal">{order.recipientPhone}</p>
               </div>
             )}
             {!isPickup && order.deliveryAddress && (
               <div className="sm:col-span-2">
                 <p className="text-foreground-secondary">Dirección</p>
-                <p className="font-medium">{order.deliveryAddress}, {order.deliveryCity}</p>
+                <p className="font-normal">{order.deliveryAddress}, {order.deliveryCity}</p>
               </div>
             )}
             {!isPickup && order.deliveryReference && (
               <div className="sm:col-span-2">
                 <p className="text-foreground-secondary">Referencia</p>
-                <p className="font-medium">{order.deliveryReference}</p>
+                <p className="font-normal">{order.deliveryReference}</p>
               </div>
             )}
             {!isPickup && order.deliveryZone && (
               <div>
                 <p className="text-foreground-secondary">Zona de entrega</p>
-                <p className="font-medium">{order.deliveryZone.zoneName}</p>
+                <p className="font-normal">{order.deliveryZone.zoneName}</p>
               </div>
             )}
             <div>
               <p className="text-foreground-secondary">
                 {isPickup ? "Fecha de retiro" : "Fecha"}</p>
-              <p className="font-medium">
+              <p className="font-normal">
                 {new Date(order.deliveryDate + "T00:00:00").toLocaleDateString("es-EC", {
                   weekday: "long",
                   day: "numeric",
@@ -439,14 +606,30 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               <p className="text-foreground-secondary">
                 {isPickup ? "Horario de retiro" : "Horario"}
               </p>
-              <p className="font-medium">{getTimeSlotLabel()}</p>
+              <p className="font-normal">{getTimeSlotLabel()}</p>
             </div>
+            {!isPickup && (order.isSurprise || order.isAnonymous) && (
+              <div className="sm:col-span-2 flex flex-wrap gap-3 pt-1">
+                {order.isSurprise && (
+                  <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+                    <Gift className="h-3.5 w-3.5" />
+                    Entrega sorpresa
+                  </span>
+                )}
+                {order.isAnonymous && (
+                  <span className="inline-flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+                    <EyeOff className="h-3.5 w-3.5" />
+                    Envío anónimo
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Products */}
         <div className="bg-background rounded-xl border border-border p-6 mb-6">
-          <h2 className="font-semibold mb-4">Productos</h2>
+          <h2 className="font-medium mb-4">Productos</h2>
           <div className="space-y-4">
             {order.items.map((item) => (
               <div key={item.id} className="flex items-start gap-4">
@@ -467,8 +650,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between gap-2">
-                    <p className="font-medium text-sm">{item.productNameSnapshot}</p>
-                    <p className="font-medium text-sm flex-shrink-0">{formatPrice(item.lineTotalCents)}</p>
+                    <p className="font-normal text-sm">{item.productNameSnapshot}</p>
+                    <p className="font-normal text-sm flex-shrink-0">{formatPrice(item.lineTotalCents)}</p>
                   </div>
                   <p className="text-xs text-foreground-secondary">Cantidad: {item.quantity}</p>
                   {item.addOns.length > 0 && (
@@ -501,12 +684,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 <span>{formatPrice(order.addOnsTotalCents)}</span>
               </div>
             )}
-            {isPickup ? (
-              <div className="flex justify-between text-sm">
-                <span className="text-foreground-secondary">Retiro en tienda</span>
-                <span className="text-green-600">$0.00</span>
-              </div>
-            ) : (
+            {!isPickup && (
               <div className="flex justify-between text-sm">
                 <span className="text-foreground-secondary">Envío</span>
                 <span>{order.deliveryFeeCents === 0 ? <span className="text-green-600">Gratis</span> : formatPrice(order.deliveryFeeCents)}</span>
@@ -518,7 +696,13 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 <span className="text-green-600">-{formatPrice(order.transferDiscountCents)}</span>
               </div>
             )}
-            <div className="flex justify-between font-semibold text-lg border-t border-border pt-2">
+            {order.taxCents > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-foreground-secondary">IVA (15%)</span>
+                <span>{formatPrice(order.taxCents)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-medium text-lg border-t border-border pt-2">
               <span>Total</span>
               <span className="text-primary">{formatPrice(order.totalCents)}</span>
             </div>
@@ -527,15 +711,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
 
         {/* Payment Info */}
         <div className="bg-background rounded-xl border border-border p-6 mb-6">
-          <h2 className="font-semibold mb-4">Pago</h2>
+          <h2 className="font-medium mb-4">Pago</h2>
           <div className="text-sm space-y-2">
             <div className="flex justify-between">
               <span className="text-foreground-secondary">Método</span>
-              <span className="font-medium">{PAYMENT_METHOD_LABELS[order.paymentMethod] || order.paymentMethod}</span>
+              <span className="font-normal">{PAYMENT_METHOD_LABELS[order.paymentMethod] || order.paymentMethod}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-foreground-secondary">Estado del pago</span>
-              <span className="font-medium">{order.paymentStatus === "paid" ? "Confirmado" : order.paymentStatus === "awaiting_verification" ? "Verificando comprobante" : "Pendiente"}</span>
+              <span className="font-normal">{order.paymentStatus === "paid" ? "Confirmado" : order.paymentStatus === "awaiting_verification" ? "Verificando comprobante" : "Pendiente"}</span>
             </div>
           </div>
         </div>
@@ -555,7 +739,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         {/* Transfer proof already uploaded - awaiting verification */}
         {isTransfer && order.paymentStatus === "awaiting_verification" && order.transferProofUrl && (
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-            <p className="text-sm text-blue-800 font-medium">
+            <p className="text-sm text-blue-800 font-normal">
               Comprobante de pago subido. Estamos verificando tu transferencia.
             </p>
           </div>
@@ -564,7 +748,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         {/* Transfer proof uploaded and paid */}
         {isTransfer && order.paymentStatus === "paid" && order.transferProofUrl && (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
-            <p className="text-sm text-green-800 font-medium">
+            <p className="text-sm text-green-800 font-normal">
               Pago verificado correctamente.
             </p>
           </div>

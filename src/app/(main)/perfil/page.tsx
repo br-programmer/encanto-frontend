@@ -32,6 +32,7 @@ import { useAddressesStore, type DeliveryAddress } from "@/stores/addresses-stor
 import { resendVerificationAction, uploadAvatarAction, deleteAvatarAction } from "@/actions/auth-actions";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 export default function PerfilPage() {
@@ -211,8 +212,67 @@ export default function PerfilPage() {
 
   if (!mounted || !_hasHydrated || authLoading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <Skeleton className="h-9 w-40 mb-6 sm:mb-8" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+          {/* Left column skeleton */}
+          <div className="lg:col-span-1">
+            <div className="bg-background rounded-xl border border-border p-4 sm:p-6">
+              <div className="flex flex-col items-center mb-6">
+                <Skeleton className="w-24 h-24 rounded-full mb-4" />
+                <Skeleton className="h-6 w-40 mb-1" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-5 w-5 rounded-full" />
+                  <div className="flex-1">
+                    <Skeleton className="h-3.5 w-12 mb-1" />
+                    <Skeleton className="h-4 w-48" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-5 w-5 rounded-full" />
+                  <div>
+                    <Skeleton className="h-3.5 w-16 mb-1" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6 pt-6 border-t border-border">
+                <Skeleton className="h-11 w-full rounded-lg" />
+              </div>
+              <div className="mt-4 pt-4 border-t border-border">
+                <Skeleton className="h-10 w-full rounded-lg" />
+              </div>
+            </div>
+          </div>
+          {/* Right column skeleton */}
+          <div className="lg:col-span-2">
+            <div className="bg-background rounded-xl border border-border p-4 sm:p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <Skeleton className="w-10 h-10 rounded-full" />
+                <div>
+                  <Skeleton className="h-5 w-48 mb-1" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+              </div>
+              <div className="space-y-4">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div key={i} className="p-3 sm:p-4 rounded-lg border border-border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Skeleton className="h-4 w-4" />
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                    <Skeleton className="h-4 w-56 mb-1" />
+                    <Skeleton className="h-4 w-full mb-1" />
+                    <Skeleton className="h-4 w-40" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -223,7 +283,7 @@ export default function PerfilPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6 sm:mb-8">Mi Perfil</h1>
+      <h1 className="text-2xl md:text-3xl font-semibold mb-6 sm:mb-8">Mi Perfil</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         {/* Left Column - User Info */}
@@ -274,7 +334,7 @@ export default function PerfilPage() {
                   )}
                 </div>
               </div>
-              <h2 className="text-xl font-semibold text-center">{user.fullName}</h2>
+              <h2 className="text-xl font-medium text-center">{user.fullName}</h2>
               <p className="text-sm text-foreground-secondary">Cliente</p>
             </div>
 
@@ -308,7 +368,7 @@ export default function PerfilPage() {
                   Tu correo electrónico no está verificado. Verifica tu cuenta para acceder a todas las funcionalidades.
                 </p>
                 {verificationSent ? (
-                  <p className="text-sm text-green-700 font-medium">
+                  <p className="text-sm text-green-700 font-normal">
                     Correo de verificación enviado. Revisa tu bandeja de entrada.
                   </p>
                 ) : (
@@ -334,12 +394,12 @@ export default function PerfilPage() {
             {/* Quick Links */}
             <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border space-y-2">
               <Link
-                href="/perfil/pedidos"
+                href="/pedidos"
                 className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <Package className="h-5 w-5 text-primary" />
-                  <span className="text-sm font-medium">Mis pedidos</span>
+                  <span className="text-sm font-normal">Mis pedidos</span>
                 </div>
                 <ChevronRight className="h-4 w-4 text-foreground-secondary" />
               </Link>
@@ -367,7 +427,7 @@ export default function PerfilPage() {
                   <MapPin className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-lg sm:text-xl font-semibold">Direcciones de entrega</h2>
+                  <h2 className="text-lg sm:text-xl font-medium">Direcciones de entrega</h2>
                   <p className="text-sm text-foreground-secondary">
                     {addresses.length} {addresses.length === 1 ? "dirección guardada" : "direcciones guardadas"}
                   </p>
@@ -397,13 +457,13 @@ export default function PerfilPage() {
             {/* Address Form */}
             {showAddressForm && (
               <div className="mb-6 p-3 sm:p-4 bg-secondary/30 rounded-lg border border-border">
-                <h3 className="font-medium mb-4">
+                <h3 className="font-normal mb-4">
                   {editingAddress ? "Editar dirección" : "Nueva dirección"}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Label */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">Etiqueta</label>
+                    <label className="block text-sm font-normal mb-2">Etiqueta</label>
                     <Select value={addressFormData.label} onValueChange={(value) => setAddressFormData({ ...addressFormData, label: value })}>
                       <SelectTrigger>
                         <SelectValue />
@@ -418,7 +478,7 @@ export default function PerfilPage() {
 
                   {/* Recipient Name */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">
+                    <label className="block text-sm font-normal mb-2">
                       Nombre del destinatario <span className="text-destructive">*</span>
                     </label>
                     <Input
@@ -431,7 +491,7 @@ export default function PerfilPage() {
 
                   {/* Phone */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">
+                    <label className="block text-sm font-normal mb-2">
                       Teléfono <span className="text-destructive">*</span>
                     </label>
                     <Input
@@ -444,7 +504,7 @@ export default function PerfilPage() {
 
                   {/* City */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">Ciudad</label>
+                    <label className="block text-sm font-normal mb-2">Ciudad</label>
                     <Select value={addressFormData.city} onValueChange={(value) => setAddressFormData({ ...addressFormData, city: value })}>
                       <SelectTrigger>
                         <SelectValue />
@@ -459,7 +519,7 @@ export default function PerfilPage() {
 
                   {/* Address */}
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium mb-2">
+                    <label className="block text-sm font-normal mb-2">
                       Dirección <span className="text-destructive">*</span>
                     </label>
                     <Input
@@ -472,7 +532,7 @@ export default function PerfilPage() {
 
                   {/* Zone */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">
+                    <label className="block text-sm font-normal mb-2">
                       Zona/Sector <span className="text-destructive">*</span>
                     </label>
                     <Input
@@ -485,7 +545,7 @@ export default function PerfilPage() {
 
                   {/* Notes */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">Notas adicionales</label>
+                    <label className="block text-sm font-normal mb-2">Notas adicionales</label>
                     <Input
                       type="text"
                       value={addressFormData.notes}
@@ -558,7 +618,7 @@ export default function PerfilPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
                           {getLabelIcon(address.label)}
-                          <span className="font-medium">{address.label}</span>
+                          <span className="font-normal">{address.label}</span>
                           {address.isDefault && (
                             <span className="inline-flex items-center gap-1 text-xs bg-primary text-white px-2 py-0.5 rounded-full">
                               <Star className="h-3 w-3" />

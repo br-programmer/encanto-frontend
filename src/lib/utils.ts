@@ -45,11 +45,10 @@ export function calculateDiscount(
 
 /**
  * Check if a product is in stock
- * @param stock - Stock quantity (from product.stock or product.inventory?.quantity)
- * @returns true if stock > 0
+ * @param inStock - Boolean from product.inStock
  */
-export function isInStock(stock?: number | null): boolean {
-  return (stock ?? 0) > 0;
+export function isInStock(inStock?: boolean | null): boolean {
+  return inStock === true;
 }
 
 /**

@@ -95,7 +95,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
             <User className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold">Datos del cliente</h2>
+            <h2 className="text-xl font-medium">Datos del cliente</h2>
             <p className="text-sm text-foreground-secondary">
               Elige cómo deseas continuar
             </p>
@@ -111,7 +111,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
             <div className="flex items-center gap-3">
               <LogIn className="h-5 w-5 text-primary" />
               <div>
-                <p className="font-medium">Iniciar sesión</p>
+                <p className="font-normal">Iniciar sesión</p>
                 <p className="text-sm text-foreground-secondary">
                   Ya tengo una cuenta
                 </p>
@@ -128,7 +128,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
             <div className="flex items-center gap-3">
               <UserPlus className="h-5 w-5 text-primary" />
               <div>
-                <p className="font-medium">Crear cuenta</p>
+                <p className="font-normal">Crear cuenta</p>
                 <p className="text-sm text-foreground-secondary">
                   Registrarme para futuras compras
                 </p>
@@ -145,7 +145,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
             <div className="flex items-center gap-3">
               <User className="h-5 w-5 text-foreground-secondary" />
               <div>
-                <p className="font-medium">Continuar como invitado</p>
+                <p className="font-normal">Continuar como invitado</p>
                 <p className="text-sm text-foreground-secondary">
                   Sin crear cuenta
                 </p>
@@ -175,7 +175,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
           <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
             <LogIn className="h-8 w-8 text-primary" />
           </div>
-          <h2 className="text-xl font-semibold">Iniciar sesión</h2>
+          <h2 className="text-xl font-medium">Iniciar sesión</h2>
           <p className="text-sm text-foreground-secondary">
             Ingresa tus credenciales para continuar
           </p>
@@ -183,7 +183,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label htmlFor="loginEmail" className="block text-sm font-medium mb-2">
+            <label htmlFor="loginEmail" className="block text-sm font-normal mb-2">
               Correo electrónico
             </label>
             <div className="relative">
@@ -200,7 +200,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
           </div>
 
           <div>
-            <label htmlFor="loginPassword" className="block text-sm font-medium mb-2">
+            <label htmlFor="loginPassword" className="block text-sm font-normal mb-2">
               Contraseña
             </label>
             <div className="relative">
@@ -238,7 +238,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
             <button
               type="button"
               onClick={() => setMode("register")}
-              className="text-primary hover:underline font-medium"
+              className="text-primary hover:underline font-normal"
             >
               Regístrate aquí
             </button>
@@ -264,7 +264,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
         <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
           <UserPlus className="h-8 w-8 text-primary" />
         </div>
-        <h2 className="text-xl font-semibold">Crear cuenta</h2>
+        <h2 className="text-xl font-medium">Crear cuenta</h2>
         <p className="text-sm text-foreground-secondary">
           Completa tus datos para registrarte
         </p>
@@ -272,7 +272,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
 
       <form onSubmit={handleRegister} className="space-y-4">
         <div>
-          <label htmlFor="registerName" className="block text-sm font-medium mb-2">
+          <label htmlFor="registerName" className="block text-sm font-normal mb-2">
             Nombre completo <span className="text-destructive">*</span>
           </label>
           <div className="relative">
@@ -289,7 +289,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
         </div>
 
         <div>
-          <label htmlFor="registerEmail" className="block text-sm font-medium mb-2">
+          <label htmlFor="registerEmail" className="block text-sm font-normal mb-2">
             Correo electrónico <span className="text-destructive">*</span>
           </label>
           <div className="relative">
@@ -306,7 +306,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
         </div>
 
         <div>
-          <label htmlFor="registerPhone" className="block text-sm font-medium mb-2">
+          <label htmlFor="registerPhone" className="block text-sm font-normal mb-2">
             Teléfono <span className="text-destructive">*</span>
           </label>
           <div className="relative">
@@ -324,7 +324,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="registerPassword" className="block text-sm font-medium mb-2">
+            <label htmlFor="registerPassword" className="block text-sm font-normal mb-2">
               Contraseña <span className="text-destructive">*</span>
             </label>
             <div className="relative">
@@ -341,7 +341,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
           </div>
 
           <div>
-            <label htmlFor="registerConfirmPassword" className="block text-sm font-medium mb-2">
+            <label htmlFor="registerConfirmPassword" className="block text-sm font-normal mb-2">
               Confirmar <span className="text-destructive">*</span>
             </label>
             <div className="relative">
@@ -380,7 +380,7 @@ export function CheckoutAuth({ onGuestCheckout, onAuthenticated }: CheckoutAuthP
           <button
             type="button"
             onClick={() => setMode("login")}
-            className="text-primary hover:underline font-medium"
+            className="text-primary hover:underline font-normal"
           >
             Inicia sesión
           </button>

@@ -15,7 +15,7 @@ export default async function CategoriasPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background-alt">
       <Breadcrumb items={[{ label: "Categorías" }]} />
 
       {/* Header */}

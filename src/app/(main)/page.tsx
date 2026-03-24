@@ -1,71 +1,25 @@
 import Link from "next/link";
 import { ArrowRight, Truck, Clock, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ProductCard } from "@/components/product-card";
-import { CategoryCard } from "@/components/category-card";
+import { FeaturedProductsCarousel } from "@/components/featured-products-carousel";
 import { InstagramFeed } from "@/components/instagram-feed";
 import { HeroCarousel } from "@/components/hero-carousel";
-import { NextSpecialDate } from "@/components/next-special-date";
 import { ScrollRevealSection } from "@/components/scroll-reveal-section";
-import { StackedCardsSection } from "@/components/stacked-cards-section";
 import { api } from "@/lib/api";
 
 export default async function Home() {
-  // Fetch categories, featured products, Instagram feed, and special dates in parallel
-  const [categoriesResponse, productsResponse, specialDatesResponse, instagramResponse] = await Promise.all([
-    api.categories.list({ isActive: true, rootOnly: true, limit: 6 }),
+  const [productsResponse, instagramResponse] = await Promise.all([
     api.products.featured(8),
-    api.specialDates.list({ isActive: true, limit: 20 }).catch(() => ({ result: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } })),
     api.instagram.feed({ limit: 6 }).catch(() => ({ result: [], meta: { total: 0, cachedAt: "", expiresAt: "" } })),
   ]);
 
-  const categories = categoriesResponse.result;
   const featuredProducts = productsResponse.result;
   const instagramPosts = instagramResponse.result;
-  const specialDates = specialDatesResponse.result;
 
   return (
     <div className="flex flex-col">
       {/* Hero Banner */}
       <HeroCarousel />
-
-      {/* Categories Section */}
-      <section className="py-10 sm:py-16 bg-background">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-6 sm:mb-8">
-            <div>
-              <h2 className="font-serif">Categorías</h2>
-              <p className="text-foreground-secondary text-sm sm:text-base mt-1">
-                Encuentra el arreglo perfecto para cada ocasión
-              </p>
-            </div>
-            <Button variant="ghost" asChild className="hidden sm:flex">
-              <Link href="/categorias">
-                Ver todas
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-
-          {categories.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {categories.map((category) => (
-                <CategoryCard key={category.id} category={category} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-foreground-secondary py-8">
-              No hay categorías disponibles.
-            </p>
-          )}
-
-          <div className="text-center mt-6 sm:hidden">
-            <Button variant="outline" className="h-11" asChild>
-              <Link href="/categorias">Ver todas las categorías</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
 
       {/* Featured Products Section */}
       <section className="py-10 sm:py-16 bg-background-alt">
@@ -86,11 +40,7 @@ export default async function Home() {
           </div>
 
           {featuredProducts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} hideFeaturedBadge />
-              ))}
-            </div>
+            <FeaturedProductsCarousel products={featuredProducts} />
           ) : (
             <p className="text-center text-foreground-secondary py-8">
               No hay productos destacados disponibles.
@@ -104,9 +54,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      {/* Next Special Date Parallax */}
-      <NextSpecialDate specialDates={specialDates} />
 
       {/* Features Section */}
       <section className="py-10 sm:py-16 bg-background">
@@ -123,7 +70,7 @@ export default async function Home() {
               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                 <Truck className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               </div>
-              <h3 className="text-base sm:text-lg font-semibold mb-2">Envío el Mismo Día</h3>
+              <h3 className="text-base sm:text-lg font-medium mb-2">Envío el Mismo Día</h3>
               <p className="text-foreground-secondary text-xs sm:text-sm">
                 Pedidos antes de las 2pm se entregan el mismo día en Manta.
               </p>
@@ -133,7 +80,7 @@ export default async function Home() {
               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                 <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               </div>
-              <h3 className="text-base sm:text-lg font-semibold mb-2">Flores Frescas</h3>
+              <h3 className="text-base sm:text-lg font-medium mb-2">Flores Frescas</h3>
               <p className="text-foreground-secondary text-xs sm:text-sm">
                 Seleccionamos las mejores flores cada día para garantizar frescura y calidad.
               </p>
@@ -143,7 +90,7 @@ export default async function Home() {
               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                 <Gift className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               </div>
-              <h3 className="text-base sm:text-lg font-semibold mb-2">Tarjeta Dedicatoria</h3>
+              <h3 className="text-base sm:text-lg font-medium mb-2">Tarjeta Dedicatoria</h3>
               <p className="text-foreground-secondary text-xs sm:text-sm">
                 Incluye un mensaje personalizado para hacer tu regalo más especial.
               </p>
@@ -152,13 +99,10 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Stacked Cards Section - Apple AirPods Style */}
-      <StackedCardsSection />
-
       {/* Instagram Feed */}
       <InstagramFeed posts={instagramPosts} instagramUrl="https://www.instagram.com/encantofloristeria_ecu" />
 
-      {/* Scroll Reveal Section - Apple Style */}
+      {/* Scroll Reveal Section */}
       <ScrollRevealSection />
 
       {/* WhatsApp CTA */}

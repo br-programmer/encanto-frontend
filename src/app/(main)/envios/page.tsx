@@ -30,7 +30,7 @@ export default function EnviosPage() {
             <div className="w-14 h-14 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
               <Truck className="h-7 w-7 text-primary" />
             </div>
-            <h3 className="font-semibold mb-2">Entrega el Mismo Día</h3>
+            <h3 className="font-medium mb-2">Entrega el Mismo Día</h3>
             <p className="text-foreground-secondary text-sm">
               Pedidos antes de las 2:00 PM se entregan el mismo día
             </p>
@@ -40,7 +40,7 @@ export default function EnviosPage() {
             <div className="w-14 h-14 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
               <Clock className="h-7 w-7 text-primary" />
             </div>
-            <h3 className="font-semibold mb-2">Horario de Entregas</h3>
+            <h3 className="font-medium mb-2">Horario de Entregas</h3>
             <p className="text-foreground-secondary text-sm">
               Lunes a Sábado de 9:00 AM a 7:00 PM
             </p>
@@ -50,7 +50,7 @@ export default function EnviosPage() {
             <div className="w-14 h-14 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
               <MapPin className="h-7 w-7 text-primary" />
             </div>
-            <h3 className="font-semibold mb-2">Cobertura</h3>
+            <h3 className="font-medium mb-2">Cobertura</h3>
             <p className="text-foreground-secondary text-sm">
               Manta y zonas aledañas
             </p>
@@ -80,20 +80,20 @@ export default function EnviosPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-serif mb-4">2. Horarios de Entrega</h2>
 
-            <h3 className="text-lg font-semibold mb-2">Horario Regular</h3>
+            <h3 className="text-lg font-medium mb-2">Horario Regular</h3>
             <ul className="list-disc pl-6 text-foreground-secondary space-y-2 mb-4">
               <li><strong>Lunes a Sábado:</strong> 9:00 AM - 7:00 PM</li>
               <li><strong>Domingos:</strong> No realizamos entregas</li>
             </ul>
 
-            <h3 className="text-lg font-semibold mb-2">Corte para Entrega el Mismo Día</h3>
+            <h3 className="text-lg font-medium mb-2">Corte para Entrega el Mismo Día</h3>
             <p className="text-foreground-secondary mb-4">
               Para recibir su pedido el mismo día, debe realizar y confirmar su compra antes de las
               <strong> 2:00 PM</strong>. Los pedidos recibidos después de esta hora se programarán
               para el siguiente día hábil.
             </p>
 
-            <h3 className="text-lg font-semibold mb-2">Fechas Especiales</h3>
+            <h3 className="text-lg font-medium mb-2">Fechas Especiales</h3>
             <p className="text-foreground-secondary mb-4">
               Durante fechas de alta demanda como San Valentín, Día de la Madre y otras ocasiones especiales,
               recomendamos realizar su pedido con al menos 48 horas de anticipación para garantizar la entrega
@@ -110,8 +110,8 @@ export default function EnviosPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left py-2 font-semibold">Zona</th>
-                    <th className="text-right py-2 font-semibold">Costo</th>
+                    <th className="text-left py-2 font-medium">Zona</th>
+                    <th className="text-right py-2 font-medium">Costo</th>
                   </tr>
                 </thead>
                 <tbody className="text-foreground-secondary">
@@ -138,19 +138,19 @@ export default function EnviosPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-serif mb-4">4. Proceso de Entrega</h2>
 
-            <h3 className="text-lg font-semibold mb-2">Confirmación</h3>
+            <h3 className="text-lg font-medium mb-2">Confirmación</h3>
             <p className="text-foreground-secondary mb-4">
               Una vez confirmado su pedido, recibirá una notificación con los detalles de la entrega.
               Nos comunicaremos con el destinatario (si es diferente al comprador) para coordinar la entrega.
             </p>
 
-            <h3 className="text-lg font-semibold mb-2">Durante la Entrega</h3>
+            <h3 className="text-lg font-medium mb-2">Durante la Entrega</h3>
             <p className="text-foreground-secondary mb-4">
               Nuestro repartidor se comunicará con el destinatario al llegar. Es importante que alguien
               esté disponible para recibir el pedido en la dirección indicada.
             </p>
 
-            <h3 className="text-lg font-semibold mb-2">Intentos de Entrega</h3>
+            <h3 className="text-lg font-medium mb-2">Intentos de Entrega</h3>
             <p className="text-foreground-secondary mb-4">
               Si no hay nadie disponible para recibir el pedido, intentaremos contactar al destinatario
               o al comprador. Si no logramos realizar la entrega después de dos intentos, el pedido
@@ -190,7 +190,7 @@ export default function EnviosPage() {
               <div className="flex gap-3">
                 <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-amber-800 font-medium mb-1">Importante</p>
+                  <p className="text-amber-800 font-normal mb-1">Importante</p>
                   <p className="text-amber-700 text-sm">
                     Si hay algún problema con su entrega o el producto llega en mal estado,
                     contáctenos inmediatamente con fotografías. Las reclamaciones deben realizarse
@@ -214,7 +214,7 @@ export default function EnviosPage() {
               Si prefiere retirar su pedido personalmente, puede hacerlo sin costo de envío en nuestra tienda:
             </p>
             <div className="bg-secondary/30 rounded-lg p-4 mb-4">
-              <p className="font-medium">Encanto Florería</p>
+              <p className="font-normal">Encanto Florería</p>
               <p className="text-foreground-secondary">Calle 22, Manta, Ecuador</p>
               <p className="text-foreground-secondary text-sm mt-2">
                 Horario: Lunes a Sábado de 9:00 AM a 7:00 PM

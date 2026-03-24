@@ -50,7 +50,7 @@ export function CartSidebar() {
           <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-border">
             <div className="flex items-center gap-2">
               <ShoppingBag className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold">Tu Carrito</h2>
+              <h2 className="text-lg font-medium">Tu Carrito</h2>
               <span className="text-sm text-foreground-secondary">
                 ({displayItems.length} {displayItems.length === 1 ? "item" : "items"})
               </span>
@@ -105,12 +105,12 @@ export function CartSidebar() {
                       <div className="flex-1 min-w-0">
                         <Link
                           href={`/productos/${item.product.slug}`}
-                          className="font-medium text-xs sm:text-sm hover:text-primary transition-colors line-clamp-2"
+                          className="font-normal text-xs sm:text-sm hover:text-primary transition-colors line-clamp-2"
                           onClick={closeCart}
                         >
                           {item.product.name}
                         </Link>
-                        <p className="text-primary font-semibold text-sm sm:text-base mt-1">
+                        <p className="text-primary font-medium text-sm sm:text-base mt-1">
                           {formatPrice(item.product.priceCents)}
                         </p>
 
@@ -148,7 +148,7 @@ export function CartSidebar() {
                             >
                               <Minus className="h-4 w-4" />
                             </Button>
-                            <span className="w-8 text-center text-sm font-medium">
+                            <span className="w-8 text-center text-sm font-normal">
                               {item.quantity}
                             </span>
                             <Button
@@ -184,7 +184,7 @@ export function CartSidebar() {
               <div className="border-t border-border p-4 sm:p-6 space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-foreground-secondary text-sm sm:text-base">Subtotal</span>
-                  <span className="text-base sm:text-lg font-semibold">
+                  <span className="text-base sm:text-lg font-medium">
                     {formatPrice(mounted ? totalPrice() : 0)}
                   </span>
                 </div>

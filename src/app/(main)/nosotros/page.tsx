@@ -65,7 +65,7 @@ export default function NosotrosPage() {
               <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
                 <Heart className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Pasión</h3>
+              <h3 className="text-lg font-medium mb-2">Pasión</h3>
               <p className="text-foreground-secondary text-sm">
                 Amamos lo que hacemos y eso se refleja en cada detalle de nuestros arreglos.
               </p>
@@ -75,7 +75,7 @@ export default function NosotrosPage() {
               <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
                 <Leaf className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Frescura</h3>
+              <h3 className="text-lg font-medium mb-2">Frescura</h3>
               <p className="text-foreground-secondary text-sm">
                 Solo trabajamos con flores frescas de la más alta calidad.
               </p>
@@ -85,7 +85,7 @@ export default function NosotrosPage() {
               <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
                 <Award className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Calidad</h3>
+              <h3 className="text-lg font-medium mb-2">Calidad</h3>
               <p className="text-foreground-secondary text-sm">
                 Nos comprometemos con la excelencia en cada arreglo que creamos.
               </p>
@@ -95,7 +95,7 @@ export default function NosotrosPage() {
               <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Servicio</h3>
+              <h3 className="text-lg font-medium mb-2">Servicio</h3>
               <p className="text-foreground-secondary text-sm">
                 Tu satisfacción es nuestra prioridad. Estamos aquí para ayudarte.
               </p>

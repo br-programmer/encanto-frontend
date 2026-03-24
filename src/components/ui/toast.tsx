@@ -107,7 +107,7 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
       )}
     >
       {icons[toast.type]}
-      <p className="flex-1 text-sm font-medium text-foreground">{toast.message}</p>
+      <p className="flex-1 text-sm font-normal text-foreground">{toast.message}</p>
       <button
         onClick={onClose}
         className="text-foreground-muted hover:text-foreground transition-colors"

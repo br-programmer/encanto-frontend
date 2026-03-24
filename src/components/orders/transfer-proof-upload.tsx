@@ -70,17 +70,17 @@ export function TransferProofUpload({
       <div className="p-6 border-b border-border">
         <div className="flex items-center gap-2 mb-2">
           <Building2 className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Datos para transferencia</h3>
+          <h3 className="font-medium">Datos para transferencia</h3>
         </div>
         <p className="text-sm text-foreground-secondary mb-4">
-          Realiza la transferencia por <span className="font-semibold text-primary">{formatPrice(totalCents)}</span>:
+          Realiza la transferencia por <span className="font-medium text-primary">{formatPrice(totalCents)}</span>:
         </p>
         <div className="space-y-3">
           {bankAccounts.map((account) => (
             <div key={account.id} className="p-3 bg-secondary/30 rounded-lg border border-border text-sm">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium">{account.bankName}</p>
+                  <p className="font-normal">{account.bankName}</p>
                   <p className="text-foreground-secondary">
                     {account.accountType === "savings" ? "Ahorros" : "Corriente"} — {account.accountNumber}
                   </p>
@@ -108,7 +108,7 @@ export function TransferProofUpload({
 
       {/* Upload */}
       <div className="p-6">
-        <h3 className="font-medium mb-3">Subir comprobante de pago</h3>
+        <h3 className="font-normal mb-3">Subir comprobante de pago</h3>
         <label className="flex flex-col items-center gap-3 p-6 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
           {isUploading ? (
             <>

@@ -31,6 +31,7 @@ interface AuthState {
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   refreshToken: () => Promise<boolean>;
+  getValidAccessToken: () => Promise<string | undefined>;
   fetchUser: () => Promise<void>;
   clearError: () => void;
 }
@@ -66,6 +67,28 @@ function clearTokens() {
   if (typeof window !== "undefined") {
     localStorage.removeItem(TOKENS_KEY);
   }
+}
+
+/**
+ * Decode JWT payload without verifying signature.
+ * Returns the exp (seconds since epoch) or null if invalid.
+ */
+function getTokenExp(token: string): number | null {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+    const decoded = JSON.parse(atob(payload));
+    return decoded.exp ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Check if token expires within the next `bufferSeconds` (default 60s) */
+function isTokenExpiringSoon(token: string, bufferSeconds = 60): boolean {
+  const exp = getTokenExp(token);
+  if (!exp) return true;
+  return Date.now() / 1000 >= exp - bufferSeconds;
 }
 
 const GUEST_TOKEN_KEY = "encanto-guest-token";
@@ -227,6 +250,22 @@ export const useAuthStore = create<AuthState>()(
           get().logout();
           return false;
         }
+      },
+
+      getValidAccessToken: async () => {
+        const currentTokens = get().tokens || getTokens();
+        if (!currentTokens?.accessToken) return undefined;
+
+        if (!isTokenExpiringSoon(currentTokens.accessToken)) {
+          return currentTokens.accessToken;
+        }
+
+        // Token expired or expiring soon — try refresh
+        const refreshed = await get().refreshToken();
+        if (refreshed) {
+          return get().tokens?.accessToken;
+        }
+        return undefined;
       },
 
       fetchUser: async () => {
