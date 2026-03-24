@@ -176,20 +176,22 @@ export function OrderSummary({
               <span>{formatPrice(displayCardMessage)}</span>
             </div>
           )}
-          <div className="flex justify-between text-sm">
-            <span className="text-foreground-secondary">
-              {isPickup ? "Retiro en tienda" : "Envío"}
-            </span>
-            <span>
-              {isPickup ? (
-                <span className="text-green-600">$0.00</span>
-              ) : displayShipping === 0 ? (
-                <span className="text-green-600">Gratis</span>
-              ) : (
-                formatPrice(displayShipping)
-              )}
-            </span>
-          </div>
+          {preview ? (
+            <div className="flex justify-between text-sm">
+              <span className="text-foreground-secondary">
+                {isPickup ? "Retiro en tienda" : "Envío"}
+              </span>
+              <span>
+                {isPickup ? (
+                  <span className="text-green-600">$0.00</span>
+                ) : displayShipping === 0 ? (
+                  <span className="text-green-600">Gratis</span>
+                ) : (
+                  formatPrice(displayShipping)
+                )}
+              </span>
+            </div>
+          ) : null}
           {displayDiscount > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-green-600">Descuento transferencia</span>
