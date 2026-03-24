@@ -40,13 +40,15 @@ export default function HomeLoading() {
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
-                className="bg-background rounded-xl border border-border overflow-hidden"
+                className="bg-white dark:bg-stone-900 rounded-sm shadow-md"
+                style={{ transform: `rotate(${i % 2 === 0 ? -1.5 : 1.5}deg)` }}
               >
-                <Skeleton className="aspect-square w-full" />
-                <div className="p-4">
-                  <Skeleton className="h-5 w-full" />
-                  <Skeleton className="h-5 w-20 mt-2" />
-                  <Skeleton className="h-9 w-full mt-4" />
+                <div className="p-2.5 pb-0 sm:p-3 sm:pb-0">
+                  <Skeleton className="aspect-[4/5] w-full" />
+                </div>
+                <div className="p-3 sm:p-4 pt-2.5 sm:pt-3 text-center space-y-2">
+                  <Skeleton className="h-4 w-3/4 mx-auto" />
+                  <Skeleton className="h-5 w-16 mx-auto" />
                 </div>
               </div>
             ))}

@@ -45,7 +45,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background-alt">
       <Breadcrumb
         items={[
           { label: "Categorías", href: "/categorias" },
@@ -72,7 +72,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} disableRotation />
               ))}
             </div>
 
