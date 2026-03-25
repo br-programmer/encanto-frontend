@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { SafeImage } from "@/components/ui/safe-image";
-import { Heart, Sparkles, Package, Truck } from "lucide-react";
+import { Heart, Sparkles } from "lucide-react";
 
 interface RevealItemProps {
   children: React.ReactNode;
@@ -55,41 +55,27 @@ const steps = [
     icon: Heart,
     title: "Nació de un sueño",
     description:
-      "Encanto comenzó como un pequeño emprendimiento en Manta, con la ilusión de llevar alegría a cada hogar a través de las flores.",
+      "Encanto comenzó como un pequeño emprendimiento en Manta, con la ilusión de llevar alegría a cada hogar a través de las flores. Lo que empezó como un sueño hoy es la florería de confianza de cientos de familias.",
     image: "https://images.unsplash.com/photo-1455659817273-f96807779a8a?w=800&q=80",
+    hoverImage: "https://images.unsplash.com/photo-1508610048659-a06b669e3321?w=800&q=80",
   },
   {
     number: "02",
     icon: Sparkles,
-    title: "Pasión por cada detalle",
-    description:
-      "Cada arreglo es diseñado a mano por nuestro equipo, cuidando los colores, las texturas y la frescura de cada flor.",
-    image: "https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&q=80",
-  },
-  {
-    number: "03",
-    icon: Package,
-    title: "Crecimos junto a ti",
-    description:
-      "Gracias a la confianza de nuestros clientes, hoy llevamos flores a más ciudades y seguimos creciendo con la misma dedicación del primer día.",
-    image: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=800&q=80",
-  },
-  {
-    number: "04",
-    icon: Truck,
     title: "Tu florería de confianza",
     description:
-      "Nos esforzamos por hacer de cada entrega un momento especial. Porque regalar flores es regalar emociones.",
-    image: "https://images.unsplash.com/photo-1549488344-cbb6c34cf08b?w=800&q=80",
+      "Cada arreglo es diseñado a mano, cuidando los colores, las texturas y la frescura de cada flor. Nos esforzamos por hacer de cada entrega un momento especial, porque regalar flores es regalar emociones.",
+    image: "https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&q=80",
+    hoverImage: "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=800&q=80",
   },
 ];
 
 export function ScrollRevealSection() {
   return (
-    <section className="py-20 sm:py-28 md:py-36 bg-background-alt overflow-hidden">
+    <section className="py-12 sm:py-16 md:py-20 bg-background-alt overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <RevealItem className="text-center mb-16 sm:mb-24">
+        <RevealItem className="text-center mb-10 sm:mb-14">
           <p className="text-primary font-normal text-sm sm:text-base uppercase tracking-wider mb-4">
             Nuestra historia
           </p>
@@ -104,30 +90,37 @@ export function ScrollRevealSection() {
         </RevealItem>
 
         {/* Steps */}
-        <div className="space-y-24 sm:space-y-32 md:space-y-40">
+        <div className="space-y-0">
           {steps.map((step, index) => (
             <div
               key={step.number}
               className={`flex flex-col ${
                 index % 2 === 0 ? "lg:flex-row" : "lg:flex-row-reverse"
-              } items-center gap-8 sm:gap-12 lg:gap-20`}
+              } items-center gap-6 sm:gap-8 lg:gap-12`}
             >
-              {/* Image */}
+              {/* Image with hover swap */}
               <RevealItem
                 delay={100}
                 className="w-full lg:w-1/2"
               >
-                <div className="relative aspect-[4/3] rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
+                <div className="group/img relative aspect-[4/3] rounded-lg overflow-hidden shadow-2xl">
                   <SafeImage
                     src={step.image}
                     alt={step.title}
                     fill
-                    className="object-cover"
+                    className="object-cover transition-opacity duration-1000 group-hover/img:opacity-0"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                  />
+                  <SafeImage
+                    src={step.hoverImage}
+                    alt={`${step.title} - detalle`}
+                    fill
+                    className="object-cover opacity-0 transition-opacity duration-1000 group-hover/img:opacity-100"
                     sizes="(max-width: 1024px) 100vw, 50vw"
                   />
                   {/* Number overlay */}
                   <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
-                    <span className="text-7xl sm:text-8xl md:text-9xl font-semibold text-white/20 font-serif leading-none">
+                    <span className="text-7xl sm:text-8xl md:text-9xl font-medium text-white/20 font-serif leading-none">
                       {step.number}
                     </span>
                   </div>
@@ -159,7 +152,7 @@ export function ScrollRevealSection() {
         </div>
 
         {/* Bottom CTA */}
-        <RevealItem delay={200} className="text-center mt-20 sm:mt-28 md:mt-36">
+        <RevealItem delay={200} className="text-center mt-12 sm:mt-16 md:mt-20">
           <p className="text-foreground-secondary text-lg sm:text-xl mb-6">
             ¿Quieres conocernos más?
           </p>

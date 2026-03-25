@@ -11,9 +11,10 @@ import type { Product } from "@/types";
 interface ProductCardProps {
   product: Product;
   hideFeaturedBadge?: boolean;
+  showBorder?: boolean;
 }
 
-export function ProductCard({ product, hideFeaturedBadge = false }: ProductCardProps) {
+export function ProductCard({ product, hideFeaturedBadge = false, showBorder = false }: ProductCardProps) {
   const { addItem } = useCartStore();
 
   const primaryImage = product.images?.find((img) => img.isPrimary) || product.images?.[0];
@@ -38,7 +39,7 @@ export function ProductCard({ product, hideFeaturedBadge = false }: ProductCardP
 
   return (
     <div
-      className={`group relative bg-white dark:bg-stone-900 rounded-sm shadow-md transition-all duration-300 ${isOutOfStock ? "opacity-50" : "hover:shadow-xl hover:-translate-y-1"}`}
+      className={`group relative bg-white dark:bg-stone-900 rounded-sm shadow-md transition-all duration-300 ${isOutOfStock ? "opacity-50" : "hover:shadow-lg hover:-translate-y-1"} ${showBorder ? "border border-secondary" : ""}`}
     >
       {/* Polaroid photo area */}
       <div className="p-2.5 pb-0 sm:p-3 sm:pb-0">

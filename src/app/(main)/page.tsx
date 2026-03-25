@@ -26,7 +26,7 @@ export default async function Home() {
       <HeroCarousel />
 
       {/* Featured Products Section */}
-      <section className="py-10 sm:py-16 bg-background-alt">
+      <section className="py-10 sm:py-16 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-6 sm:mb-8">
             <div>
@@ -139,7 +139,7 @@ export default async function Home() {
       </section>
 
       {/* Categories Section */}
-      <section className="py-10 sm:py-16 bg-background-alt">
+      <section className="py-10 sm:py-16 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-6 sm:mb-8">
             <div>
