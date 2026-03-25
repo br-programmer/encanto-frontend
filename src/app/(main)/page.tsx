@@ -1,19 +1,23 @@
 import Link from "next/link";
-import { ArrowRight, Truck, Clock, Gift } from "lucide-react";
+import { ArrowRight, Search, Palette, CalendarDays, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FeaturedProductsCarousel } from "@/components/featured-products-carousel";
+import { CategoriesCarousel } from "@/components/categories-carousel";
 import { InstagramFeed } from "@/components/instagram-feed";
 import { HeroCarousel } from "@/components/hero-carousel";
 import { ScrollRevealSection } from "@/components/scroll-reveal-section";
+import { TestimonialsCarousel } from "@/components/testimonials-carousel";
 import { api } from "@/lib/api";
 
 export default async function Home() {
-  const [productsResponse, instagramResponse] = await Promise.all([
-    api.products.featured(8),
+  const [productsResponse, categoriesResponse, instagramResponse] = await Promise.all([
+    api.products.featured(20),
+    api.categories.list({ isActive: true, rootOnly: true, limit: 12 }),
     api.instagram.feed({ limit: 6 }).catch(() => ({ result: [], meta: { total: 0, cachedAt: "", expiresAt: "" } })),
   ]);
 
   const featuredProducts = productsResponse.result;
+  const categories = categoriesResponse.result;
   const instagramPosts = instagramResponse.result;
 
   return (
@@ -26,9 +30,9 @@ export default async function Home() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-6 sm:mb-8">
             <div>
-              <h2 className="font-serif">Productos Destacados</h2>
+              <h2 className="font-serif">Los más pedidos</h2>
               <p className="text-foreground-secondary text-sm sm:text-base mt-1">
-                Los favoritos de nuestros clientes
+                Lo que nuestros clientes más eligen
               </p>
             </div>
             <Button variant="ghost" asChild className="hidden sm:flex">
@@ -55,55 +59,95 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* How to Buy */}
       <section className="py-10 sm:py-16 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12">
-            <h2 className="font-serif mb-2 sm:mb-3">¿Por qué elegirnos?</h2>
+            <h2 className="font-serif mb-2 sm:mb-3">¿Cómo comprar?</h2>
             <p className="text-foreground-secondary text-sm sm:text-base">
-              Nos esforzamos por hacer cada entrega especial
+              En solo 4 pasos tu pedido estará en camino
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            <div className="text-center p-4 sm:p-6 rounded-xl bg-warm-white">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <Truck className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+          <div className="flex items-start">
+            {[
+              { icon: Search, step: "1", title: "Elige tu arreglo", description: "Explora nuestro catálogo y encuentra el detalle perfecto" },
+              { icon: Palette, step: "2", title: "Personaliza", description: "Agrega complementos y escribe tu dedicatoria" },
+              { icon: CalendarDays, step: "3", title: "Programa la entrega", description: "Selecciona fecha, horario y dirección" },
+              { icon: CreditCard, step: "4", title: "Paga y listo", description: "Transferencia o PayPal, tú eliges" },
+            ].map((item, i) => (
+              <div key={item.step} className="flex items-start flex-1">
+                <div className="flex flex-col items-center text-center w-full">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-primary bg-background flex items-center justify-center flex-shrink-0">
+                    <item.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  </div>
+                  <p className="text-xs text-primary font-normal mt-2 sm:mt-3">Paso {item.step}</p>
+                  <h3 className="text-xs sm:text-sm font-normal mt-0.5">{item.title}</h3>
+                  <p className="text-[11px] sm:text-xs text-foreground-secondary mt-1 leading-relaxed max-w-[140px] sm:max-w-[160px] mx-auto">
+                    {item.description}
+                  </p>
+                </div>
+                {i < 3 && (
+                  <div className="h-px flex-shrink-0 w-6 sm:w-10 lg:w-16 bg-border mt-5 sm:mt-6" />
+                )}
               </div>
-              <h3 className="text-base sm:text-lg font-medium mb-2">Envío el Mismo Día</h3>
-              <p className="text-foreground-secondary text-xs sm:text-sm">
-                Pedidos antes de las 2pm se entregan el mismo día en Manta.
-              </p>
-            </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-            <div className="text-center p-4 sm:p-6 rounded-xl bg-warm-white">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-              </div>
-              <h3 className="text-base sm:text-lg font-medium mb-2">Flores Frescas</h3>
-              <p className="text-foreground-secondary text-xs sm:text-sm">
-                Seleccionamos las mejores flores cada día para garantizar frescura y calidad.
-              </p>
-            </div>
+      {/* Scroll Reveal Section */}
+      <ScrollRevealSection />
 
-            <div className="text-center p-4 sm:p-6 rounded-xl bg-warm-white sm:col-span-2 md:col-span-1">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <Gift className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-              </div>
-              <h3 className="text-base sm:text-lg font-medium mb-2">Tarjeta Dedicatoria</h3>
-              <p className="text-foreground-secondary text-xs sm:text-sm">
-                Incluye un mensaje personalizado para hacer tu regalo más especial.
+      {/* Testimonials */}
+      <section className="py-10 sm:py-16 bg-background">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="font-serif mb-2 sm:mb-3">¿Qué dicen nuestros clientes?</h2>
+            <p className="text-foreground-secondary text-sm sm:text-base">
+              La opinión de quienes confían en nosotros
+            </p>
+          </div>
+          <TestimonialsCarousel />
+        </div>
+      </section>
+
+      {/* Categories Section */}
+      <section className="py-10 sm:py-16 bg-background-alt">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-6 sm:mb-8">
+            <div>
+              <h2 className="font-serif">Nuestras categorías</h2>
+              <p className="text-foreground-secondary text-sm sm:text-base mt-1">
+                Encuentra el arreglo perfecto para cada ocasión
               </p>
             </div>
+            <Button variant="ghost" asChild className="hidden sm:flex">
+              <Link href="/categorias">
+                Ver todas
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+
+          {categories.length > 0 ? (
+            <CategoriesCarousel categories={categories} />
+          ) : (
+            <p className="text-center text-foreground-secondary py-8">
+              No hay categorías disponibles.
+            </p>
+          )}
+
+          <div className="text-center mt-6 sm:hidden">
+            <Button variant="outline" className="h-11" asChild>
+              <Link href="/categorias">Ver todas las categorías</Link>
+            </Button>
           </div>
         </div>
       </section>
 
       {/* Instagram Feed */}
       <InstagramFeed posts={instagramPosts} instagramUrl="https://www.instagram.com/encantofloristeria_ecu" />
-
-      {/* Scroll Reveal Section */}
-      <ScrollRevealSection />
 
       {/* WhatsApp CTA */}
       <section className="py-12 sm:py-20 bg-secondary">

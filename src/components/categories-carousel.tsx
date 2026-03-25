@@ -2,15 +2,15 @@
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { ProductCard } from "@/components/product-card";
+import { CategoryCard } from "@/components/category-card";
 import { cn } from "@/lib/utils";
-import type { Product } from "@/types";
+import type { Category } from "@/types";
 
-interface FeaturedProductsCarouselProps {
-  products: Product[];
+interface CategoriesCarouselProps {
+  categories: Category[];
 }
 
-export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselProps) {
+export function CategoriesCarousel({ categories }: CategoriesCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -48,9 +48,9 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
     });
   }, []);
 
-  // Autoplay - goes right, resets to start when reaching end
+  // Autoplay
   useEffect(() => {
-    if (isHovered || products.length <= 1) return;
+    if (isHovered || categories.length <= 1) return;
 
     autoplayRef.current = setInterval(() => {
       const el = scrollRef.current;
@@ -61,14 +61,14 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
       } else {
         scroll("right");
       }
-    }, 3500);
+    }, 4000);
 
     return () => {
       if (autoplayRef.current) clearInterval(autoplayRef.current);
     };
-  }, [isHovered, products.length, scroll]);
+  }, [isHovered, categories.length, scroll]);
 
-  if (products.length === 0) return null;
+  if (categories.length === 0) return null;
 
   return (
     <div
@@ -106,12 +106,12 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
         className="flex gap-4 lg:gap-5 overflow-x-auto scrollbar-hide scroll-smooth py-4 px-2 -mx-2"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        {products.map((product) => (
+        {categories.map((category) => (
           <div
-            key={product.id}
-            className="flex-shrink-0 w-[45%] sm:w-[30%] lg:w-[23%]"
+            key={category.id}
+            className="flex-shrink-0 w-[60%] sm:w-[40%] lg:w-[30%]"
           >
-            <ProductCard product={product} hideFeaturedBadge />
+            <CategoryCard category={category} />
           </div>
         ))}
       </div>

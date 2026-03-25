@@ -25,7 +25,7 @@ export async function InstagramFeed({
   }
 
   return (
-    <section className="py-10 sm:py-16 bg-warm-white">
+    <section className="py-10 sm:py-16 bg-background">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8 sm:mb-10">
