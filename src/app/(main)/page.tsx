@@ -69,7 +69,33 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="flex items-start">
+          {/* Mobile: 2x2 grid */}
+          <div className="grid grid-cols-2 gap-6 sm:hidden">
+            {[
+              { icon: Search, step: "1", title: "Elige tu arreglo", description: "Explora nuestro catálogo y encuentra el detalle perfecto" },
+              { icon: Palette, step: "2", title: "Personaliza", description: "Agrega complementos y escribe tu dedicatoria" },
+              { icon: CalendarDays, step: "3", title: "Programa la entrega", description: "Selecciona fecha, horario y dirección" },
+              { icon: CreditCard, step: "4", title: "Paga y listo", description: "Transferencia o PayPal, tú eliges" },
+            ].map((item) => (
+              <div key={item.step} className="text-center">
+                <div className="relative w-12 h-12 mx-auto mb-3">
+                  <div className="w-12 h-12 rounded-full border-2 border-primary bg-background flex items-center justify-center">
+                    <item.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-primary text-white text-[10px] rounded-full flex items-center justify-center">
+                    {item.step}
+                  </span>
+                </div>
+                <h3 className="text-sm font-normal">{item.title}</h3>
+                <p className="text-xs text-foreground-secondary mt-1 leading-relaxed">
+                  {item.description}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: horizontal timeline */}
+          <div className="hidden sm:flex items-start">
             {[
               { icon: Search, step: "1", title: "Elige tu arreglo", description: "Explora nuestro catálogo y encuentra el detalle perfecto" },
               { icon: Palette, step: "2", title: "Personaliza", description: "Agrega complementos y escribe tu dedicatoria" },
@@ -78,17 +104,17 @@ export default async function Home() {
             ].map((item, i) => (
               <div key={item.step} className="flex items-start flex-1">
                 <div className="flex flex-col items-center text-center w-full">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-primary bg-background flex items-center justify-center flex-shrink-0">
-                    <item.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <div className="w-12 h-12 rounded-full border-2 border-primary bg-background flex items-center justify-center flex-shrink-0">
+                    <item.icon className="h-5 w-5 text-primary" />
                   </div>
-                  <p className="text-xs text-primary font-normal mt-2 sm:mt-3">Paso {item.step}</p>
-                  <h3 className="text-xs sm:text-sm font-normal mt-0.5">{item.title}</h3>
-                  <p className="text-[11px] sm:text-xs text-foreground-secondary mt-1 leading-relaxed max-w-[140px] sm:max-w-[160px] mx-auto">
+                  <p className="text-xs text-primary font-normal mt-3">Paso {item.step}</p>
+                  <h3 className="text-sm font-normal mt-0.5">{item.title}</h3>
+                  <p className="text-xs text-foreground-secondary mt-1 leading-relaxed max-w-[160px] mx-auto">
                     {item.description}
                   </p>
                 </div>
                 {i < 3 && (
-                  <div className="h-px flex-shrink-0 w-6 sm:w-10 lg:w-16 bg-border mt-5 sm:mt-6" />
+                  <div className="h-px flex-shrink-0 w-10 lg:w-16 bg-border mt-6" />
                 )}
               </div>
             ))}
