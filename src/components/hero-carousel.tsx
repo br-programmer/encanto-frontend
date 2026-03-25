@@ -102,7 +102,7 @@ export function HeroCarousel({
   if (banners.length === 0) return null;
 
   return (
-    <section className="bg-background-alt py-4 sm:py-6 lg:py-8">
+    <section className="bg-background py-4 sm:py-6 lg:py-8">
       <div
         className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 overflow-hidden"
         onMouseEnter={() => setIsHovered(true)}

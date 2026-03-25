@@ -11,11 +11,9 @@ import type { Product } from "@/types";
 interface ProductCardProps {
   product: Product;
   hideFeaturedBadge?: boolean;
-  disableRotation?: boolean;
-  index?: number;
 }
 
-export function ProductCard({ product, hideFeaturedBadge = false, disableRotation = false, index = 0 }: ProductCardProps) {
+export function ProductCard({ product, hideFeaturedBadge = false }: ProductCardProps) {
   const { addItem } = useCartStore();
 
   const primaryImage = product.images?.find((img) => img.isPrimary) || product.images?.[0];
@@ -38,12 +36,9 @@ export function ProductCard({ product, hideFeaturedBadge = false, disableRotatio
     });
   };
 
-  const rotation = disableRotation ? 0 : (index % 2 === 0 ? -1.5 : 1.5);
-
   return (
     <div
       className={`group relative bg-white dark:bg-stone-900 rounded-sm shadow-md transition-all duration-300 ${isOutOfStock ? "opacity-50" : "hover:shadow-xl hover:-translate-y-1"}`}
-      style={{ transform: `rotate(${rotation}deg)` }}
     >
       {/* Polaroid photo area */}
       <div className="p-2.5 pb-0 sm:p-3 sm:pb-0">

@@ -53,53 +53,53 @@ const steps = [
   {
     number: "01",
     icon: Heart,
-    title: "Elige con amor",
+    title: "Nació de un sueño",
     description:
-      "Explora nuestra colección de arreglos florales diseñados para cada ocasión especial.",
-    image: "https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&q=80",
+      "Encanto comenzó como un pequeño emprendimiento en Manta, con la ilusión de llevar alegría a cada hogar a través de las flores.",
+    image: "https://images.unsplash.com/photo-1455659817273-f96807779a8a?w=800&q=80",
   },
   {
     number: "02",
     icon: Sparkles,
-    title: "Personaliza tu mensaje",
+    title: "Pasión por cada detalle",
     description:
-      "Añade una dedicatoria única que exprese exactamente lo que sientes.",
-    image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&q=80",
+      "Cada arreglo es diseñado a mano por nuestro equipo, cuidando los colores, las texturas y la frescura de cada flor.",
+    image: "https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&q=80",
   },
   {
     number: "03",
     icon: Package,
-    title: "Preparamos con cuidado",
+    title: "Crecimos junto a ti",
     description:
-      "Nuestros floristas seleccionan las flores más frescas y crean tu arreglo con dedicación.",
+      "Gracias a la confianza de nuestros clientes, hoy llevamos flores a más ciudades y seguimos creciendo con la misma dedicación del primer día.",
     image: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=800&q=80",
   },
   {
     number: "04",
     icon: Truck,
-    title: "Entrega puntual",
+    title: "Tu florería de confianza",
     description:
-      "Llevamos tu regalo directamente a la puerta de quien más quieres, justo a tiempo.",
+      "Nos esforzamos por hacer de cada entrega un momento especial. Porque regalar flores es regalar emociones.",
     image: "https://images.unsplash.com/photo-1549488344-cbb6c34cf08b?w=800&q=80",
   },
 ];
 
 export function ScrollRevealSection() {
   return (
-    <section className="py-20 sm:py-28 md:py-36 bg-background overflow-hidden">
+    <section className="py-20 sm:py-28 md:py-36 bg-background-alt overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <RevealItem className="text-center mb-16 sm:mb-24">
           <p className="text-primary font-normal text-sm sm:text-base uppercase tracking-wider mb-4">
-            Cómo funciona
+            Nuestra historia
           </p>
           <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl lg:text-6xl mb-6">
-            Regalar flores
+            Más que flores,
             <br />
-            <span className="text-primary">nunca fue tan fácil</span>
+            <span className="text-primary">entregamos emociones</span>
           </h2>
           <p className="text-foreground-secondary text-lg sm:text-xl max-w-2xl mx-auto">
-            En cuatro simples pasos, haz que alguien especial sonría hoy.
+            Conoce cómo nació Encanto y por qué cada arreglo lleva un pedacito de nuestro corazón.
           </p>
         </RevealItem>
 
@@ -161,13 +161,13 @@ export function ScrollRevealSection() {
         {/* Bottom CTA */}
         <RevealItem delay={200} className="text-center mt-20 sm:mt-28 md:mt-36">
           <p className="text-foreground-secondary text-lg sm:text-xl mb-6">
-            ¿Listo para sorprender?
+            ¿Quieres conocernos más?
           </p>
           <a
-            href="/productos"
+            href="/nosotros"
             className="inline-flex items-center justify-center h-14 px-10 bg-primary hover:bg-primary-hover text-white rounded-full text-lg font-normal transition-all duration-300 hover:scale-105 hover:shadow-lg"
           >
-            Explorar arreglos
+            Sobre nosotros
           </a>
         </RevealItem>
       </div>
