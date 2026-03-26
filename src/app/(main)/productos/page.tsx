@@ -59,7 +59,7 @@ export default async function ProductosPage({ searchParams }: ProductosPageProps
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background-alt">
       <Breadcrumb items={breadcrumbItems} />
 
       {/* Header */}

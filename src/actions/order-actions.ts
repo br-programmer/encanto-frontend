@@ -3,6 +3,7 @@
 import { api } from "@/lib/api";
 import type {
   Order,
+  OrderListItem,
   OrderPreview,
   CreateOrderRequest,
   PreviewOrderRequest,
@@ -37,16 +38,16 @@ export async function createOrderAction(
 export async function getMyOrdersAction(
   filters: OrderFilters,
   accessToken: string
-): Promise<PaginatedResponse<Order>> {
+): Promise<PaginatedResponse<OrderListItem>> {
   return api.orders.myWithToken(filters, accessToken);
 }
 
-export async function getOrderByIdAction(
-  id: string,
+export async function getOrderByOrderNumberAction(
+  orderNumber: string,
   accessToken?: string,
   guestToken?: string
 ): Promise<Order> {
-  return api.orders.getByIdWithTokens(id, accessToken, guestToken);
+  return api.orders.getByOrderNumberWithTokens(orderNumber, accessToken, guestToken);
 }
 
 export async function cancelOrderAction(
@@ -81,4 +82,20 @@ export async function claimGuestOrdersAction(
   accessToken: string
 ): Promise<{ claimedCount: number }> {
   return api.orders.claimGuestOrdersWithToken(accessToken);
+}
+
+export async function paypalCreateOrderAction(
+  orderId: string,
+  accessToken?: string,
+  guestToken?: string
+): Promise<{ paypalOrderId: string }> {
+  return api.orders.paypalCreateOrderWithTokens(orderId, accessToken, guestToken);
+}
+
+export async function paypalCaptureAction(
+  orderId: string,
+  accessToken?: string,
+  guestToken?: string
+): Promise<Order> {
+  return api.orders.paypalCaptureWithTokens(orderId, accessToken, guestToken);
 }

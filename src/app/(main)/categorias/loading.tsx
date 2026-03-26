@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CategoriasLoading() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background-alt">
       {/* Breadcrumb */}
       <div className="bg-secondary/30">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">

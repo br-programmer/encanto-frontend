@@ -45,7 +45,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background-alt">
       <Breadcrumb
         items={[
           { label: "Categorías", href: "/categorias" },

@@ -45,19 +45,19 @@ export default function TerminosPage() {
 
           <section className="mb-8">
             <h2 className="text-2xl font-serif mb-4">3. Pedidos y Pagos</h2>
-            <h3 className="text-lg font-semibold mb-2">3.1 Realización de Pedidos</h3>
+            <h3 className="text-lg font-medium mb-2">3.1 Realización de Pedidos</h3>
             <p className="text-foreground-secondary mb-4">
               Los pedidos pueden realizarse a través de nuestra página web, WhatsApp o de forma presencial en nuestra
               tienda. Todo pedido está sujeto a disponibilidad de productos.
             </p>
 
-            <h3 className="text-lg font-semibold mb-2">3.2 Precios</h3>
+            <h3 className="text-lg font-medium mb-2">3.2 Precios</h3>
             <p className="text-foreground-secondary mb-4">
               Los precios mostrados en nuestro sitio web están en dólares estadounidenses (USD) e incluyen IVA.
               Nos reservamos el derecho de modificar los precios sin previo aviso.
             </p>
 
-            <h3 className="text-lg font-semibold mb-2">3.3 Métodos de Pago</h3>
+            <h3 className="text-lg font-medium mb-2">3.3 Métodos de Pago</h3>
             <p className="text-foreground-secondary mb-4">
               Aceptamos los siguientes métodos de pago:
             </p>

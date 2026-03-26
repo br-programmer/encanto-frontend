@@ -1,80 +1,38 @@
 import Link from "next/link";
-import { ArrowRight, Truck, Clock, Gift } from "lucide-react";
+import { ArrowRight, Search, Palette, CalendarDays, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ProductCard } from "@/components/product-card";
-import { CategoryCard } from "@/components/category-card";
+import { FeaturedProductsCarousel } from "@/components/featured-products-carousel";
+import { CategoriesCarousel } from "@/components/categories-carousel";
 import { InstagramFeed } from "@/components/instagram-feed";
 import { HeroCarousel } from "@/components/hero-carousel";
-import { NextSpecialDate } from "@/components/next-special-date";
 import { ScrollRevealSection } from "@/components/scroll-reveal-section";
-import { StackedCardsSection } from "@/components/stacked-cards-section";
+import { TestimonialsCarousel } from "@/components/testimonials-carousel";
 import { api } from "@/lib/api";
 
 export default async function Home() {
-  // Fetch categories, featured products, Instagram feed, and special dates in parallel
-  const [categoriesResponse, productsResponse, specialDatesResponse, instagramResponse] = await Promise.all([
-    api.categories.list({ isActive: true, rootOnly: true, limit: 6 }),
-    api.products.featured(8),
-    api.specialDates.list({ isActive: true, limit: 20 }).catch(() => ({ result: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } })),
+  const [productsResponse, categoriesResponse, instagramResponse] = await Promise.all([
+    api.products.featured(20),
+    api.categories.list({ isActive: true, rootOnly: true, limit: 12 }),
     api.instagram.feed({ limit: 6 }).catch(() => ({ result: [], meta: { total: 0, cachedAt: "", expiresAt: "" } })),
   ]);
 
-  const categories = categoriesResponse.result;
   const featuredProducts = productsResponse.result;
+  const categories = categoriesResponse.result;
   const instagramPosts = instagramResponse.result;
-  const specialDates = specialDatesResponse.result;
 
   return (
     <div className="flex flex-col">
       {/* Hero Banner */}
       <HeroCarousel />
 
-      {/* Categories Section */}
+      {/* Featured Products Section */}
       <section className="py-10 sm:py-16 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-6 sm:mb-8">
             <div>
-              <h2 className="font-serif">Categorías</h2>
+              <h2 className="font-serif">Los más pedidos</h2>
               <p className="text-foreground-secondary text-sm sm:text-base mt-1">
-                Encuentra el arreglo perfecto para cada ocasión
-              </p>
-            </div>
-            <Button variant="ghost" asChild className="hidden sm:flex">
-              <Link href="/categorias">
-                Ver todas
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-
-          {categories.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {categories.map((category) => (
-                <CategoryCard key={category.id} category={category} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-foreground-secondary py-8">
-              No hay categorías disponibles.
-            </p>
-          )}
-
-          <div className="text-center mt-6 sm:hidden">
-            <Button variant="outline" className="h-11" asChild>
-              <Link href="/categorias">Ver todas las categorías</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Products Section */}
-      <section className="py-10 sm:py-16 bg-background-alt">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-6 sm:mb-8">
-            <div>
-              <h2 className="font-serif">Productos Destacados</h2>
-              <p className="text-foreground-secondary text-sm sm:text-base mt-1">
-                Los favoritos de nuestros clientes
+                Lo que nuestros clientes más eligen
               </p>
             </div>
             <Button variant="ghost" asChild className="hidden sm:flex">
@@ -86,11 +44,7 @@ export default async function Home() {
           </div>
 
           {featuredProducts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} hideFeaturedBadge />
-              ))}
-            </div>
+            <FeaturedProductsCarousel products={featuredProducts} />
           ) : (
             <p className="text-center text-foreground-secondary py-8">
               No hay productos destacados disponibles.
@@ -105,61 +59,121 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Next Special Date Parallax */}
-      <NextSpecialDate specialDates={specialDates} />
-
-      {/* Features Section */}
+      {/* How to Buy */}
       <section className="py-10 sm:py-16 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12">
-            <h2 className="font-serif mb-2 sm:mb-3">¿Por qué elegirnos?</h2>
+            <h2 className="font-serif mb-2 sm:mb-3">¿Cómo comprar?</h2>
             <p className="text-foreground-secondary text-sm sm:text-base">
-              Nos esforzamos por hacer cada entrega especial
+              En solo 4 pasos tu pedido estará en camino
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            <div className="text-center p-4 sm:p-6 rounded-xl bg-warm-white">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <Truck className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+          {/* Mobile: 2x2 grid */}
+          <div className="grid grid-cols-2 gap-6 sm:hidden">
+            {[
+              { icon: Search, step: "1", title: "Elige tu arreglo", description: "Explora nuestro catálogo y encuentra el detalle perfecto" },
+              { icon: Palette, step: "2", title: "Personaliza", description: "Agrega complementos y escribe tu dedicatoria" },
+              { icon: CalendarDays, step: "3", title: "Programa la entrega", description: "Selecciona fecha, horario y dirección" },
+              { icon: CreditCard, step: "4", title: "Paga y listo", description: "Transferencia o PayPal, tú eliges" },
+            ].map((item) => (
+              <div key={item.step} className="text-center">
+                <div className="relative w-12 h-12 mx-auto mb-3">
+                  <div className="w-12 h-12 rounded-full border-2 border-primary bg-background flex items-center justify-center">
+                    <item.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-primary text-white text-[10px] rounded-full flex items-center justify-center">
+                    {item.step}
+                  </span>
+                </div>
+                <h3 className="text-sm font-normal">{item.title}</h3>
+                <p className="text-xs text-foreground-secondary mt-1 leading-relaxed">
+                  {item.description}
+                </p>
               </div>
-              <h3 className="text-base sm:text-lg font-semibold mb-2">Envío el Mismo Día</h3>
-              <p className="text-foreground-secondary text-xs sm:text-sm">
-                Pedidos antes de las 2pm se entregan el mismo día en Manta.
-              </p>
-            </div>
+            ))}
+          </div>
 
-            <div className="text-center p-4 sm:p-6 rounded-xl bg-warm-white">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+          {/* Desktop: horizontal timeline */}
+          <div className="hidden sm:flex items-start">
+            {[
+              { icon: Search, step: "1", title: "Elige tu arreglo", description: "Explora nuestro catálogo y encuentra el detalle perfecto" },
+              { icon: Palette, step: "2", title: "Personaliza", description: "Agrega complementos y escribe tu dedicatoria" },
+              { icon: CalendarDays, step: "3", title: "Programa la entrega", description: "Selecciona fecha, horario y dirección" },
+              { icon: CreditCard, step: "4", title: "Paga y listo", description: "Transferencia o PayPal, tú eliges" },
+            ].map((item, i) => (
+              <div key={item.step} className="flex items-start flex-1">
+                <div className="flex flex-col items-center text-center w-full">
+                  <div className="w-12 h-12 rounded-full border-2 border-primary bg-background flex items-center justify-center flex-shrink-0">
+                    <item.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <p className="text-xs text-primary font-normal mt-3">Paso {item.step}</p>
+                  <h3 className="text-sm font-normal mt-0.5">{item.title}</h3>
+                  <p className="text-xs text-foreground-secondary mt-1 leading-relaxed max-w-[160px] mx-auto">
+                    {item.description}
+                  </p>
+                </div>
+                {i < 3 && (
+                  <div className="h-px flex-shrink-0 w-10 lg:w-16 bg-border mt-6" />
+                )}
               </div>
-              <h3 className="text-base sm:text-lg font-semibold mb-2">Flores Frescas</h3>
-              <p className="text-foreground-secondary text-xs sm:text-sm">
-                Seleccionamos las mejores flores cada día para garantizar frescura y calidad.
-              </p>
-            </div>
-
-            <div className="text-center p-4 sm:p-6 rounded-xl bg-warm-white sm:col-span-2 md:col-span-1">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <Gift className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-              </div>
-              <h3 className="text-base sm:text-lg font-semibold mb-2">Tarjeta Dedicatoria</h3>
-              <p className="text-foreground-secondary text-xs sm:text-sm">
-                Incluye un mensaje personalizado para hacer tu regalo más especial.
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Stacked Cards Section - Apple AirPods Style */}
-      <StackedCardsSection />
+      {/* Scroll Reveal Section */}
+      <ScrollRevealSection />
+
+      {/* Testimonials */}
+      <section className="py-10 sm:py-16 bg-background">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="font-serif mb-2 sm:mb-3">¿Qué dicen nuestros clientes?</h2>
+            <p className="text-foreground-secondary text-sm sm:text-base">
+              La opinión de quienes confían en nosotros
+            </p>
+          </div>
+          <TestimonialsCarousel />
+        </div>
+      </section>
+
+      {/* Categories Section */}
+      <section className="py-10 sm:py-16 bg-background">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-6 sm:mb-8">
+            <div>
+              <h2 className="font-serif">Nuestras categorías</h2>
+              <p className="text-foreground-secondary text-sm sm:text-base mt-1">
+                Encuentra el arreglo perfecto para cada ocasión
+              </p>
+            </div>
+            <Button variant="ghost" asChild className="hidden sm:flex">
+              <Link href="/categorias">
+                Ver todas
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+
+          {categories.length > 0 ? (
+            <CategoriesCarousel categories={categories} />
+          ) : (
+            <p className="text-center text-foreground-secondary py-8">
+              No hay categorías disponibles.
+            </p>
+          )}
+
+          <div className="text-center mt-6 sm:hidden">
+            <Button variant="outline" className="h-11" asChild>
+              <Link href="/categorias">Ver todas las categorías</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
 
       {/* Instagram Feed */}
       <InstagramFeed posts={instagramPosts} instagramUrl="https://www.instagram.com/encantofloristeria_ecu" />
-
-      {/* Scroll Reveal Section - Apple Style */}
-      <ScrollRevealSection />
 
       {/* WhatsApp CTA */}
       <section className="py-12 sm:py-20 bg-secondary">

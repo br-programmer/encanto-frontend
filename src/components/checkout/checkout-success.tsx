@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Package, ArrowRight, Upload, Loader2, Building2, Copy, CheckCircle2 } from "lucide-react";
+import { Check, Package, ArrowRight, Upload, Loader2, Building2, Copy, CheckCircle2, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { uploadTransferProofAction } from "@/actions/order-actions";
@@ -14,6 +14,7 @@ interface CheckoutSuccessProps {
   orderSettings: OrderSettings | null;
   timeSlots: DeliveryTimeSlot[];
   onNewOrder: () => void;
+  onPayPal?: () => void;
 }
 
 export function CheckoutSuccess({
@@ -22,6 +23,7 @@ export function CheckoutSuccess({
   orderSettings,
   timeSlots,
   onNewOrder,
+  onPayPal,
 }: CheckoutSuccessProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -101,11 +103,15 @@ export function CheckoutSuccess({
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <Check className="h-10 w-10 text-green-600" />
           </div>
-          <h1 className="text-3xl font-serif mb-2">¡Pedido recibido!</h1>
+          <h1 className="text-3xl font-serif mb-2">
+            {order.paymentStatus === "paid" ? "¡Pago confirmado!" : "¡Pedido recibido!"}
+          </h1>
           <p className="text-foreground-secondary text-lg">
-            {isTransfer
-              ? "Realiza la transferencia y sube tu comprobante para confirmar el pedido."
-              : "Gracias por tu compra. Te contactaremos pronto para confirmar los detalles."}
+            {order.paymentStatus === "paid"
+              ? "Tu pago ha sido confirmado. Te contactaremos pronto para confirmar los detalles."
+              : isTransfer
+                ? "Realiza la transferencia y sube tu comprobante para confirmar el pedido."
+                : "Gracias por tu compra. Te contactaremos pronto para confirmar los detalles."}
           </p>
         </div>
 
@@ -115,16 +121,16 @@ export function CheckoutSuccess({
           <div className="p-6 border-b border-border">
             <div className="flex items-center gap-2 mb-2">
               <Package className="h-5 w-5 text-primary" />
-              <h2 className="font-semibold text-lg">Detalles del pedido</h2>
+              <h2 className="font-medium text-lg">Detalles del pedido</h2>
             </div>
             <p className="text-sm text-foreground-secondary">
-              Número de pedido: <span className="font-medium text-foreground">{order.orderNumber}</span>
+              Número de pedido: <span className="font-normal text-foreground">{order.orderNumber}</span>
             </p>
           </div>
 
           {/* Delivery/Pickup info */}
           <div className="p-6 border-b border-border">
-            <h3 className="font-medium mb-4">
+            <h3 className="font-normal mb-4">
               {order.fulfillmentType === "pickup" ? "Información de retiro" : "Información de entrega"}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
@@ -132,18 +138,18 @@ export function CheckoutSuccess({
                 <p className="text-foreground-secondary">
                   {order.fulfillmentType === "pickup" ? "Quien retira" : "Destinatario"}
                 </p>
-                <p className="font-medium">{order.recipientName}</p>
+                <p className="font-normal">{order.recipientName}</p>
               </div>
               {order.recipientPhone && (
                 <div>
                   <p className="text-foreground-secondary">Teléfono</p>
-                  <p className="font-medium">{order.recipientPhone}</p>
+                  <p className="font-normal">{order.recipientPhone}</p>
                 </div>
               )}
               {order.fulfillmentType !== "pickup" && order.deliveryAddress && (
                 <div className="sm:col-span-2">
                   <p className="text-foreground-secondary">Dirección</p>
-                  <p className="font-medium">
+                  <p className="font-normal">
                     {order.deliveryAddress}{order.deliveryCity ? `, ${order.deliveryCity}` : ""}
                   </p>
                 </div>
@@ -152,7 +158,7 @@ export function CheckoutSuccess({
                 <p className="text-foreground-secondary">
                   {order.fulfillmentType === "pickup" ? "Fecha de retiro" : "Fecha de entrega"}
                 </p>
-                <p className="font-medium">
+                <p className="font-normal">
                   {new Date(order.deliveryDate + "T00:00:00").toLocaleDateString("es-EC", {
                     weekday: "long",
                     year: "numeric",
@@ -163,16 +169,16 @@ export function CheckoutSuccess({
               </div>
               <div>
                 <p className="text-foreground-secondary">Horario</p>
-                <p className="font-medium">{getTimeSlotLabel(order.deliveryTimeSlotId)}</p>
+                <p className="font-normal">{getTimeSlotLabel(order.deliveryTimeSlotId)}</p>
               </div>
               <div>
                 <p className="text-foreground-secondary">Método de pago</p>
-                <p className="font-medium">{getPaymentMethodLabel(order.paymentMethod)}</p>
+                <p className="font-normal">{getPaymentMethodLabel(order.paymentMethod)}</p>
               </div>
               {order.fulfillmentType !== "pickup" && order.isSurprise && (
                 <div>
                   <p className="text-foreground-secondary">Tipo de entrega</p>
-                  <p className="font-medium text-primary">Entrega sorpresa</p>
+                  <p className="font-normal text-primary">Entrega sorpresa</p>
                 </div>
               )}
             </div>
@@ -180,12 +186,12 @@ export function CheckoutSuccess({
 
           {/* Products */}
           <div className="p-6 border-b border-border">
-            <h3 className="font-medium mb-4">Productos</h3>
+            <h3 className="font-normal mb-4">Productos</h3>
             <div className="space-y-3">
               {order.items.map((item) => (
                 <div key={item.id} className="flex gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{item.productNameSnapshot}</p>
+                    <p className="text-sm font-normal">{item.productNameSnapshot}</p>
                     <p className="text-xs text-foreground-secondary">Cantidad: {item.quantity}</p>
                     {item.addOns.length > 0 && (
                       <div className="mt-1">
@@ -202,7 +208,7 @@ export function CheckoutSuccess({
                       </p>
                     )}
                   </div>
-                  <div className="text-sm font-medium">
+                  <div className="text-sm font-normal">
                     {formatPrice(item.lineTotalCents)}
                   </div>
                 </div>
@@ -222,25 +228,31 @@ export function CheckoutSuccess({
                 <span>{formatPrice(order.addOnsTotalCents)}</span>
               </div>
             )}
-            <div className="flex justify-between text-sm">
-              <span className="text-foreground-secondary">
-                {order.fulfillmentType === "pickup" ? "Retiro en tienda" : "Envío"}
-              </span>
-              <span>
-                {order.fulfillmentType === "pickup" || order.deliveryFeeCents === 0 ? (
-                  <span className="text-green-600">{order.fulfillmentType === "pickup" ? "$0.00" : "Gratis"}</span>
-                ) : (
-                  formatPrice(order.deliveryFeeCents)
-                )}
-              </span>
-            </div>
+            {order.fulfillmentType !== "pickup" && (
+              <div className="flex justify-between text-sm">
+                <span className="text-foreground-secondary">Envío</span>
+                <span>
+                  {order.deliveryFeeCents === 0 ? (
+                    <span className="text-green-600">Gratis</span>
+                  ) : (
+                    formatPrice(order.deliveryFeeCents)
+                  )}
+                </span>
+              </div>
+            )}
             {order.transferDiscountCents > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-green-600">Descuento transferencia</span>
                 <span className="text-green-600">-{formatPrice(order.transferDiscountCents)}</span>
               </div>
             )}
-            <div className="border-t border-border pt-3 flex justify-between font-semibold text-lg">
+            {order.taxCents > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-foreground-secondary">IVA (15%)</span>
+                <span>{formatPrice(order.taxCents)}</span>
+              </div>
+            )}
+            <div className="border-t border-border pt-3 flex justify-between font-medium text-lg">
               <span>Total</span>
               <span className="text-primary">{formatPrice(order.totalCents)}</span>
             </div>
@@ -253,10 +265,10 @@ export function CheckoutSuccess({
             <div className="p-6 border-b border-border">
               <div className="flex items-center gap-2 mb-2">
                 <Building2 className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold">Datos para transferencia</h3>
+                <h3 className="font-medium">Datos para transferencia</h3>
               </div>
               <p className="text-sm text-foreground-secondary">
-                Realiza la transferencia por <span className="font-semibold text-primary">{formatPrice(order.totalCents)}</span> a cualquiera de estas cuentas:
+                Realiza la transferencia por <span className="font-medium text-primary">{formatPrice(order.totalCents)}</span> a cualquiera de estas cuentas:
               </p>
             </div>
 
@@ -265,7 +277,7 @@ export function CheckoutSuccess({
                 <div key={account.id} className="p-4 bg-secondary/30 rounded-lg border border-border">
                   <div className="flex items-start justify-between">
                     <div className="text-sm">
-                      <p className="font-medium">{account.bankName}</p>
+                      <p className="font-normal">{account.bankName}</p>
                       <p className="text-foreground-secondary">
                         {account.accountType === "savings" ? "Ahorros" : "Corriente"} — {account.accountNumber}
                       </p>
@@ -292,7 +304,7 @@ export function CheckoutSuccess({
 
             {/* Upload proof */}
             <div className="p-6 border-t border-border">
-              <h3 className="font-medium mb-3">Subir comprobante de pago</h3>
+              <h3 className="font-normal mb-3">Subir comprobante de pago</h3>
               {uploadSuccess ? (
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
                   <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -333,10 +345,23 @@ export function CheckoutSuccess({
           </div>
         )}
 
+        {/* PayPal pending payment */}
+        {order.paymentMethod === "paypal" && order.paymentStatus !== "paid" && onPayPal && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-6 text-center">
+            <p className="text-sm text-amber-800 font-normal mb-3">
+              Tu pedido está pendiente de pago
+            </p>
+            <Button onClick={onPayPal} className="gap-2">
+              <CreditCard className="h-4 w-4" />
+              Pagar con PayPal
+            </Button>
+          </div>
+        )}
+
         {/* Next steps info */}
-        {!isTransfer && (
+        {!isTransfer && order.paymentMethod !== "paypal" && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-            <h3 className="font-medium text-amber-800 mb-2">Próximos pasos</h3>
+            <h3 className="font-normal text-amber-800 mb-2">Próximos pasos</h3>
             <ul className="text-sm text-amber-700 space-y-1">
               <li>Te contactaremos por WhatsApp para confirmar tu pedido</li>
               {order.fulfillmentType === "pickup" ? (

@@ -111,13 +111,6 @@ export interface ProductImage {
   createdAt: string;
 }
 
-export interface Inventory {
-  id: string;
-  productId: string;
-  quantity: number;
-  lowStockThreshold: number;
-}
-
 export interface Product {
   id: string;
   name: string;
@@ -127,14 +120,23 @@ export interface Product {
   comparePriceCents: number | null;
   sku: string | null;
   categoryId: string | null;
+  branchId: string | null;
+  includesCard: boolean;
+  cardMessageFeeCents: number | null;
   isActive: boolean;
   isFeatured: boolean;
+  preparationMinutes: number;
   createdAt: string;
   updatedAt: string;
   images: ProductImage[];
-  inventory: Inventory | null;
   category?: Category;
-  stock?: number;
+  // Computed fields
+  inStock: boolean;
+  availableQuantity: number | null;
+  hasRecipe: boolean;
+  materialCostCents: number | null;
+  displayPriceCents: number;
+  transferPriceCents: number;
 }
 
 export interface ProductFilters {
@@ -446,6 +448,7 @@ export interface CreateOrderRequest {
   deliveryReference?: string;
   occasionId?: string;
   isSurprise?: boolean;
+  isAnonymous?: boolean;
 }
 
 export interface PreviewOrderRequest {
@@ -490,6 +493,7 @@ export interface OrderPreview {
   cardMessageTotalCents: number;
   deliveryFeeCents: number;
   transferDiscountCents: number;
+  taxCents: number;
   totalCents: number;
   timeEstimate: TimeEstimate;
   warningMessage?: string;
@@ -521,6 +525,36 @@ export interface OrderItemResponse {
   addOns: OrderItemAddOnResponse[];
 }
 
+export interface DeliveryVehicleSnapshot {
+  vehicleType: "motorcycle" | "car";
+  brand: string;
+  model: string;
+  year: number | null;
+  color: string;
+  licensePlate: string;
+  imageUrl: string | null;
+}
+
+export interface DeliveryPerson {
+  id: string;
+  fullName: string;
+  phone: string;
+  avatarUrl: string | null;
+  vehicle: DeliveryVehicleSnapshot | null;
+}
+
+export interface OrderDeliveryZone {
+  id: string;
+  zoneName: string;
+}
+
+export interface OrderDeliveryTimeSlot {
+  id: string;
+  startTime: string;
+  endTime: string;
+  displayLabel: string | null;
+}
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -540,20 +574,24 @@ export interface Order {
   deliveryTimeSlotId: string;
   occasionId: string | null;
   isSurprise: boolean;
+  isAnonymous: boolean;
   subtotalCents: number;
   addOnsTotalCents: number;
   cardMessageTotalCents: number;
   deliveryFeeCents: number;
   transferDiscountCents: number;
+  taxCents: number;
   totalCents: number;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   transferProofUrl: string | null;
   transferReference: string | null;
   transferVerifiedAt: string | null;
+  transferRejectionReason: string | null;
   orderStatus: OrderStatus;
   estimatedPrepMinutes: number;
   preparationOverrideMinutes: number | null;
+  overrideReason: string | null;
   preparationStartedAt: string | null;
   preparationCompletedAt: string | null;
   dispatchedAt: string | null;
@@ -564,7 +602,15 @@ export interface Order {
   updatedAt: string;
   items: OrderItemResponse[];
   guestToken?: string;
+  // Detail-only fields (not present in list endpoints)
+  deliveryZone?: OrderDeliveryZone | null;
+  deliveryTimeSlot?: OrderDeliveryTimeSlot | null;
+  deliveryPerson?: DeliveryPerson | null;
+  deliveryVehicleSnapshot?: unknown;
 }
+
+// For list endpoints (GET /orders/my) - no nested relations
+export type OrderListItem = Omit<Order, "items" | "deliveryZone" | "deliveryTimeSlot" | "deliveryPerson" | "deliveryVehicleSnapshot">;
 
 export interface OrderFilters {
   page?: number;
@@ -1006,14 +1052,14 @@ export const api = {
       }).then(r => r.result),
 
     my: (filters?: OrderFilters) =>
-      fetchApiAuth<PaginatedResponse<Order>>("/orders/my", {
+      fetchApiAuth<PaginatedResponse<OrderListItem>>("/orders/my", {
         params: filters as QueryParams,
       }),
 
-    getById: (id: string) => {
+    getByOrderNumber: (orderNumber: string) => {
       const authHeader = getAuthHeader();
       const guestHeader = getGuestTokenHeader();
-      return fetchApi<ResultResponse<Order>>(`/orders/${id}`, {
+      return fetchApi<ResultResponse<Order>>(`/orders/${orderNumber}`, {
         headers: { ...authHeader, ...guestHeader },
       }).then(r => r.result);
     },
@@ -1080,7 +1126,7 @@ export const api = {
       }).then(r => r.result),
 
     queueStatus: (branchId: string) =>
-      fetchApi<ResultResponse<{ pendingOrders: number; estimatedWaitMinutes: number }>>(
+      fetchApi<ResultResponse<{ ordersInQueue: number; estimatedWaitMinutes: number }>>(
         `/orders/branch/${branchId}/queue-status`
       ).then(r => r.result),
 
@@ -1092,12 +1138,12 @@ export const api = {
       }, accessToken, guestToken).then(r => r.result),
 
     myWithToken: (filters: OrderFilters, accessToken: string) =>
-      fetchApiWithToken<PaginatedResponse<Order>>("/orders/my", accessToken, {
+      fetchApiWithToken<PaginatedResponse<OrderListItem>>("/orders/my", accessToken, {
         params: filters as QueryParams,
       }),
 
-    getByIdWithTokens: (id: string, accessToken?: string, guestToken?: string) =>
-      fetchApiWithTokens<ResultResponse<Order>>(`/orders/${id}`, {}, accessToken, guestToken).then(r => r.result),
+    getByOrderNumberWithTokens: (orderNumber: string, accessToken?: string, guestToken?: string) =>
+      fetchApiWithTokens<ResultResponse<Order>>(`/orders/${orderNumber}`, {}, accessToken, guestToken).then(r => r.result),
 
     cancelWithTokens: (id: string, accessToken?: string, guestToken?: string) =>
       fetchApiWithTokens<ResultResponse<Order>>(`/orders/${id}/cancel`, {
@@ -1108,6 +1154,35 @@ export const api = {
       fetchApiWithToken<ResultResponse<{ claimedCount: number }>>("/orders/claim-guest-orders", accessToken, {
         method: "POST",
       }).then(r => r.result),
+
+    // PayPal
+    paypalCreateOrder: (orderId: string) => {
+      const authHeader = getAuthHeader();
+      const guestHeader = getGuestTokenHeader();
+      return fetchApi<ResultResponse<{ paypalOrderId: string }>>(`/orders/${orderId}/paypal/create-order`, {
+        method: "POST",
+        headers: { ...authHeader, ...guestHeader },
+      }).then(r => r.result);
+    },
+
+    paypalCapture: (orderId: string) => {
+      const authHeader = getAuthHeader();
+      const guestHeader = getGuestTokenHeader();
+      return fetchApi<ResultResponse<Order>>(`/orders/${orderId}/paypal/capture`, {
+        method: "POST",
+        headers: { ...authHeader, ...guestHeader },
+      }).then(r => r.result);
+    },
+
+    paypalCreateOrderWithTokens: (orderId: string, accessToken?: string, guestToken?: string) =>
+      fetchApiWithTokens<ResultResponse<{ paypalOrderId: string }>>(`/orders/${orderId}/paypal/create-order`, {
+        method: "POST",
+      }, accessToken, guestToken).then(r => r.result),
+
+    paypalCaptureWithTokens: (orderId: string, accessToken?: string, guestToken?: string) =>
+      fetchApiWithTokens<ResultResponse<Order>>(`/orders/${orderId}/paypal/capture`, {
+        method: "POST",
+      }, accessToken, guestToken).then(r => r.result),
   },
 
   // Delivery Addresses

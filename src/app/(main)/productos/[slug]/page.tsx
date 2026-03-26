@@ -43,7 +43,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
     api.addOnCategories.active(),
     api.addOns.list(),
   ]);
-
   const relatedProducts = relatedData.result
     .filter((p) => p.id !== product.id)
     .slice(0, 4);

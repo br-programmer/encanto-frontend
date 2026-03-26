@@ -174,13 +174,13 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm sm:text-base truncate">{product.name}</p>
+                        <p className="font-normal text-sm sm:text-base truncate">{product.name}</p>
                         <p className="text-xs sm:text-sm text-foreground-secondary truncate">
                           {product.category?.name || "Sin categoría"}
                         </p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="font-semibold text-sm sm:text-base text-primary">
+                        <p className="font-medium text-sm sm:text-base text-primary">
                           {formatPrice(product.priceCents)}
                         </p>
                         {product.comparePriceCents && (
@@ -207,7 +207,7 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
             ) : serverError ? (
               <div className="py-8 sm:py-12 text-center px-4">
                 <WifiOff className="h-8 w-8 sm:h-10 sm:w-10 text-foreground-muted mx-auto mb-3" />
-                <p className="text-foreground-secondary font-medium text-sm sm:text-base">
+                <p className="text-foreground-secondary font-normal text-sm sm:text-base">
                   Servidor no disponible
                 </p>
                 <p className="text-xs sm:text-sm text-foreground-muted mt-1">
