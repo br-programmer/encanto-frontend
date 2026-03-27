@@ -6,6 +6,7 @@ import { InstagramFeed } from "@/components/instagram-feed";
 import { HeroCarousel } from "@/components/hero-carousel";
 import { ScrollRevealSection } from "@/components/scroll-reveal-section";
 import { TestimonialsCarousel } from "@/components/testimonials-carousel";
+import { FeaturedShowcase } from "@/components/featured-showcase";
 import { api } from "@/lib/api";
 
 export default async function Home() {
@@ -23,7 +24,7 @@ export default async function Home() {
       <HeroCarousel />
 
       {/* Featured Products Section */}
-      <section className="py-10 sm:py-16 bg-background">
+      <section className="py-8 sm:py-12 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-6 sm:mb-8">
             <div>
@@ -56,8 +57,15 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Featured Showcase */}
+      <section className="bg-background py-8 sm:py-12">
+        <div className="mx-auto max-w-7xl">
+          <FeaturedShowcase />
+        </div>
+      </section>
+
       {/* How to Buy */}
-      <section className="py-10 sm:py-16 bg-background">
+      <section className="py-8 sm:py-12 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12">
             <h2 className="font-serif mb-2 sm:mb-3">¿Cómo comprar?</h2>
@@ -123,7 +131,7 @@ export default async function Home() {
       <ScrollRevealSection />
 
       {/* Testimonials */}
-      <section className="py-10 sm:py-16 bg-background">
+      <section className="py-8 sm:py-12 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-6 sm:mb-8">
             <h2 className="font-serif mb-2 sm:mb-3">¿Qué dicen nuestros clientes?</h2>
@@ -139,7 +147,7 @@ export default async function Home() {
       <InstagramFeed posts={instagramPosts} instagramUrl="https://www.instagram.com/encantofloristeria_ecu" />
 
       {/* WhatsApp CTA */}
-      <section className="py-12 sm:py-20 bg-secondary">
+      <section className="py-8 sm:py-12 bg-secondary">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-serif mb-3 sm:mb-4">¿Necesitas algo especial?</h2>
           <p className="text-foreground-secondary text-sm sm:text-base mb-6 sm:mb-8 max-w-xl mx-auto">
