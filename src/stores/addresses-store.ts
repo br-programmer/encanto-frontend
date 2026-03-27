@@ -9,6 +9,8 @@ export interface DeliveryAddress {
   address: string;
   city: string;
   zone: string;
+  latitude?: number;
+  longitude?: number;
   notes?: string;
   isDefault: boolean;
   createdAt: string;

@@ -714,6 +714,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 <span className="text-green-600">-{formatPrice(order.transferDiscountCents)}</span>
               </div>
             )}
+            {order.discountAmountCents > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-green-600">Descuento aplicado</span>
+                <span className="text-green-600">-{formatPrice(order.discountAmountCents)}</span>
+              </div>
+            )}
             {order.taxCents > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-foreground-secondary">IVA (15%)</span>

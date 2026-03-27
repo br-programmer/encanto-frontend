@@ -194,7 +194,7 @@ export function TestimonialsCarousel({ testimonials = MOCK_TESTIMONIALS }: Testi
             key={`${testimonial.id}-${i}`}
             className="flex-shrink-0 w-[85%] sm:w-[45%] lg:w-[30%]"
           >
-            <div className="bg-white dark:bg-stone-900 rounded-xl border border-border p-5 sm:p-6 h-full flex flex-col">
+            <div className="bg-white dark:bg-stone-900 border border-border p-5 sm:p-6 h-full flex flex-col">
               {/* Quote icon */}
               <Quote className="h-6 w-6 text-primary/30 mb-3 flex-shrink-0" />
 

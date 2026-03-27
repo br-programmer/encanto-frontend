@@ -119,6 +119,7 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
         slug: product.slug,
         priceCents: product.priceCents,
         image: primaryImage,
+        isQuickDelivery: product.isQuickDelivery,
       },
       quantity,
       cartAddOns.length > 0 ? cartAddOns : undefined

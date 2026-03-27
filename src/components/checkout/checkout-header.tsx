@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import Image from "next/image";
 import { createPortal } from "react-dom";
 import { ArrowLeft, Lock, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,7 +25,6 @@ export function CheckoutHeader() {
   };
 
   const handleConfirmLeave = () => {
-    sessionStorage.removeItem(CHECKOUT_STORAGE_KEY);
     setShowConfirm(false);
     router.push("/productos");
   };
@@ -47,17 +44,6 @@ export function CheckoutHeader() {
               <span className="hidden sm:inline">Volver a la tienda</span>
             </button>
 
-            {/* Logo */}
-            <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-              <Image
-                src="/logo.svg"
-                alt="Encanto"
-                width={100}
-                height={32}
-                className="h-7 sm:h-8 w-auto"
-                priority
-              />
-            </Link>
 
             {/* Secure checkout indicator */}
             <div className="flex items-center gap-1.5 text-sm text-foreground-secondary">
@@ -87,7 +73,7 @@ export function CheckoutHeader() {
                       ¿Salir del checkout?
                     </h3>
                     <p className="text-sm text-foreground-secondary mt-1">
-                      Los datos del formulario se perderán. Tu carrito se mantendrá intacto.
+                      Si sales, tendrás que volver a completar los datos. Tu carrito se mantendrá intacto.
                     </p>
                   </div>
                 </div>

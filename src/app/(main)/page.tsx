@@ -2,22 +2,20 @@ import Link from "next/link";
 import { ArrowRight, Search, Palette, CalendarDays, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FeaturedProductsCarousel } from "@/components/featured-products-carousel";
-import { CategoriesCarousel } from "@/components/categories-carousel";
 import { InstagramFeed } from "@/components/instagram-feed";
 import { HeroCarousel } from "@/components/hero-carousel";
 import { ScrollRevealSection } from "@/components/scroll-reveal-section";
 import { TestimonialsCarousel } from "@/components/testimonials-carousel";
+import { FeaturedShowcase } from "@/components/featured-showcase";
 import { api } from "@/lib/api";
 
 export default async function Home() {
-  const [productsResponse, categoriesResponse, instagramResponse] = await Promise.all([
+  const [productsResponse, instagramResponse] = await Promise.all([
     api.products.featured(20),
-    api.categories.list({ isActive: true, rootOnly: true, limit: 12 }),
     api.instagram.feed({ limit: 6 }).catch(() => ({ result: [], meta: { total: 0, cachedAt: "", expiresAt: "" } })),
   ]);
 
   const featuredProducts = productsResponse.result;
-  const categories = categoriesResponse.result;
   const instagramPosts = instagramResponse.result;
 
   return (
@@ -26,7 +24,7 @@ export default async function Home() {
       <HeroCarousel />
 
       {/* Featured Products Section */}
-      <section className="py-10 sm:py-16 bg-background">
+      <section className="py-8 sm:py-12 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-6 sm:mb-8">
             <div>
@@ -59,8 +57,15 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Featured Showcase */}
+      <section className="bg-background py-8 sm:py-12">
+        <div className="mx-auto max-w-7xl">
+          <FeaturedShowcase />
+        </div>
+      </section>
+
       {/* How to Buy */}
-      <section className="py-10 sm:py-16 bg-background">
+      <section className="py-8 sm:py-12 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12">
             <h2 className="font-serif mb-2 sm:mb-3">¿Cómo comprar?</h2>
@@ -126,7 +131,7 @@ export default async function Home() {
       <ScrollRevealSection />
 
       {/* Testimonials */}
-      <section className="py-10 sm:py-16 bg-background">
+      <section className="py-8 sm:py-12 bg-background">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-6 sm:mb-8">
             <h2 className="font-serif mb-2 sm:mb-3">¿Qué dicen nuestros clientes?</h2>
@@ -138,45 +143,11 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section className="py-10 sm:py-16 bg-background">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-6 sm:mb-8">
-            <div>
-              <h2 className="font-serif">Nuestras categorías</h2>
-              <p className="text-foreground-secondary text-sm sm:text-base mt-1">
-                Encuentra el arreglo perfecto para cada ocasión
-              </p>
-            </div>
-            <Button variant="ghost" asChild className="hidden sm:flex">
-              <Link href="/categorias">
-                Ver todas
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-
-          {categories.length > 0 ? (
-            <CategoriesCarousel categories={categories} />
-          ) : (
-            <p className="text-center text-foreground-secondary py-8">
-              No hay categorías disponibles.
-            </p>
-          )}
-
-          <div className="text-center mt-6 sm:hidden">
-            <Button variant="outline" className="h-11" asChild>
-              <Link href="/categorias">Ver todas las categorías</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
       {/* Instagram Feed */}
       <InstagramFeed posts={instagramPosts} instagramUrl="https://www.instagram.com/encantofloristeria_ecu" />
 
       {/* WhatsApp CTA */}
-      <section className="py-12 sm:py-20 bg-secondary">
+      <section className="py-8 sm:py-12 bg-secondary">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-serif mb-3 sm:mb-4">¿Necesitas algo especial?</h2>
           <p className="text-foreground-secondary text-sm sm:text-base mb-6 sm:mb-8 max-w-xl mx-auto">

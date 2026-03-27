@@ -45,6 +45,7 @@ export function OrderSummary({
   const displayCardMessage = preview?.cardMessageTotalCents ?? 0;
   const displayShipping = isPickup ? 0 : (preview?.deliveryFeeCents ?? shippingCost);
   const displayDiscount = preview?.transferDiscountCents ?? transferDiscount;
+  const displayCodeDiscount = preview?.discountAmountCents ?? 0;
   const displayTax = preview?.taxCents ?? 0;
   const total = preview?.totalCents ?? (displaySubtotal + displayAddOns + displayCardMessage + displayShipping - displayDiscount + displayTax);
 
@@ -197,6 +198,12 @@ export function OrderSummary({
               <span className="text-green-600">-{formatPrice(displayDiscount)}</span>
             </div>
           )}
+          {displayCodeDiscount > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-green-600">Código de descuento</span>
+              <span className="text-green-600">-{formatPrice(displayCodeDiscount)}</span>
+            </div>
+          )}
           {displayTax > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-foreground-secondary">IVA (15%)</span>
@@ -208,35 +215,6 @@ export function OrderSummary({
             <span className="text-primary">{formatPrice(total)}</span>
           </div>
 
-          {/* Time estimate breakdown */}
-          {preview?.timeEstimate && preview.timeEstimate.totalEstimatedMinutes > 0 && (
-            <div className="pt-3 mt-1 border-t border-border">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Clock className="h-4 w-4 text-primary flex-shrink-0" />
-                <span>Tiempo estimado: ~{formatTime(preview.timeEstimate.totalEstimatedMinutes)}</span>
-              </div>
-              <div className="ml-6 mt-1.5 space-y-1 text-xs text-foreground-secondary">
-                {preview.timeEstimate.queueWaitMinutes > 0 && (
-                  <div className="flex justify-between">
-                    <span>Cola de espera</span>
-                    <span className="font-normal">~{formatTime(preview.timeEstimate.queueWaitMinutes)}</span>
-                  </div>
-                )}
-                {preview.timeEstimate.preparationMinutes > 0 && (
-                  <div className="flex justify-between">
-                    <span>Preparación</span>
-                    <span className="font-normal">~{formatTime(preview.timeEstimate.preparationMinutes)}</span>
-                  </div>
-                )}
-                {!isPickup && preview.timeEstimate.travelMinutes > 0 && (
-                  <div className="flex justify-between">
-                    <span>Traslado</span>
-                    <span className="font-normal">~{formatTime(preview.timeEstimate.travelMinutes)}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
