@@ -39,7 +39,7 @@ export function ProductCard({ product, hideFeaturedBadge = false, showBorder = f
 
   return (
     <div
-      className={`group relative bg-white dark:bg-stone-900 rounded-sm shadow-md transition-all duration-300 ${isOutOfStock ? "opacity-50" : "hover:shadow-lg hover:-translate-y-1"} ${showBorder ? "border border-secondary" : ""}`}
+      className={`group relative bg-white dark:bg-stone-900 shadow-md transition-all duration-300 ${isOutOfStock ? "opacity-50" : "hover:shadow-lg hover:-translate-y-1"} ${showBorder ? "border border-secondary" : ""}`}
     >
       {/* Polaroid photo area */}
       <div className="p-2.5 pb-0 sm:p-3 sm:pb-0">

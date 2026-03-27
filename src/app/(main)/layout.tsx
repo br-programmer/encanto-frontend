@@ -1,3 +1,4 @@
+import { TopBanner } from "@/components/layout/top-banner";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { CartSidebar } from "@/components/layout/cart-sidebar";
@@ -12,6 +13,7 @@ export default function MainLayout({
 }) {
   return (
     <Providers>
+      <TopBanner />
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />

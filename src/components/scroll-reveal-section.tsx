@@ -103,7 +103,7 @@ export function ScrollRevealSection() {
                 delay={100}
                 className="w-full lg:w-1/2"
               >
-                <div className="group/img relative aspect-[4/3] rounded-lg overflow-hidden shadow-2xl">
+                <div className="group/img relative aspect-[4/3] overflow-hidden shadow-2xl">
                   <SafeImage
                     src={step.image}
                     alt={step.title}

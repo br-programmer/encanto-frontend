@@ -147,6 +147,7 @@ export interface ProductFilters {
   categorySlug?: string;
   isActive?: boolean;
   isFeatured?: boolean;
+  isQuickDelivery?: boolean;
   inStock?: boolean;
   minPrice?: number;
   maxPrice?: number;
