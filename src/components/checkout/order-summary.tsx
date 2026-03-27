@@ -45,6 +45,7 @@ export function OrderSummary({
   const displayCardMessage = preview?.cardMessageTotalCents ?? 0;
   const displayShipping = isPickup ? 0 : (preview?.deliveryFeeCents ?? shippingCost);
   const displayDiscount = preview?.transferDiscountCents ?? transferDiscount;
+  const displayCodeDiscount = preview?.discountAmountCents ?? 0;
   const displayTax = preview?.taxCents ?? 0;
   const total = preview?.totalCents ?? (displaySubtotal + displayAddOns + displayCardMessage + displayShipping - displayDiscount + displayTax);
 
@@ -195,6 +196,12 @@ export function OrderSummary({
             <div className="flex justify-between text-sm">
               <span className="text-green-600">Descuento transferencia</span>
               <span className="text-green-600">-{formatPrice(displayDiscount)}</span>
+            </div>
+          )}
+          {displayCodeDiscount > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-green-600">Código de descuento</span>
+              <span className="text-green-600">-{formatPrice(displayCodeDiscount)}</span>
             </div>
           )}
           {displayTax > 0 && (

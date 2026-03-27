@@ -12,6 +12,8 @@ import type {
   PaginatedResponse,
   BankAccount,
   DeliveryTimeSlot,
+  ValidateDiscountCodeResponse,
+  PaymentMethod,
 } from "@/lib/api";
 
 export async function previewOrderAction(
@@ -82,6 +84,18 @@ export async function claimGuestOrdersAction(
   accessToken: string
 ): Promise<{ claimedCount: number }> {
   return api.orders.claimGuestOrdersWithToken(accessToken);
+}
+
+export async function validateDiscountCodeAction(
+  code: string,
+  subtotalCents: number,
+  paymentMethod: string,
+): Promise<ValidateDiscountCodeResponse> {
+  return api.discountCodes.validate({
+    code,
+    subtotalCents,
+    paymentMethod: paymentMethod as PaymentMethod,
+  });
 }
 
 export async function paypalCreateOrderAction(

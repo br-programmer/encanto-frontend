@@ -49,6 +49,8 @@ export type {
   PaymentMethod,
   OrderStatus,
   PaymentStatus,
+  ValidateDiscountCodeRequest,
+  ValidateDiscountCodeResponse,
   DeliveryPerson,
   DeliveryVehicleSnapshot,
   OrderDeliveryZone,

@@ -11,6 +11,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import dynamic from "next/dynamic";
 import { OrderSummary } from "./order-summary";
+import { DiscountCodeInput } from "./discount-code-input";
 
 const MapPicker = dynamic(() => import("./map-picker").then(m => ({ default: m.MapPicker })), {
   ssr: false,
@@ -151,6 +152,8 @@ export function CheckoutForm() {
   const [paypalTokens, setPaypalTokens] = useState<{ accessToken?: string; guestToken?: string }>({});
   const [specialDateWarning, setSpecialDateWarning] = useState<string | null>(null);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [discountCode, setDiscountCode] = useState<string | null>(null);
+  const [discountAmountCents, setDiscountAmountCents] = useState(0);
   const previewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { items, totalPrice, clearCart, updateItemCardMessage, updateItemAddOns } = useCartStore();
@@ -307,6 +310,7 @@ export function CheckoutForm() {
           cardMessage: item.cardMessage,
           addOns: item.addOns?.map((a) => ({ addOnId: a.addOnId, quantity: a.quantity })),
         })),
+        ...(discountCode ? { discountCode } : {}),
       });
       setOrderPreview(preview);
       if (preview.warningMessage) {
@@ -317,7 +321,7 @@ export function CheckoutForm() {
     } finally {
       setIsLoadingPreview(false);
     }
-  }, [formData.fulfillmentType, formData.branchId, formData.deliveryZoneId, formData.deliveryDate, formData.deliveryTimeSlotId, formData.paymentMethod, formData.latitude, formData.longitude, items]);
+  }, [formData.fulfillmentType, formData.branchId, formData.deliveryZoneId, formData.deliveryDate, formData.deliveryTimeSlotId, formData.paymentMethod, formData.latitude, formData.longitude, items, discountCode]);
 
   useEffect(() => {
     if (previewTimeoutRef.current) {
@@ -574,6 +578,7 @@ export function CheckoutForm() {
         occasionId: formData.occasionId || undefined,
         isSurprise: formData.isSurprise,
         isAnonymous: formData.isAnonymous,
+        ...(discountCode ? { discountCode } : {}),
       };
 
       // Ensure token is valid before sending
@@ -1592,6 +1597,27 @@ export function CheckoutForm() {
                     </div>
                   )}
                 </div>
+
+                {/* Discount Code */}
+                {formData.paymentMethod && (
+                  <div className="bg-background rounded-xl border border-border p-6">
+                    <h2 className="text-xl font-normal mb-4">Código de descuento</h2>
+                    <DiscountCodeInput
+                      subtotalCents={orderPreview?.subtotalCents ?? subtotal}
+                      paymentMethod={formData.paymentMethod}
+                      appliedCode={discountCode}
+                      appliedAmount={discountAmountCents}
+                      onApply={(result) => {
+                        setDiscountCode(result.code);
+                        setDiscountAmountCents(result.discountAmountCents);
+                      }}
+                      onClear={() => {
+                        setDiscountCode(null);
+                        setDiscountAmountCents(0);
+                      }}
+                    />
+                  </div>
+                )}
 
                 {/* Error message */}
                 {error && (
