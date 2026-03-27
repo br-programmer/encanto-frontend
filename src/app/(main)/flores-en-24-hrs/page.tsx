@@ -22,7 +22,7 @@ export default async function FloresEn24HrsPage({ searchParams }: PageProps) {
 
   const productsResponse = await api.products.list({
     isActive: true,
-    // isQuickDelivery: true, // TODO: Enable when backend supports this filter
+    isQuickDelivery: true,
     page,
     limit,
     ...(minPrice ? { minPrice: Math.round(parseFloat(minPrice) * 100) } : {}),

@@ -34,6 +34,16 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
+
+const MapPicker = dynamic(() => import("@/components/checkout/map-picker").then(m => ({ default: m.MapPicker })), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[250px] rounded-lg border border-border bg-secondary/30 flex items-center justify-center">
+      <span className="text-sm text-foreground-secondary">Cargando mapa...</span>
+    </div>
+  ),
+});
 
 export default function PerfilPage() {
   const router = useRouter();
@@ -53,6 +63,8 @@ export default function PerfilPage() {
     address: "",
     city: "Manta",
     zone: "",
+    latitude: -0.95,
+    longitude: -80.73,
     notes: "",
     isDefault: false,
   });
@@ -158,6 +170,8 @@ export default function PerfilPage() {
       address: "",
       city: "Manta",
       zone: "",
+      latitude: -0.95,
+      longitude: -80.73,
       notes: "",
       isDefault: addresses.length === 0,
     });
@@ -174,6 +188,8 @@ export default function PerfilPage() {
       address: address.address,
       city: address.city,
       zone: address.zone,
+      latitude: address.latitude ?? -0.95,
+      longitude: address.longitude ?? -80.73,
       notes: address.notes || "",
       isDefault: address.isDefault,
     });
@@ -527,6 +543,18 @@ export default function PerfilPage() {
                       value={addressFormData.address}
                       onChange={(e) => setAddressFormData({ ...addressFormData, address: e.target.value })}
                       placeholder="Calle principal, número, referencias"
+                    />
+                  </div>
+
+                  {/* Map */}
+                  <div className="md:col-span-2">
+                    <MapPicker
+                      latitude={addressFormData.latitude}
+                      longitude={addressFormData.longitude}
+                      onLocationChange={(lat, lng, _zone) => {
+                        setAddressFormData((prev) => ({ ...prev, latitude: lat, longitude: lng }));
+                      }}
+                      disableZoneValidation
                     />
                   </div>
 

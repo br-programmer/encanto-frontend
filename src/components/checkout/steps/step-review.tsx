@@ -26,6 +26,7 @@ interface StepReviewProps {
   isSubmitting: boolean;
   cityName: string;
   zoneName: string;
+  branchName: string;
   timeSlotLabel: string;
   paymentMethodLabel: string;
   discountCode: string | null;
@@ -43,6 +44,7 @@ export function StepReview({
   isSubmitting,
   cityName,
   zoneName,
+  branchName,
   timeSlotLabel,
   paymentMethodLabel,
   discountCode,
@@ -78,10 +80,11 @@ export function StepReview({
         </div>
         <div className="text-sm text-foreground-secondary space-y-1">
           <p>{formData.recipientName} {formData.recipientPhone ? `— ${formData.recipientPhone}` : ""}</p>
+          {isPickup && branchName && <p>Sucursal: {branchName}</p>}
           {!isPickup && <p>{formData.address}{cityName ? `, ${cityName}` : ""}</p>}
           {!isPickup && zoneName && <p>Zona: {zoneName}</p>}
-          {formData.isSurprise && <p className="text-primary text-xs">Entrega sorpresa</p>}
-          {formData.isAnonymous && <p className="text-primary text-xs">Envío anónimo</p>}
+          {!isPickup && formData.isSurprise && <p className="text-primary text-xs">Entrega sorpresa</p>}
+          {!isPickup && formData.isAnonymous && <p className="text-primary text-xs">Envío anónimo</p>}
         </div>
       </div>
 

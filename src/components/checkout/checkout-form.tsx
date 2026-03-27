@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Loader2, AlertTriangle, User, LogIn, UserPlus, Check, LogOut, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckoutProgress } from "./checkout-progress";
+import { CheckoutProgress, getTotalSteps } from "./checkout-progress";
 import { OrderSummary } from "./order-summary";
 import { CheckoutSuccess } from "./checkout-success";
 import { PayPalCheckoutModal } from "./paypal-checkout";
@@ -16,6 +17,7 @@ import { useCartStore } from "@/stores/cart-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { useAddressesStore, type DeliveryAddress } from "@/stores/addresses-store";
 import { useCheckoutData } from "@/hooks/use-checkout-data";
+import { StepGuestInfo } from "./steps/step-guest-info";
 import { StepDelivery } from "./steps/step-delivery";
 import { StepSchedule } from "./steps/step-schedule";
 import { StepPayment } from "./steps/step-payment";
@@ -110,6 +112,27 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   datafast: "Tarjeta de crédito/débito",
 };
 
+// Step mapping: guest has extra step 1 (guest info)
+type StepName = "guest_info" | "delivery" | "schedule" | "payment" | "review";
+
+function getStepNumber(name: StepName, isGuest: boolean): number {
+  if (isGuest) {
+    const map: Record<StepName, number> = { guest_info: 1, delivery: 2, schedule: 3, payment: 4, review: 5 };
+    return map[name];
+  }
+  const map: Record<StepName, number> = { guest_info: 0, delivery: 1, schedule: 2, payment: 3, review: 4 };
+  return map[name];
+}
+
+function getStepName(step: number, isGuest: boolean): StepName {
+  if (isGuest) {
+    const map: Record<number, StepName> = { 1: "guest_info", 2: "delivery", 3: "schedule", 4: "payment", 5: "review" };
+    return map[step] || "guest_info";
+  }
+  const map: Record<number, StepName> = { 1: "delivery", 2: "schedule", 3: "payment", 4: "review" };
+  return map[step] || "delivery";
+}
+
 export function CheckoutForm() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -161,9 +184,14 @@ export function CheckoutForm() {
     setCurrentStep(getSavedStep());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Persist
+  // Persist while on checkout
   useEffect(() => { if (mounted) saveFormData(formData); }, [mounted, formData]);
   useEffect(() => { if (mounted) saveStep(currentStep); }, [mounted, currentStep]);
+
+  // Clear session data when leaving checkout
+  useEffect(() => {
+    return () => { clearSavedFormData(); };
+  }, []);
 
   // Auto-set city/branch
   useEffect(() => { if (selectedCityId && !formData.cityId) setFormData((p) => ({ ...p, cityId: selectedCityId })); }, [selectedCityId, formData.cityId]);
@@ -246,6 +274,10 @@ export function CheckoutForm() {
   const displayItems = mounted ? items : [];
   const subtotal = mounted ? totalPrice() : 0;
   const showAuthSection = mounted && !user && !isGuestCheckout;
+  const isGuest = isGuestCheckout && !user;
+  const currentStepName = getStepName(currentStep, isGuest);
+  const totalSteps = getTotalSteps(isGuest);
+  const reviewStep = getStepNumber("review", isGuest);
   const shippingCost = isPickup ? 0 : (orderPreview?.deliveryFeeCents ?? (formData.deliveryZoneId ? (getZoneById(formData.deliveryZoneId)?.deliveryFeeCents ?? 0) : 0));
   const transferDiscount = orderPreview?.transferDiscountCents ?? 0;
 
@@ -274,7 +306,7 @@ export function CheckoutForm() {
 
   const handleSelectAddress = (address: DeliveryAddress) => {
     setSelectedAddressId(address.id);
-    setFormData((p) => ({ ...p, recipientName: address.recipientName, recipientPhone: address.recipientPhone, address: address.address, deliveryReference: address.notes || "" }));
+    setFormData((p) => ({ ...p, recipientName: address.recipientName, recipientPhone: address.recipientPhone, address: address.address, deliveryReference: address.notes || "", ...(address.latitude != null ? { latitude: address.latitude } : {}), ...(address.longitude != null ? { longitude: address.longitude } : {}) }));
   };
 
   const handleNewAddress = () => {
@@ -284,10 +316,11 @@ export function CheckoutForm() {
   };
 
   const getMinDeliveryDate = (): string => {
-    const today = new Date();
-    today.setDate(today.getDate() + 1);
-    if (today.getDay() === 0) today.setDate(today.getDate() + 1);
-    return today.toISOString().split("T")[0];
+    const allQuickDelivery = items.length > 0 && items.every((item) => item.product.isQuickDelivery);
+    const minDays = allQuickDelivery ? 1 : (orderSettings?.minAdvanceDays ?? 2);
+    const date = new Date();
+    date.setDate(date.getDate() + minDays);
+    return date.toISOString().split("T")[0];
   };
 
   const formatTimeSlot = (startTime: string, endTime: string, label: string | null): string => {
@@ -296,10 +329,15 @@ export function CheckoutForm() {
     return label ? `${label} (${timeRange})` : timeRange;
   };
 
-  // Step validation
-  const validateStep = (step: number): boolean => {
+  // Step validation by name
+  const validateStepByName = (name: StepName): boolean => {
     setError(null);
-    if (step === 1) {
+    if (name === "guest_info") {
+      if (!formData.senderName.trim()) { setError("Ingresa tu nombre"); return false; }
+      if (!formData.senderEmail.trim()) { setError("Ingresa tu correo electrónico"); return false; }
+      if (!formData.senderPhone.trim()) { setError("Ingresa tu teléfono"); return false; }
+    }
+    if (name === "delivery") {
       if (!formData.recipientName.trim()) { setError(isPickup ? "Ingresa el nombre de quien retira" : "Ingresa el nombre del destinatario"); return false; }
       if (!isPickup && !formData.recipientPhone.trim()) { setError("Ingresa el teléfono del destinatario"); return false; }
       if (!isPickup && !formData.address.trim()) { setError("Ingresa la dirección de entrega"); return false; }
@@ -307,7 +345,7 @@ export function CheckoutForm() {
       if (!isPickup && !formData.deliveryZoneId) { setError("Selecciona la zona de entrega"); return false; }
       if (!formData.branchId) { setError("Selecciona una sucursal"); return false; }
     }
-    if (step === 2) {
+    if (name === "schedule") {
       if (!formData.deliveryDate) { setError("Selecciona la fecha de entrega"); return false; }
       if (!formData.deliveryTimeSlotId) { setError("Selecciona el horario de entrega"); return false; }
       if (formData.differentBuyer) {
@@ -323,18 +361,23 @@ export function CheckoutForm() {
         }
       }
     }
-    if (step === 3) {
+    if (name === "payment") {
       if (!formData.paymentMethod) { setError("Selecciona un método de pago"); return false; }
     }
     return true;
   };
 
+  const validateStep = (step: number): boolean => validateStepByName(getStepName(step, isGuest));
+
   const goToStep = (step: number) => { setCurrentStep(step); setError(null); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   const handleNext = () => {
     if (validateStep(currentStep)) {
-      setCompletedSteps((p) => [...new Set([...p, currentStep])]);
-      goToStep(currentStep + 1);
+      const nextStep = currentStep + 1;
+      // Mark current and all previous steps as completed
+      const allCompleted = Array.from({ length: currentStep }, (_, i) => i + 1);
+      setCompletedSteps((p) => [...new Set([...p, ...allCompleted])]);
+      goToStep(nextStep);
     }
   };
 
@@ -346,9 +389,12 @@ export function CheckoutForm() {
 
   // Submit
   const handleSubmit = async () => {
-    if (!validateStep(1) || !validateStep(2) || !validateStep(3)) return;
-    if (!user && isGuestCheckout && (!formData.senderName.trim() || !formData.senderEmail.trim() || !formData.senderPhone.trim())) {
-      setError("Completa tus datos de contacto"); return;
+    // Validate all steps before submit
+    const stepsToValidate: StepName[] = isGuest
+      ? ["guest_info", "delivery", "schedule", "payment"]
+      : ["delivery", "schedule", "payment"];
+    for (const name of stepsToValidate) {
+      if (!validateStepByName(name)) return;
     }
 
     setIsSubmitting(true); setError(null);
@@ -386,7 +432,7 @@ export function CheckoutForm() {
       if (order.guestToken) localStorage.setItem("encanto-guest-token", order.guestToken);
 
       if (saveAddress && !selectedAddressId && user) {
-        addAddress({ label: addressLabel, recipientName: formData.recipientName, recipientPhone: formData.recipientPhone, address: formData.address, city: selectedCity?.name || "", zone: zones.find((z) => z.id === formData.deliveryZoneId)?.zoneName || "", notes: formData.deliveryReference || undefined, isDefault: addresses.length === 0 });
+        addAddress({ label: addressLabel, recipientName: formData.recipientName, recipientPhone: formData.recipientPhone, address: formData.address, city: selectedCity?.name || "", zone: zones.find((z) => z.id === formData.deliveryZoneId)?.zoneName || "", latitude: formData.latitude, longitude: formData.longitude, notes: formData.deliveryReference || undefined, isDefault: addresses.length === 0 });
       }
 
       setCreatedOrder(order); clearCart(); clearSavedFormData();
@@ -458,6 +504,9 @@ export function CheckoutForm() {
   if (showAuthSection) {
     return (
       <div className="py-8 sm:py-10">
+        <div className="flex justify-center mb-4">
+          <Image src="/logo.svg" alt="Encanto" width={160} height={50} className="h-14 sm:h-16 w-auto" />
+        </div>
         <h1 className="text-3xl sm:text-4xl font-serif text-center mb-2">Finalizar compra</h1>
         <p className="text-foreground-secondary text-center mb-8">Elige cómo deseas continuar</p>
         <div className="max-w-md mx-auto space-y-3">
@@ -469,7 +518,7 @@ export function CheckoutForm() {
             <div className="flex items-center gap-3"><UserPlus className="h-5 w-5 text-primary" /><div><p className="font-normal">Crear cuenta</p><p className="text-sm text-foreground-secondary">Registrarme para futuras compras</p></div></div>
             <ChevronRight className="h-5 w-5 text-foreground-secondary" />
           </button>
-          <button onClick={() => setIsGuestCheckout(true)} className="w-full flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all text-left">
+          <button onClick={() => { setIsGuestCheckout(true); setFormData((p) => ({ ...p, senderName: "", senderEmail: "", senderPhone: "" })); }} className="w-full flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all text-left">
             <div className="flex items-center gap-3"><User className="h-5 w-5 text-foreground-secondary" /><div><p className="font-normal">Continuar como invitado</p><p className="text-sm text-foreground-secondary">Sin crear cuenta</p></div></div>
             <ChevronRight className="h-5 w-5 text-foreground-secondary" />
           </button>
@@ -488,6 +537,9 @@ export function CheckoutForm() {
   return (
     <div>
       <div className="py-6 sm:py-8">
+        <div className="flex justify-center mb-4">
+          <Image src="/logo.svg" alt="Encanto" width={160} height={50} className="h-14 sm:h-16 w-auto" />
+        </div>
         <h1 className="text-2xl sm:text-3xl font-serif text-center mb-6">Finalizar compra</h1>
 
         {/* User info bar */}
@@ -500,82 +552,80 @@ export function CheckoutForm() {
             <button onClick={() => { logout(); setIsGuestCheckout(false); }} className="text-foreground-muted hover:text-destructive transition-colors"><LogOut className="h-4 w-4" /></button>
           </div>
         )}
-        {isGuestCheckout && !user && (
-          <div className="max-w-lg mx-auto mb-6 p-4 border border-border rounded-lg">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-normal">Tus datos de contacto</p>
-              <button onClick={() => setIsGuestCheckout(false)} className="text-xs text-primary hover:underline">Iniciar sesión</button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Input placeholder="Tu nombre *" value={formData.senderName} onChange={(e) => handleFormChange({ senderName: e.target.value })} />
-              <PhoneInput value={formData.senderPhone} onChange={(val) => handlePhoneChange("senderPhone", val)} />
-              <div className="sm:col-span-2">
-                <Input type="email" placeholder="Tu correo electrónico *" value={formData.senderEmail} onChange={(e) => handleFormChange({ senderEmail: e.target.value })} />
-              </div>
-            </div>
-          </div>
-        )}
-
-        <CheckoutProgress currentStep={currentStep} completedSteps={completedSteps} onStepClick={handleStepClick} />
+        <CheckoutProgress currentStep={currentStep} completedSteps={completedSteps} onStepClick={handleStepClick} isGuest={isGuest} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-12">
-        <div className="lg:col-span-7 xl:col-span-8">
-          {currentStep === 1 && (
-            <StepDelivery
-              formData={formData} onFormChange={handleFormChange} onSelectChange={handleSelectChange}
-              onMapLocationChange={handleMapLocationChange} onPhoneChange={handlePhoneChange}
-              cities={cities} branches={branches} zones={zones} addresses={addresses}
-              selectedAddressId={selectedAddressId} onSelectAddress={handleSelectAddress} onNewAddress={handleNewAddress}
-              saveAddress={saveAddress} onSaveAddressChange={setSaveAddress} addressLabel={addressLabel} onAddressLabelChange={setAddressLabel}
-              user={user} isPickup={isPickup} error={error} onNext={handleNext}
-            />
-          )}
-          {currentStep === 2 && (
-            <StepSchedule
-              formData={formData} onFormChange={handleFormChange} onSelectChange={handleSelectChange} onPhoneChange={handlePhoneChange}
-              timeSlots={timeSlots} occasions={occasions} specialDateWarning={specialDateWarning}
-              minDeliveryDate={getMinDeliveryDate()} formatTimeSlot={formatTimeSlot} isPickup={isPickup} user={user}
-              items={items} onUpdateCardMessage={updateItemCardMessage} onOpenAddOns={setAddOnsModalProductId} availableAddOns={availableAddOns}
-              error={error} onNext={handleNext} onBack={handleBack}
-            />
-          )}
-          {currentStep === 3 && (
-            <StepPayment
-              paymentMethod={formData.paymentMethod} onPaymentMethodChange={(m) => handleFormChange({ paymentMethod: m })}
-              bankAccounts={bankAccounts} orderSettings={orderSettings}
-              subtotalCents={orderPreview?.subtotalCents ?? subtotal}
-              discountCode={discountCode} discountAmountCents={discountAmountCents}
-              onDiscountApply={(r) => { setDiscountCode(r.code); setDiscountAmountCents(r.discountAmountCents); }}
-              onDiscountClear={() => { setDiscountCode(null); setDiscountAmountCents(0); }}
-              error={error} onNext={handleNext} onBack={handleBack}
-            />
-          )}
-          {currentStep === 4 && (
-            <StepReview
-              formData={formData} items={items} preview={orderPreview} isLoadingPreview={isLoadingPreview} isSubmitting={isSubmitting}
-              cityName={cities.find((c) => c.id === formData.cityId)?.name || ""}
-              zoneName={zones.find((z) => z.id === formData.deliveryZoneId)?.zoneName || ""}
-              timeSlotLabel={getTimeSlotLabel()}
-              paymentMethodLabel={PAYMENT_METHOD_LABELS[formData.paymentMethod] || formData.paymentMethod}
-              discountCode={discountCode} error={error}
-              onGoToStep={goToStep} onSubmit={handleSubmit} onBack={handleBack}
-            />
-          )}
+      {currentStepName === "review" ? (
+        /* Review: Full width (no sidebar) */
+        <div className="max-w-2xl mx-auto pb-12">
+          <StepReview
+            formData={formData} items={items} preview={orderPreview} isLoadingPreview={isLoadingPreview} isSubmitting={isSubmitting}
+            cityName={cities.find((c) => c.id === formData.cityId)?.name || ""}
+            zoneName={zones.find((z) => z.id === formData.deliveryZoneId)?.zoneName || ""}
+            branchName={branches.find((b) => b.id === formData.branchId)?.name || ""}
+            timeSlotLabel={getTimeSlotLabel()}
+            paymentMethodLabel={PAYMENT_METHOD_LABELS[formData.paymentMethod] || formData.paymentMethod}
+            discountCode={discountCode} error={error}
+            onGoToStep={goToStep} onSubmit={handleSubmit} onBack={handleBack}
+          />
         </div>
+      ) : (
+        /* Form steps + sidebar */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-12">
+          <div className="lg:col-span-7 xl:col-span-8">
+            {currentStepName === "guest_info" && (
+              <StepGuestInfo
+                formData={formData} onFormChange={handleFormChange} onPhoneChange={handlePhoneChange}
+                onSwitchToLogin={() => { setIsGuestCheckout(false); setCurrentStep(1); }}
+                error={error} onNext={handleNext}
+              />
+            )}
+            {currentStepName === "delivery" && (
+              <StepDelivery
+                formData={formData} onFormChange={handleFormChange} onSelectChange={handleSelectChange}
+                onMapLocationChange={handleMapLocationChange} onPhoneChange={handlePhoneChange}
+                cities={cities} branches={branches} zones={zones} addresses={addresses}
+                selectedAddressId={selectedAddressId} onSelectAddress={handleSelectAddress} onNewAddress={handleNewAddress}
+                saveAddress={saveAddress} onSaveAddressChange={setSaveAddress} addressLabel={addressLabel} onAddressLabelChange={setAddressLabel}
+                user={user} isPickup={isPickup} error={error} onNext={handleNext}
+                onBack={isGuest ? handleBack : undefined}
+              />
+            )}
+            {currentStepName === "schedule" && (
+              <StepSchedule
+                formData={formData} onFormChange={handleFormChange} onSelectChange={handleSelectChange} onPhoneChange={handlePhoneChange}
+                timeSlots={timeSlots} occasions={occasions} specialDateWarning={specialDateWarning}
+                minDeliveryDate={getMinDeliveryDate()} formatTimeSlot={formatTimeSlot} isPickup={isPickup} user={user}
+                items={items} onUpdateCardMessage={updateItemCardMessage} onOpenAddOns={setAddOnsModalProductId} availableAddOns={availableAddOns}
+                error={error} onNext={handleNext} onBack={handleBack}
+              />
+            )}
+            {currentStepName === "payment" && (
+              <StepPayment
+                paymentMethod={formData.paymentMethod} onPaymentMethodChange={(m) => handleFormChange({ paymentMethod: m })}
+                bankAccounts={bankAccounts} orderSettings={orderSettings}
+                subtotalCents={orderPreview?.subtotalCents ?? subtotal}
+                discountCode={discountCode} discountAmountCents={discountAmountCents}
+                onDiscountApply={(r) => { setDiscountCode(r.code); setDiscountAmountCents(r.discountAmountCents); }}
+                onDiscountClear={() => { setDiscountCode(null); setDiscountAmountCents(0); }}
+                error={error} onNext={handleNext} onBack={handleBack}
+              />
+            )}
+          </div>
 
-        {/* Summary sidebar */}
-        <div className="lg:col-span-5 xl:col-span-4">
-          <div className="lg:sticky lg:top-24">
-            <OrderSummary
-              items={displayItems} subtotal={orderPreview?.subtotalCents ?? subtotal}
-              shippingCost={shippingCost} transferDiscount={transferDiscount}
-              isLoadingPreview={isLoadingPreview} isPickup={isPickup} preview={orderPreview}
-              forceExpanded={currentStep === 4}
-            />
+          {/* Summary sidebar */}
+          <div className="lg:col-span-5 xl:col-span-4">
+            <div className="lg:sticky lg:top-24">
+              <OrderSummary
+                items={displayItems} subtotal={orderPreview?.subtotalCents ?? subtotal}
+                shippingCost={shippingCost} transferDiscount={transferDiscount}
+                isLoadingPreview={isLoadingPreview} isPickup={isPickup} preview={orderPreview}
+                forceExpanded={false}
+              />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Add-ons Modal */}
       {addOnsModalProductId && (

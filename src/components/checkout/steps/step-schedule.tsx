@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, MessageSquare, Package, Plus, Gift, EyeOff, User, ChevronLeft } from "lucide-react";
+import { AlertTriangle, MessageSquare, Package, Plus, Gift, EyeOff, User, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -158,11 +158,21 @@ export function StepSchedule({
                     <button
                       type="button"
                       onClick={() => onOpenAddOns(item.product.id)}
-                      className="flex items-center gap-2 w-full p-2.5 rounded-lg border border-dashed border-primary/40 text-sm text-primary hover:bg-primary/5 transition-colors"
+                      className="group relative flex items-center gap-3 w-full p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/20 text-sm text-primary hover:bg-primary/10 transition-all"
                     >
-                      <Package className="h-4 w-4" />
-                      <span>Agregar complementos</span>
-                      <Plus className="h-3.5 w-3.5 ml-auto" />
+                      <div className="relative">
+                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Gift className="h-4 w-4" />
+                        </div>
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center animate-pulse">
+                          <Plus className="h-2.5 w-2.5 text-white" />
+                        </span>
+                      </div>
+                      <div className="text-left flex-1">
+                        <span className="font-normal block">Hazlo más especial</span>
+                        <span className="text-xs text-primary/70">Agrega peluches, chocolates y más</span>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-primary/50 group-hover:translate-x-0.5 transition-transform" />
                     </button>
                   )}
                 </div>

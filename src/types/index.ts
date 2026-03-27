@@ -77,6 +77,7 @@ export interface CartItem {
     slug: string;
     priceCents: number;
     image: string | null;
+    isQuickDelivery?: boolean;
   };
   quantity: number;
   cardMessage?: string;

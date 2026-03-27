@@ -34,6 +34,7 @@ export function ProductCard({ product, hideFeaturedBadge = false, showBorder = f
       slug: product.slug,
       priceCents: product.priceCents,
       image: primaryImage?.url || null,
+      isQuickDelivery: product.isQuickDelivery,
     });
   };
 

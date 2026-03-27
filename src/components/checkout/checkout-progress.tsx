@@ -1,9 +1,22 @@
 "use client";
 
-import { Check, MapPin, CalendarDays, CreditCard, ClipboardList } from "lucide-react";
+import { Check, User, MapPin, CalendarDays, CreditCard, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const STEPS = [
+export interface StepDef {
+  label: string;
+  icon: typeof User;
+}
+
+const STEPS_GUEST: StepDef[] = [
+  { label: "Tus datos", icon: User },
+  { label: "Entrega", icon: MapPin },
+  { label: "Fecha y detalles", icon: CalendarDays },
+  { label: "Pago", icon: CreditCard },
+  { label: "Resumen", icon: ClipboardList },
+];
+
+const STEPS_AUTH: StepDef[] = [
   { label: "Entrega", icon: MapPin },
   { label: "Fecha y detalles", icon: CalendarDays },
   { label: "Pago", icon: CreditCard },
@@ -14,14 +27,17 @@ interface CheckoutProgressProps {
   currentStep: number;
   completedSteps: number[];
   onStepClick: (step: number) => void;
+  isGuest: boolean;
 }
 
-export function CheckoutProgress({ currentStep, completedSteps, onStepClick }: CheckoutProgressProps) {
+export function CheckoutProgress({ currentStep, completedSteps, onStepClick, isGuest }: CheckoutProgressProps) {
+  const steps = isGuest ? STEPS_GUEST : STEPS_AUTH;
+
   return (
     <>
       {/* Desktop */}
       <div className="hidden sm:flex items-center justify-center gap-0 mb-8">
-        {STEPS.map((step, i) => {
+        {steps.map((step, i) => {
           const stepNum = i + 1;
           const isCompleted = completedSteps.includes(stepNum);
           const isCurrent = currentStep === stepNum;
@@ -54,7 +70,7 @@ export function CheckoutProgress({ currentStep, completedSteps, onStepClick }: C
                 </div>
                 <span className="font-normal">{step.label}</span>
               </button>
-              {i < STEPS.length - 1 && (
+              {i < steps.length - 1 && (
                 <div className={cn(
                   "w-8 lg:w-12 h-px mx-1",
                   completedSteps.includes(stepNum) ? "bg-primary" : "bg-border"
@@ -69,14 +85,14 @@ export function CheckoutProgress({ currentStep, completedSteps, onStepClick }: C
       <div className="sm:hidden mb-6">
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm font-normal">
-            Paso {currentStep} de {STEPS.length}
+            Paso {currentStep} de {steps.length}
           </p>
           <p className="text-sm text-foreground-secondary">
-            {STEPS[currentStep - 1]?.label}
+            {steps[currentStep - 1]?.label}
           </p>
         </div>
         <div className="flex gap-1.5">
-          {STEPS.map((_, i) => (
+          {steps.map((_, i) => (
             <div
               key={i}
               className={cn(
@@ -89,4 +105,8 @@ export function CheckoutProgress({ currentStep, completedSteps, onStepClick }: C
       </div>
     </>
   );
+}
+
+export function getTotalSteps(isGuest: boolean): number {
+  return isGuest ? STEPS_GUEST.length : STEPS_AUTH.length;
 }

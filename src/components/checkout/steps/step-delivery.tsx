@@ -1,6 +1,6 @@
 "use client";
 
-import { Truck, Store, MapPin, Plus, Bookmark } from "lucide-react";
+import { Truck, Store, MapPin, Plus, Bookmark, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,6 +53,7 @@ interface StepDeliveryProps {
   isPickup: boolean;
   error: string | null;
   onNext: () => void;
+  onBack?: () => void;
 }
 
 export function StepDelivery({
@@ -76,6 +77,7 @@ export function StepDelivery({
   isPickup,
   error,
   onNext,
+  onBack,
 }: StepDeliveryProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     onFormChange({ [e.target.name]: e.target.value });
@@ -305,10 +307,18 @@ export function StepDelivery({
       {/* Error */}
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      {/* Next */}
-      <Button type="button" size="lg" className="w-full h-12" onClick={onNext}>
-        Continuar
-      </Button>
+      {/* Navigation */}
+      <div className={onBack ? "flex gap-3" : ""}>
+        {onBack && (
+          <Button type="button" variant="outline" size="lg" className="flex-1 h-12" onClick={onBack}>
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Anterior
+          </Button>
+        )}
+        <Button type="button" size="lg" className={onBack ? "flex-1 h-12" : "w-full h-12"} onClick={onNext}>
+          Continuar
+        </Button>
+      </div>
     </div>
   );
 }

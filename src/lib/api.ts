@@ -125,6 +125,7 @@ export interface Product {
   cardMessageFeeCents: number | null;
   isActive: boolean;
   isFeatured: boolean;
+  isQuickDelivery: boolean;
   preparationMinutes: number;
   createdAt: string;
   updatedAt: string;
@@ -395,6 +396,7 @@ export interface OrderSettings {
   bouquetDefaultPrepMinutes: number;
   bouquetIncludesCard: boolean;
   bouquetCardMessageFeeCents: number | null;
+  minAdvanceDays: number;
   updatedAt: string;
   updatedBy: string | null;
 }
