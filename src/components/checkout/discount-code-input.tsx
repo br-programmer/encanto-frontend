@@ -37,16 +37,16 @@ export function DiscountCodeInput({
 
     try {
       const result = await validateDiscountCodeAction(trimmed, subtotalCents, paymentMethod);
-      if (result.valid && result.discountAmountCents) {
+      if (result.success) {
         onApply({
           code: trimmed.toUpperCase(),
-          discountAmountCents: result.discountAmountCents,
-          type: result.type || "percentage",
-          value: result.value || 0,
+          discountAmountCents: result.data.discountAmountCents,
+          type: result.data.type,
+          value: result.data.value,
         });
         setCode("");
       } else {
-        setError(result.message || "Código no válido");
+        setError(result.error);
       }
     } catch {
       setError("Error al validar el código");

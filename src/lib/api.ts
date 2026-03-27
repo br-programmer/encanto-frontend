@@ -474,12 +474,15 @@ export interface ValidateDiscountCodeRequest {
   paymentMethod: PaymentMethod;
 }
 
+export interface ValidateDiscountCodeResult {
+  discountCodeId: string;
+  discountAmountCents: number;
+  type: "percentage" | "fixed_amount";
+  value: number;
+}
+
 export interface ValidateDiscountCodeResponse {
-  valid: boolean;
-  discountAmountCents?: number;
-  type?: "percentage" | "fixed_amount";
-  value?: number;
-  message?: string;
+  result: ValidateDiscountCodeResult;
 }
 
 export interface PreviewItemResponse {

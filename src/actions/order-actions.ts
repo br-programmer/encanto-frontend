@@ -12,7 +12,7 @@ import type {
   PaginatedResponse,
   BankAccount,
   DeliveryTimeSlot,
-  ValidateDiscountCodeResponse,
+  ValidateDiscountCodeResult,
   PaymentMethod,
 } from "@/lib/api";
 
@@ -90,12 +90,19 @@ export async function validateDiscountCodeAction(
   code: string,
   subtotalCents: number,
   paymentMethod: string,
-): Promise<ValidateDiscountCodeResponse> {
-  return api.discountCodes.validate({
-    code,
-    subtotalCents,
-    paymentMethod: paymentMethod as PaymentMethod,
-  });
+): Promise<{ success: true; data: ValidateDiscountCodeResult } | { success: false; error: string }> {
+  try {
+    const response = await api.discountCodes.validate({
+      code,
+      subtotalCents,
+      paymentMethod: paymentMethod as PaymentMethod,
+    });
+    return { success: true, data: response.result };
+  } catch (err: unknown) {
+    const apiErr = err as { data?: { message?: string } };
+    const message = apiErr?.data?.message || "Error al validar el codigo";
+    return { success: false, error: message };
+  }
 }
 
 export async function paypalCreateOrderAction(
