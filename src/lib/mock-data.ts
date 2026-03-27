@@ -88,6 +88,7 @@ export const MOCK_PRODUCTS: Product[] = [
     categoryId: "1",
     isActive: true,
     isFeatured: true,
+    isQuickDelivery: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     images: [
@@ -114,6 +115,7 @@ export const MOCK_PRODUCTS: Product[] = [
     categoryId: "1",
     isActive: true,
     isFeatured: true,
+    isQuickDelivery: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     images: [
@@ -140,6 +142,7 @@ export const MOCK_PRODUCTS: Product[] = [
     categoryId: "2",
     isActive: true,
     isFeatured: true,
+    isQuickDelivery: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     images: [
@@ -166,6 +169,7 @@ export const MOCK_PRODUCTS: Product[] = [
     categoryId: "4",
     isActive: true,
     isFeatured: true,
+    isQuickDelivery: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     images: [
@@ -192,6 +196,7 @@ export const MOCK_PRODUCTS: Product[] = [
     categoryId: "5",
     isActive: true,
     isFeatured: true,
+    isQuickDelivery: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     images: [
@@ -218,6 +223,7 @@ export const MOCK_PRODUCTS: Product[] = [
     categoryId: "3",
     isActive: true,
     isFeatured: true,
+    isQuickDelivery: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     images: [
@@ -244,6 +250,7 @@ export const MOCK_PRODUCTS: Product[] = [
     categoryId: "1",
     isActive: true,
     isFeatured: true,
+    isQuickDelivery: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     images: [
@@ -270,6 +277,7 @@ export const MOCK_PRODUCTS: Product[] = [
     categoryId: "5",
     isActive: true,
     isFeatured: true,
+    isQuickDelivery: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     images: [

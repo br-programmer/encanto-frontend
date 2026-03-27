@@ -125,6 +125,7 @@ export interface Product {
   cardMessageFeeCents: number | null;
   isActive: boolean;
   isFeatured: boolean;
+  isQuickDelivery: boolean;
   preparationMinutes: number;
   createdAt: string;
   updatedAt: string;
@@ -147,6 +148,7 @@ export interface ProductFilters {
   categorySlug?: string;
   isActive?: boolean;
   isFeatured?: boolean;
+  isQuickDelivery?: boolean;
   inStock?: boolean;
   minPrice?: number;
   maxPrice?: number;
@@ -394,6 +396,7 @@ export interface OrderSettings {
   bouquetDefaultPrepMinutes: number;
   bouquetIncludesCard: boolean;
   bouquetCardMessageFeeCents: number | null;
+  minAdvanceDays: number;
   updatedAt: string;
   updatedBy: string | null;
 }
@@ -449,6 +452,7 @@ export interface CreateOrderRequest {
   occasionId?: string;
   isSurprise?: boolean;
   isAnonymous?: boolean;
+  discountCode?: string;
 }
 
 export interface PreviewOrderRequest {
@@ -461,6 +465,21 @@ export interface PreviewOrderRequest {
   deliveryTimeSlotId: string;
   paymentMethod: PaymentMethod;
   items: OrderItemRequest[];
+  discountCode?: string;
+}
+
+export interface ValidateDiscountCodeRequest {
+  code: string;
+  subtotalCents: number;
+  paymentMethod: PaymentMethod;
+}
+
+export interface ValidateDiscountCodeResponse {
+  valid: boolean;
+  discountAmountCents?: number;
+  type?: "percentage" | "fixed_amount";
+  value?: number;
+  message?: string;
 }
 
 export interface PreviewItemResponse {
@@ -493,6 +512,7 @@ export interface OrderPreview {
   cardMessageTotalCents: number;
   deliveryFeeCents: number;
   transferDiscountCents: number;
+  discountAmountCents: number;
   taxCents: number;
   totalCents: number;
   timeEstimate: TimeEstimate;
@@ -580,6 +600,8 @@ export interface Order {
   cardMessageTotalCents: number;
   deliveryFeeCents: number;
   transferDiscountCents: number;
+  discountCodeId: string | null;
+  discountAmountCents: number;
   taxCents: number;
   totalCents: number;
   paymentMethod: PaymentMethod;
@@ -1183,6 +1205,15 @@ export const api = {
       fetchApiWithTokens<ResultResponse<Order>>(`/orders/${orderId}/paypal/capture`, {
         method: "POST",
       }, accessToken, guestToken).then(r => r.result),
+  },
+
+  // Discount Codes
+  discountCodes: {
+    validate: (data: ValidateDiscountCodeRequest) =>
+      fetchApi<ValidateDiscountCodeResponse>("/discount-codes/validate", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
   },
 
   // Delivery Addresses

@@ -30,6 +30,7 @@ interface MapPickerProps {
   zones?: DeliveryZone[];
   selectedZoneId?: string;
   className?: string;
+  disableZoneValidation?: boolean;
 }
 
 // City centers for quick navigation
@@ -37,7 +38,7 @@ const CITY_CENTERS: Record<string, [number, number]> = {
   Manta: [-0.95, -80.73],
 };
 
-export function MapPicker({ latitude, longitude, onLocationChange, zones = [], selectedZoneId, className }: MapPickerProps) {
+export function MapPicker({ latitude, longitude, onLocationChange, zones = [], selectedZoneId, className, disableZoneValidation = false }: MapPickerProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -82,6 +83,10 @@ export function MapPicker({ latitude, longitude, onLocationChange, zones = [], s
   }, []);
 
   const findZone = useCallback(async (lat: number, lng: number) => {
+    if (disableZoneValidation) {
+      onLocationChange(lat, lng, null);
+      return;
+    }
     setIsSearching(true);
     // Clear previous detected zone
     if (detectedZoneLayerRef.current) {
@@ -166,6 +171,16 @@ export function MapPicker({ latitude, longitude, onLocationChange, zones = [], s
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Update map position when props change (e.g. selecting a saved address)
+  useEffect(() => {
+    if (!mapRef.current || !markerRef.current) return;
+    const currentPos = markerRef.current.getLatLng();
+    if (Math.abs(currentPos.lat - latitude) > 0.0001 || Math.abs(currentPos.lng - longitude) > 0.0001) {
+      markerRef.current.setLatLng([latitude, longitude]);
+      mapRef.current.setView([latitude, longitude], mapRef.current.getZoom(), { animate: true });
+    }
+  }, [latitude, longitude]);
 
   // Draw delivery zone polygons
   useEffect(() => {

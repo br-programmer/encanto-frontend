@@ -49,6 +49,8 @@ export type {
   PaymentMethod,
   OrderStatus,
   PaymentStatus,
+  ValidateDiscountCodeRequest,
+  ValidateDiscountCodeResponse,
   DeliveryPerson,
   DeliveryVehicleSnapshot,
   OrderDeliveryZone,
@@ -75,6 +77,7 @@ export interface CartItem {
     slug: string;
     priceCents: number;
     image: string | null;
+    isQuickDelivery?: boolean;
   };
   quantity: number;
   cardMessage?: string;

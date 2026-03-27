@@ -23,7 +23,7 @@ export default function CategoryLoading() {
           {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className="bg-white dark:bg-stone-900 rounded-sm shadow-md"
+              className="bg-white dark:bg-stone-900 shadow-md"
             >
               <div className="p-2.5 pb-0 sm:p-3 sm:pb-0">
                 <Skeleton className="aspect-[4/5] w-full" />

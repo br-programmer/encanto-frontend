@@ -101,7 +101,7 @@ export function Header() {
                   alt="Encanto"
                   width={120}
                   height={40}
-                  className="h-7 sm:h-8 md:h-10 w-auto"
+                  className="h-9 sm:h-10 md:h-12 w-auto"
                   priority
                 />
               </Link>

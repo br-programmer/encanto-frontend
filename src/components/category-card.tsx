@@ -11,7 +11,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
   return (
     <Link
       href={`/categorias/${category.slug}`}
-      className="group block bg-white dark:bg-stone-900 rounded-sm shadow-md border border-secondary hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+      className="group block bg-white dark:bg-stone-900 shadow-md border border-secondary hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
     >
       {/* Image with polaroid-style padding */}
       <div className="p-2.5 pb-0 sm:p-3 sm:pb-0">

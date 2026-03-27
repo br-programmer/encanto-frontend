@@ -72,38 +72,21 @@ const steps = [
 
 export function ScrollRevealSection() {
   return (
-    <section className="py-12 sm:py-16 md:py-20 bg-background-alt overflow-hidden">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <RevealItem className="text-center mb-10 sm:mb-14">
-          <p className="text-primary font-normal text-sm sm:text-base uppercase tracking-wider mb-4">
-            Nuestra historia
-          </p>
-          <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl lg:text-6xl mb-6">
-            Más que flores,
-            <br />
-            <span className="text-primary">entregamos emociones</span>
-          </h2>
-          <p className="text-foreground-secondary text-lg sm:text-xl max-w-2xl mx-auto">
-            Conoce cómo nació Encanto y por qué cada arreglo lleva un pedacito de nuestro corazón.
-          </p>
-        </RevealItem>
-
+    <section className="bg-background-alt overflow-hidden">
+      <div className="mx-auto max-w-7xl">
         {/* Steps */}
-        <div className="space-y-0">
+        <div>
           {steps.map((step, index) => (
             <div
               key={step.number}
-              className={`flex flex-col ${
-                index % 2 === 0 ? "lg:flex-row" : "lg:flex-row-reverse"
-              } items-center gap-6 sm:gap-8 lg:gap-12`}
+              className="grid grid-cols-1 lg:grid-cols-2"
             >
               {/* Image with hover swap */}
               <RevealItem
                 delay={100}
-                className="w-full lg:w-1/2"
+                className={`w-full ${index % 2 !== 0 ? "lg:order-2" : ""}`}
               >
-                <div className="group/img relative aspect-[4/3] rounded-lg overflow-hidden shadow-2xl">
+                <div className="group/img relative aspect-[4/3] lg:aspect-auto lg:h-full overflow-hidden">
                   <SafeImage
                     src={step.image}
                     alt={step.title}
@@ -128,21 +111,21 @@ export function ScrollRevealSection() {
               </RevealItem>
 
               {/* Content */}
-              <div className="w-full lg:w-1/2 text-center lg:text-left">
+              <div className={`w-full flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-14 lg:px-16 lg:py-20 text-center lg:text-left ${index % 2 !== 0 ? "lg:order-1" : ""}`}>
                 <RevealItem delay={200}>
-                  <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-secondary mb-6">
-                    <step.icon className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
+                  <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-secondary mb-4 sm:mb-6">
+                    <step.icon className="w-6 h-6 sm:w-7 sm:h-7 text-primary" />
                   </div>
                 </RevealItem>
 
                 <RevealItem delay={300}>
-                  <h3 className="font-serif text-3xl sm:text-4xl md:text-5xl mb-4 sm:mb-6">
+                  <h3 className="font-serif text-2xl sm:text-3xl md:text-4xl mb-3 sm:mb-5">
                     {step.title}
                   </h3>
                 </RevealItem>
 
                 <RevealItem delay={400}>
-                  <p className="text-foreground-secondary text-base sm:text-lg md:text-xl leading-relaxed max-w-md mx-auto lg:mx-0">
+                  <p className="text-foreground-secondary text-sm sm:text-base md:text-lg leading-relaxed max-w-md mx-auto lg:mx-0">
                     {step.description}
                   </p>
                 </RevealItem>
@@ -151,18 +134,6 @@ export function ScrollRevealSection() {
           ))}
         </div>
 
-        {/* Bottom CTA */}
-        <RevealItem delay={200} className="text-center mt-12 sm:mt-16 md:mt-20">
-          <p className="text-foreground-secondary text-lg sm:text-xl mb-6">
-            ¿Quieres conocernos más?
-          </p>
-          <a
-            href="/nosotros"
-            className="inline-flex items-center justify-center h-14 px-10 bg-primary hover:bg-primary-hover text-white rounded-full text-lg font-normal transition-all duration-300 hover:scale-105 hover:shadow-lg"
-          >
-            Sobre nosotros
-          </a>
-        </RevealItem>
       </div>
     </section>
   );
