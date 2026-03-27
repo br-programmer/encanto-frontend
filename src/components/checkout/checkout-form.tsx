@@ -2,33 +2,24 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, CreditCard, Building2, Gift, EyeOff, User, LogOut, Check, LogIn, UserPlus, ChevronRight, MapPin, Plus, Bookmark, AlertTriangle, Percent, Truck, Store, MessageSquare, Package } from "lucide-react";
+import { Loader2, AlertTriangle, User, LogIn, UserPlus, Check, LogOut, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
-import { Checkbox } from "@/components/ui/checkbox";
-import dynamic from "next/dynamic";
+import { CheckoutProgress } from "./checkout-progress";
 import { OrderSummary } from "./order-summary";
-import { DiscountCodeInput } from "./discount-code-input";
-
-const MapPicker = dynamic(() => import("./map-picker").then(m => ({ default: m.MapPicker })), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-[300px] rounded-lg border border-border bg-secondary/30 flex items-center justify-center">
-      <span className="text-sm text-foreground-secondary">Cargando mapa...</span>
-    </div>
-  ),
-});
 import { CheckoutSuccess } from "./checkout-success";
 import { PayPalCheckoutModal } from "./paypal-checkout";
 import { AddOnsModal } from "./add-ons-modal";
 import { AuthModal } from "@/components/auth-modal";
+import { PhoneInput, normalizePhoneValue } from "@/components/ui/phone-input";
 import { useCartStore } from "@/stores/cart-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { useAddressesStore, type DeliveryAddress } from "@/stores/addresses-store";
 import { useCheckoutData } from "@/hooks/use-checkout-data";
+import { StepDelivery } from "./steps/step-delivery";
+import { StepSchedule } from "./steps/step-schedule";
+import { StepPayment } from "./steps/step-payment";
+import { StepReview } from "./steps/step-review";
 
 import { previewOrderAction, createOrderAction } from "@/actions/order-actions";
 import type { Order, OrderPreview, BankAccount, DeliveryZone, FulfillmentType } from "@/lib/api";
@@ -80,32 +71,8 @@ const initialFormData: FormData = {
   longitude: -80.73,
 };
 
-import { PhoneInput, normalizePhoneValue } from "@/components/ui/phone-input";
-
-const paymentMethods = [
-  {
-    value: "bank_transfer",
-    label: "Transferencia bancaria",
-    icon: Building2,
-    available: true,
-  },
-  {
-    value: "paypal",
-    label: "PayPal",
-    description: "Paga con tarjeta o cuenta PayPal",
-    icon: CreditCard,
-    available: !!process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID,
-  },
-  {
-    value: "datafast",
-    label: "Tarjeta de crédito/débito",
-    description: "Próximamente",
-    icon: CreditCard,
-    available: false,
-  },
-];
-
 const CHECKOUT_STORAGE_KEY = "encanto-checkout-form";
+const CHECKOUT_STEP_KEY = "encanto-checkout-step";
 
 function getSavedFormData(): FormData | null {
   if (typeof window === "undefined") return null;
@@ -113,28 +80,41 @@ function getSavedFormData(): FormData | null {
     const saved = sessionStorage.getItem(CHECKOUT_STORAGE_KEY);
     if (!saved) return null;
     return JSON.parse(saved) as FormData;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 function saveFormData(data: FormData) {
   if (typeof window === "undefined") return;
-  try {
-    sessionStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(data));
-  } catch {
-    // Storage full or unavailable
-  }
+  try { sessionStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(data)); } catch {}
 }
 
 function clearSavedFormData() {
   if (typeof window === "undefined") return;
   sessionStorage.removeItem(CHECKOUT_STORAGE_KEY);
+  sessionStorage.removeItem(CHECKOUT_STEP_KEY);
 }
+
+function getSavedStep(): number {
+  if (typeof window === "undefined") return 1;
+  try { return parseInt(sessionStorage.getItem(CHECKOUT_STEP_KEY) || "1", 10) || 1; } catch { return 1; }
+}
+
+function saveStep(step: number) {
+  if (typeof window === "undefined") return;
+  try { sessionStorage.setItem(CHECKOUT_STEP_KEY, String(step)); } catch {}
+}
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  bank_transfer: "Transferencia bancaria",
+  paypal: "PayPal",
+  datafast: "Tarjeta de crédito/débito",
+};
 
 export function CheckoutForm() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -155,81 +135,53 @@ export function CheckoutForm() {
   const [discountCode, setDiscountCode] = useState<string | null>(null);
   const [discountAmountCents, setDiscountAmountCents] = useState(0);
   const previewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [addOnsModalProductId, setAddOnsModalProductId] = useState<string | null>(null);
 
   const { items, totalPrice, clearCart, updateItemCardMessage, updateItemAddOns } = useCartStore();
-  const [addOnsModalProductId, setAddOnsModalProductId] = useState<string | null>(null);
   const { user, tokens, logout } = useAuthStore();
   const { addresses, addAddress, getDefaultAddress } = useAddressesStore();
 
-  const [productAddOnGroups, setProductAddOnGroups] = useState<Record<string, import("@/types").ProductAddOnsGroup[]>>({});
-
   const {
-    cities,
-    branches,
-    zones,
-    timeSlots,
-    specialDates,
-    bankAccounts,
-    occasions,
-    orderSettings,
-    addOnCategories,
-    addOns: availableAddOns,
-    isLoading: isLoadingCheckoutData,
-    error: checkoutDataError,
-    selectedCityId,
-    selectedBranchId,
-    setSelectedCityId,
-    setSelectedBranchId,
-    getSpecialDateForDate,
-    getZoneById,
+    cities, branches, zones, timeSlots, specialDates, bankAccounts, occasions, orderSettings,
+    addOnCategories, addOns: availableAddOns,
+    isLoading: isLoadingCheckoutData, error: checkoutDataError,
+    selectedCityId, selectedBranchId, setSelectedCityId, setSelectedBranchId,
+    getSpecialDateForDate, getZoneById,
   } = useCheckoutData();
 
+  // Mount + restore
   useEffect(() => {
     setMounted(true);
-    // Restore saved form data
     const saved = getSavedFormData();
     if (saved) {
       setFormData(saved);
       if (saved.cityId) setSelectedCityId(saved.cityId);
       if (saved.branchId) setSelectedBranchId(saved.branchId);
     }
+    setCurrentStep(getSavedStep());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Persist form data to sessionStorage
-  useEffect(() => {
-    if (mounted) {
-      saveFormData(formData);
-    }
-  }, [mounted, formData]);
+  // Persist
+  useEffect(() => { if (mounted) saveFormData(formData); }, [mounted, formData]);
+  useEffect(() => { if (mounted) saveStep(currentStep); }, [mounted, currentStep]);
 
+  // Auto-set city/branch
+  useEffect(() => { if (selectedCityId && !formData.cityId) setFormData((p) => ({ ...p, cityId: selectedCityId })); }, [selectedCityId, formData.cityId]);
+  useEffect(() => { if (selectedBranchId && !formData.branchId) setFormData((p) => ({ ...p, branchId: selectedBranchId })); }, [selectedBranchId, formData.branchId]);
 
-  // Auto-set city/branch when data loads
-  useEffect(() => {
-    if (selectedCityId && !formData.cityId) {
-      setFormData((prev) => ({ ...prev, cityId: selectedCityId }));
-    }
-  }, [selectedCityId, formData.cityId]);
-
-  useEffect(() => {
-    if (selectedBranchId && !formData.branchId) {
-      setFormData((prev) => ({ ...prev, branchId: selectedBranchId }));
-    }
-  }, [selectedBranchId, formData.branchId]);
-
-  // Pre-fill form with user data and default address
+  // Pre-fill user data
   useEffect(() => {
     if (mounted && user) {
-      setFormData((prev) => ({
-        ...prev,
-        senderName: prev.senderName || user.fullName,
-        senderEmail: prev.senderEmail || user.email,
-        senderPhone: prev.senderPhone || user.phone,
+      setFormData((p) => ({
+        ...p,
+        senderName: p.senderName || user.fullName,
+        senderEmail: p.senderEmail || user.email,
+        senderPhone: p.senderPhone || user.phone,
       }));
-
       const defaultAddress = getDefaultAddress();
       if (defaultAddress) {
-        setFormData((prev) => ({
-          ...prev,
+        setFormData((p) => ({
+          ...p,
           recipientName: defaultAddress.recipientName,
           recipientPhone: defaultAddress.recipientPhone,
           address: defaultAddress.address,
@@ -240,1476 +192,403 @@ export function CheckoutForm() {
     }
   }, [mounted, user, getDefaultAddress]);
 
-  // Redirect to products if cart is empty
+  // Redirect if cart empty
   useEffect(() => {
-    if (mounted && items.length === 0 && !isSubmitted && !pendingPayPal) {
-      router.push("/productos");
-    }
+    if (mounted && items.length === 0 && !isSubmitted && !pendingPayPal) router.push("/productos");
   }, [mounted, items.length, isSubmitted, pendingPayPal, router]);
 
-  // Check special date when delivery date changes
+  // Special date check
   useEffect(() => {
     if (formData.deliveryDate) {
       const sd = getSpecialDateForDate(formData.deliveryDate);
-      if (sd && sd.warningMessage) {
-        setSpecialDateWarning(sd.warningMessage);
-      } else {
-        setSpecialDateWarning(null);
-      }
-
-      // Validate advance days
+      setSpecialDateWarning(sd?.warningMessage || null);
       if (sd && sd.requiresAdvanceDays > 0) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const today = new Date(); today.setHours(0, 0, 0, 0);
         const deliveryDate = new Date(formData.deliveryDate + "T00:00:00");
         const diffDays = Math.ceil((deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         if (diffDays < sd.requiresAdvanceDays) {
-          setError(
-            `Para ${sd.name} se requiere un mínimo de ${sd.requiresAdvanceDays} días de anticipación`
-          );
+          setError(`Para ${sd.name} se requiere un mínimo de ${sd.requiresAdvanceDays} días de anticipación`);
         }
       }
-    } else {
-      setSpecialDateWarning(null);
-    }
+    } else { setSpecialDateWarning(null); }
   }, [formData.deliveryDate, getSpecialDateForDate]);
 
   const isPickup = formData.fulfillmentType === "pickup";
 
-  // Fetch order preview with debounce
+  // Preview
   const fetchPreview = useCallback(async () => {
     const needsZone = formData.fulfillmentType === "delivery";
-    if (
-      !formData.branchId ||
-      (needsZone && !formData.deliveryZoneId) ||
-      !formData.deliveryDate ||
-      !formData.deliveryTimeSlotId ||
-      !formData.paymentMethod ||
-      items.length === 0
-    ) {
-      setOrderPreview(null);
-      return;
+    if (!formData.branchId || (needsZone && !formData.deliveryZoneId) || !formData.deliveryDate || !formData.deliveryTimeSlotId || !formData.paymentMethod || items.length === 0) {
+      setOrderPreview(null); return;
     }
-
     setIsLoadingPreview(true);
     try {
       const preview = await previewOrderAction({
-        fulfillmentType: formData.fulfillmentType,
-        branchId: formData.branchId,
-        ...(needsZone ? {
-          deliveryZoneId: formData.deliveryZoneId,
-          latitude: formData.latitude,
-          longitude: formData.longitude,
-        } : {}),
-        deliveryDate: formData.deliveryDate,
-        deliveryTimeSlotId: formData.deliveryTimeSlotId,
+        fulfillmentType: formData.fulfillmentType, branchId: formData.branchId,
+        ...(needsZone ? { deliveryZoneId: formData.deliveryZoneId, latitude: formData.latitude, longitude: formData.longitude } : {}),
+        deliveryDate: formData.deliveryDate, deliveryTimeSlotId: formData.deliveryTimeSlotId,
         paymentMethod: formData.paymentMethod as "bank_transfer" | "paypal" | "datafast",
-        items: items.map((item) => ({
-          productId: item.product.id,
-          quantity: item.quantity,
-          cardMessage: item.cardMessage,
-          addOns: item.addOns?.map((a) => ({ addOnId: a.addOnId, quantity: a.quantity })),
-        })),
+        items: items.map((item) => ({ productId: item.product.id, quantity: item.quantity, cardMessage: item.cardMessage, addOns: item.addOns?.map((a) => ({ addOnId: a.addOnId, quantity: a.quantity })) })),
         ...(discountCode ? { discountCode } : {}),
       });
       setOrderPreview(preview);
-      if (preview.warningMessage) {
-        setSpecialDateWarning(preview.warningMessage);
-      }
-    } catch (err) {
-      console.error("Error fetching preview:", err);
-    } finally {
-      setIsLoadingPreview(false);
-    }
+      if (preview.warningMessage) setSpecialDateWarning(preview.warningMessage);
+    } catch (err) { console.error("Error fetching preview:", err); }
+    finally { setIsLoadingPreview(false); }
   }, [formData.fulfillmentType, formData.branchId, formData.deliveryZoneId, formData.deliveryDate, formData.deliveryTimeSlotId, formData.paymentMethod, formData.latitude, formData.longitude, items, discountCode]);
 
   useEffect(() => {
-    if (previewTimeoutRef.current) {
-      clearTimeout(previewTimeoutRef.current);
-    }
+    if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
     previewTimeoutRef.current = setTimeout(fetchPreview, 300);
-    return () => {
-      if (previewTimeoutRef.current) {
-        clearTimeout(previewTimeoutRef.current);
-      }
-    };
+    return () => { if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current); };
   }, [fetchPreview]);
 
   const displayItems = mounted ? items : [];
   const subtotal = mounted ? totalPrice() : 0;
-
-  // Determine if we should show auth section
   const showAuthSection = mounted && !user && !isGuestCheckout;
-
-  // Get shipping cost from preview or zone
-  const getShippingCost = (): number => {
-    if (isPickup) return 0;
-    if (orderPreview) return orderPreview.deliveryFeeCents;
-    if (formData.deliveryZoneId) {
-      const zone = getZoneById(formData.deliveryZoneId);
-      return zone?.deliveryFeeCents ?? 0;
-    }
-    return 0;
-  };
-
-  const shippingCost = getShippingCost();
+  const shippingCost = isPickup ? 0 : (orderPreview?.deliveryFeeCents ?? (formData.deliveryZoneId ? (getZoneById(formData.deliveryZoneId)?.deliveryFeeCents ?? 0) : 0));
   const transferDiscount = orderPreview?.transferDiscountCents ?? 0;
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-      // Reset cascading fields
-      ...(name === "cityId" ? { branchId: "", deliveryZoneId: "" } : {}),
-      ...(name === "branchId" ? { deliveryZoneId: "" } : {}),
-    }));
+  // Handlers
+  const handleFormChange = (updates: Record<string, unknown>) => {
+    setFormData((p) => {
+      const next = { ...p, ...updates };
+      if ("cityId" in updates) { next.branchId = ""; next.deliveryZoneId = ""; setSelectedCityId(updates.cityId as string); }
+      if ("branchId" in updates) { next.deliveryZoneId = ""; setSelectedBranchId(updates.branchId as string); }
+      return next;
+    });
     setError(null);
-
-    // Update checkout data hook for cascading fetches
-    if (name === "cityId") {
-      setSelectedCityId(value);
-    }
-    if (name === "branchId") {
-      setSelectedBranchId(value);
-    }
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-      ...(name === "cityId" ? { branchId: "", deliveryZoneId: "" } : {}),
-      ...(name === "branchId" ? { deliveryZoneId: "" } : {}),
-    }));
-    setError(null);
-
-    if (name === "cityId") {
-      setSelectedCityId(value);
-    }
-    if (name === "branchId") {
-      setSelectedBranchId(value);
-    }
+    handleFormChange({ [name]: value });
   };
 
   const handleMapLocationChange = useCallback((lat: number, lng: number, zone: DeliveryZone | null) => {
-    setFormData((prev) => ({
-      ...prev,
-      latitude: lat,
-      longitude: lng,
-      deliveryZoneId: zone?.id ?? "",
-      branchId: zone?.branchId ?? prev.branchId,
-    }));
-
-    if (zone?.branchId) {
-      setSelectedBranchId(zone.branchId);
-    }
+    setFormData((p) => ({ ...p, latitude: lat, longitude: lng, deliveryZoneId: zone?.id ?? "", branchId: zone?.branchId ?? p.branchId }));
+    if (zone?.branchId) setSelectedBranchId(zone.branchId);
     setError(null);
   }, [setSelectedBranchId]);
 
-  const handlePaymentMethodChange = (method: string) => {
-    setFormData((prev) => ({ ...prev, paymentMethod: method }));
-    setError(null);
-  };
-
-  const getMinDeliveryDate = (): string => {
-    const today = new Date();
-    // Minimum 1 day ahead
-    today.setDate(today.getDate() + 1);
-
-    // Skip Sundays (0 = Sunday)
-    if (today.getDay() === 0) {
-      today.setDate(today.getDate() + 1);
-    }
-
-    return today.toISOString().split("T")[0];
-  };
-
-  const validateForm = (): boolean => {
-    // Guest checkout requires sender info
-    if (!user && isGuestCheckout) {
-      if (!formData.senderName.trim()) {
-        setError("Por favor, ingresa tu nombre");
-        return false;
-      }
-      if (!formData.senderEmail.trim()) {
-        setError("Por favor, ingresa tu correo electrónico");
-        return false;
-      }
-      if (!formData.senderPhone.trim()) {
-        setError("Por favor, ingresa tu teléfono");
-        return false;
-      }
-    }
-    if (!formData.recipientName.trim()) {
-      setError(isPickup ? "Por favor, ingresa el nombre de quien retira" : "Por favor, ingresa el nombre del destinatario");
-      return false;
-    }
-    if (!isPickup && !formData.recipientPhone.trim()) {
-      setError("Por favor, ingresa el teléfono del destinatario");
-      return false;
-    }
-    if (!isPickup && !formData.address.trim()) {
-      setError("Por favor, ingresa la dirección de entrega");
-      return false;
-    }
-    if (!isPickup && !formData.cityId) {
-      setError("Por favor, selecciona una ciudad");
-      return false;
-    }
-    if (!isPickup && !formData.deliveryZoneId) {
-      setError("Por favor, selecciona la zona de entrega");
-      return false;
-    }
-    if (!formData.deliveryDate) {
-      setError("Por favor, selecciona la fecha de entrega");
-      return false;
-    }
-    if (!formData.deliveryTimeSlotId) {
-      setError("Por favor, selecciona el horario de entrega");
-      return false;
-    }
-    if (formData.differentBuyer) {
-      if (!formData.senderName.trim()) {
-        setError("Por favor, ingresa el nombre del comprador");
-        return false;
-      }
-      if (!formData.senderPhone.trim()) {
-        setError("Por favor, ingresa el teléfono del comprador");
-        return false;
-      }
-    }
-    if (!formData.paymentMethod) {
-      setError("Por favor, selecciona un método de pago");
-      return false;
-    }
-
-    // Validate special date advance days
-    const sd = getSpecialDateForDate(formData.deliveryDate);
-    if (sd && sd.requiresAdvanceDays > 0) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const deliveryDate = new Date(formData.deliveryDate + "T00:00:00");
-      const diffDays = Math.ceil((deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      if (diffDays < sd.requiresAdvanceDays) {
-        setError(
-          `Para ${sd.name} se requiere un mínimo de ${sd.requiresAdvanceDays} días de anticipación`
-        );
-        return false;
-      }
-    }
-
-    return true;
-  };
+  const handlePhoneChange = (name: string, value: string) => setFormData((p) => ({ ...p, [name]: value }));
 
   const handleSelectAddress = (address: DeliveryAddress) => {
     setSelectedAddressId(address.id);
-    setFormData((prev) => ({
-      ...prev,
-      recipientName: address.recipientName,
-      recipientPhone: address.recipientPhone,
-      address: address.address,
-      deliveryReference: address.notes || "",
-    }));
+    setFormData((p) => ({ ...p, recipientName: address.recipientName, recipientPhone: address.recipientPhone, address: address.address, deliveryReference: address.notes || "" }));
   };
 
   const handleNewAddress = () => {
     setSelectedAddressId(null);
-    setFormData((prev) => ({
-      ...prev,
-      recipientName: "",
-      recipientPhone: "",
-      address: "",
-      deliveryReference: "",
-    }));
+    setFormData((p) => ({ ...p, recipientName: "", recipientPhone: "", address: "", deliveryReference: "" }));
     setSaveAddress(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
-
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      // Determine sender info
-      const senderName = formData.differentBuyer
-        ? formData.senderName
-        : user?.fullName || formData.senderName;
-      const senderEmail = user?.email || formData.senderEmail;
-      const senderPhone = formData.differentBuyer
-        ? formData.senderPhone
-        : user?.phone || formData.senderPhone;
-
-      // Get city name for the order
-      const selectedCity = cities.find((c) => c.id === formData.cityId);
-
-      const orderData = {
-        fulfillmentType: formData.fulfillmentType,
-        branchId: formData.branchId,
-        ...(isPickup ? {} : {
-          deliveryZoneId: formData.deliveryZoneId,
-          latitude: formData.latitude,
-          longitude: formData.longitude,
-          deliveryAddress: formData.address,
-          deliveryCity: selectedCity?.name || "",
-          deliveryReference: formData.deliveryReference || undefined,
-        }),
-        deliveryDate: formData.deliveryDate,
-        deliveryTimeSlotId: formData.deliveryTimeSlotId,
-        paymentMethod: formData.paymentMethod as "bank_transfer" | "paypal" | "datafast",
-        items: items.map((item) => ({
-          productId: item.product.id,
-          quantity: item.quantity,
-          cardMessage: item.cardMessage,
-          addOns: item.addOns?.map((a) => ({ addOnId: a.addOnId, quantity: a.quantity })),
-        })),
-        senderName,
-        senderEmail,
-        senderPhone: normalizePhoneValue(senderPhone),
-        recipientName: formData.recipientName,
-        ...(formData.recipientPhone.trim() ? { recipientPhone: normalizePhoneValue(formData.recipientPhone) } : {}),
-        occasionId: formData.occasionId || undefined,
-        isSurprise: formData.isSurprise,
-        isAnonymous: formData.isAnonymous,
-        ...(discountCode ? { discountCode } : {}),
-      };
-
-      // Ensure token is valid before sending
-      let validAccessToken: string | undefined;
-      let guestToken: string | undefined;
-
-      if (user) {
-        const { getValidAccessToken } = useAuthStore.getState();
-        validAccessToken = await getValidAccessToken();
-        if (!validAccessToken) {
-          setSessionExpired(true);
-          setIsSubmitting(false);
-          return;
-        }
-      } else {
-        guestToken = typeof window !== "undefined"
-          ? localStorage.getItem("encanto-guest-token") || undefined
-          : undefined;
-      }
-
-      const order = await createOrderAction(
-        orderData,
-        validAccessToken,
-        guestToken
-      );
-
-      // Save guest token if returned
-      if (order.guestToken) {
-        localStorage.setItem("encanto-guest-token", order.guestToken);
-      }
-
-      // Save address if checkbox is checked and it's a new address
-      if (saveAddress && !selectedAddressId && user) {
-        addAddress({
-          label: addressLabel,
-          recipientName: formData.recipientName,
-          recipientPhone: formData.recipientPhone,
-          address: formData.address,
-          city: selectedCity?.name || "",
-          zone: zones.find((z) => z.id === formData.deliveryZoneId)?.zoneName || "",
-          notes: formData.deliveryReference || undefined,
-          isDefault: addresses.length === 0,
-        });
-      }
-
-      setCreatedOrder(order);
-      clearCart();
-      clearSavedFormData();
-      sessionStorage.setItem("encanto-order-created", "true");
-
-      if (formData.paymentMethod === "paypal") {
-        setPaypalTokens({
-          accessToken: validAccessToken,
-          guestToken: order.guestToken || guestToken,
-        });
-        setPendingPayPal(true);
-      } else {
-        setIsSubmitted(true);
-      }
-    } catch (err) {
-      if (err instanceof Error) {
-        // Server Actions serialize errors - extract message
-        const msg = err.message;
-        if (msg && msg !== "API Error: 400 Bad Request" && !msg.startsWith("API Error:")) {
-          setError(msg);
-        } else {
-          setError("Hubo un error al procesar tu pedido. Por favor, intenta de nuevo.");
-        }
-      } else {
-        setError("Hubo un error al procesar tu pedido. Por favor, intenta de nuevo.");
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
+  const getMinDeliveryDate = (): string => {
+    const today = new Date();
+    today.setDate(today.getDate() + 1);
+    if (today.getDay() === 0) today.setDate(today.getDate() + 1);
+    return today.toISOString().split("T")[0];
   };
 
-  const handleNewOrder = () => {
-    setIsSubmitted(false);
-    setCreatedOrder(null);
-    setFormData(initialFormData);
-    clearSavedFormData();
-    router.push("/productos");
-  };
-
-  const handleGuestCheckout = () => {
-    setIsGuestCheckout(true);
-  };
-
-  const handleOpenLogin = () => {
-    setAuthModalMode("login");
-    setAuthModalOpen(true);
-  };
-
-  const handleOpenRegister = () => {
-    setAuthModalMode("register");
-    setAuthModalOpen(true);
-  };
-
-  const handleLogout = () => {
-    logout();
-    setIsGuestCheckout(false);
-  };
-
-  // Format time slot for display
   const formatTimeSlot = (startTime: string, endTime: string, label: string | null): string => {
-    const formatTime = (t: string) => {
-      const [h, m] = t.split(":");
-      const hour = parseInt(h);
-      const ampm = hour >= 12 ? "PM" : "AM";
-      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-      return `${displayHour}:${m} ${ampm}`;
-    };
-    const timeRange = `${formatTime(startTime)} - ${formatTime(endTime)}`;
+    const fmt = (t: string) => { const [h, m] = t.split(":"); const hour = parseInt(h); return `${hour > 12 ? hour - 12 : hour === 0 ? 12 : hour}:${m} ${hour >= 12 ? "PM" : "AM"}`; };
+    const timeRange = `${fmt(startTime)} - ${fmt(endTime)}`;
     return label ? `${label} (${timeRange})` : timeRange;
   };
 
-  // Loading state
+  // Step validation
+  const validateStep = (step: number): boolean => {
+    setError(null);
+    if (step === 1) {
+      if (!formData.recipientName.trim()) { setError(isPickup ? "Ingresa el nombre de quien retira" : "Ingresa el nombre del destinatario"); return false; }
+      if (!isPickup && !formData.recipientPhone.trim()) { setError("Ingresa el teléfono del destinatario"); return false; }
+      if (!isPickup && !formData.address.trim()) { setError("Ingresa la dirección de entrega"); return false; }
+      if (!isPickup && !formData.cityId) { setError("Selecciona una ciudad"); return false; }
+      if (!isPickup && !formData.deliveryZoneId) { setError("Selecciona la zona de entrega"); return false; }
+      if (!formData.branchId) { setError("Selecciona una sucursal"); return false; }
+    }
+    if (step === 2) {
+      if (!formData.deliveryDate) { setError("Selecciona la fecha de entrega"); return false; }
+      if (!formData.deliveryTimeSlotId) { setError("Selecciona el horario de entrega"); return false; }
+      if (formData.differentBuyer) {
+        if (!formData.senderName.trim()) { setError("Ingresa el nombre del comprador"); return false; }
+        if (!formData.senderPhone.trim()) { setError("Ingresa el teléfono del comprador"); return false; }
+      }
+      const sd = getSpecialDateForDate(formData.deliveryDate);
+      if (sd && sd.requiresAdvanceDays > 0) {
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const dd = new Date(formData.deliveryDate + "T00:00:00");
+        if (Math.ceil((dd.getTime() - today.getTime()) / 86400000) < sd.requiresAdvanceDays) {
+          setError(`Para ${sd.name} se requiere ${sd.requiresAdvanceDays} días de anticipación`); return false;
+        }
+      }
+    }
+    if (step === 3) {
+      if (!formData.paymentMethod) { setError("Selecciona un método de pago"); return false; }
+    }
+    return true;
+  };
+
+  const goToStep = (step: number) => { setCurrentStep(step); setError(null); window.scrollTo({ top: 0, behavior: "smooth" }); };
+
+  const handleNext = () => {
+    if (validateStep(currentStep)) {
+      setCompletedSteps((p) => [...new Set([...p, currentStep])]);
+      goToStep(currentStep + 1);
+    }
+  };
+
+  const handleBack = () => { if (currentStep > 1) goToStep(currentStep - 1); };
+
+  const handleStepClick = (step: number) => {
+    if (completedSteps.includes(step) || step < currentStep) goToStep(step);
+  };
+
+  // Submit
+  const handleSubmit = async () => {
+    if (!validateStep(1) || !validateStep(2) || !validateStep(3)) return;
+    if (!user && isGuestCheckout && (!formData.senderName.trim() || !formData.senderEmail.trim() || !formData.senderPhone.trim())) {
+      setError("Completa tus datos de contacto"); return;
+    }
+
+    setIsSubmitting(true); setError(null);
+    try {
+      const senderName = formData.differentBuyer ? formData.senderName : user?.fullName || formData.senderName;
+      const senderEmail = user?.email || formData.senderEmail;
+      const senderPhone = formData.differentBuyer ? formData.senderPhone : user?.phone || formData.senderPhone;
+      const selectedCity = cities.find((c) => c.id === formData.cityId);
+
+      const orderData = {
+        fulfillmentType: formData.fulfillmentType, branchId: formData.branchId,
+        ...(isPickup ? {} : { deliveryZoneId: formData.deliveryZoneId, latitude: formData.latitude, longitude: formData.longitude, deliveryAddress: formData.address, deliveryCity: selectedCity?.name || "", deliveryReference: formData.deliveryReference || undefined }),
+        deliveryDate: formData.deliveryDate, deliveryTimeSlotId: formData.deliveryTimeSlotId,
+        paymentMethod: formData.paymentMethod as "bank_transfer" | "paypal" | "datafast",
+        items: items.map((item) => ({ productId: item.product.id, quantity: item.quantity, cardMessage: item.cardMessage, addOns: item.addOns?.map((a) => ({ addOnId: a.addOnId, quantity: a.quantity })) })),
+        senderName, senderEmail, senderPhone: normalizePhoneValue(senderPhone),
+        recipientName: formData.recipientName,
+        ...(formData.recipientPhone.trim() ? { recipientPhone: normalizePhoneValue(formData.recipientPhone) } : {}),
+        occasionId: formData.occasionId || undefined,
+        isSurprise: formData.isSurprise, isAnonymous: formData.isAnonymous,
+        ...(discountCode ? { discountCode } : {}),
+      };
+
+      let validAccessToken: string | undefined;
+      let guestToken: string | undefined;
+      if (user) {
+        const { getValidAccessToken } = useAuthStore.getState();
+        validAccessToken = await getValidAccessToken();
+        if (!validAccessToken) { setSessionExpired(true); setIsSubmitting(false); return; }
+      } else {
+        guestToken = typeof window !== "undefined" ? localStorage.getItem("encanto-guest-token") || undefined : undefined;
+      }
+
+      const order = await createOrderAction(orderData, validAccessToken, guestToken);
+      if (order.guestToken) localStorage.setItem("encanto-guest-token", order.guestToken);
+
+      if (saveAddress && !selectedAddressId && user) {
+        addAddress({ label: addressLabel, recipientName: formData.recipientName, recipientPhone: formData.recipientPhone, address: formData.address, city: selectedCity?.name || "", zone: zones.find((z) => z.id === formData.deliveryZoneId)?.zoneName || "", notes: formData.deliveryReference || undefined, isDefault: addresses.length === 0 });
+      }
+
+      setCreatedOrder(order); clearCart(); clearSavedFormData();
+      sessionStorage.setItem("encanto-order-created", "true");
+
+      if (formData.paymentMethod === "paypal") {
+        setPaypalTokens({ accessToken: validAccessToken, guestToken: order.guestToken || guestToken });
+        setPendingPayPal(true);
+      } else { setIsSubmitted(true); }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      setError(msg && msg !== "API Error: 400 Bad Request" && !msg.startsWith("API Error:") ? msg : "Hubo un error al procesar tu pedido. Por favor, intenta de nuevo.");
+    } finally { setIsSubmitting(false); }
+  };
+
+  const handleNewOrder = () => { setIsSubmitted(false); setCreatedOrder(null); setFormData(initialFormData); clearSavedFormData(); setCurrentStep(1); setCompletedSteps([]); router.push("/productos"); };
+
+  // Loading
   if (!mounted || isLoadingCheckoutData) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-foreground-secondary">Cargando información de checkout...</p>
+          <p className="text-foreground-secondary">Cargando...</p>
         </div>
       </div>
     );
   }
 
-  // Error loading checkout data
   if (checkoutDataError) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="h-8 w-8 text-destructive mx-auto mb-4" />
           <p className="text-destructive">{checkoutDataError}</p>
-          <Button className="mt-4" onClick={() => window.location.reload()}>
-            Reintentar
-          </Button>
+          <Button className="mt-4" onClick={() => window.location.reload()}>Reintentar</Button>
         </div>
       </div>
     );
   }
 
-  // Show success view
+  // Success
   if (isSubmitted && createdOrder) {
     const canReopenPayPal = createdOrder.paymentMethod === "paypal" && createdOrder.paymentStatus !== "paid";
     return (
       <>
-        <CheckoutSuccess
-          order={createdOrder}
-          bankAccounts={bankAccounts}
-          orderSettings={orderSettings}
-          timeSlots={timeSlots}
-          onNewOrder={handleNewOrder}
-          onPayPal={canReopenPayPal ? () => setPendingPayPal(true) : undefined}
-        />
+        <CheckoutSuccess order={createdOrder} bankAccounts={bankAccounts} orderSettings={orderSettings} timeSlots={timeSlots} onNewOrder={handleNewOrder} onPayPal={canReopenPayPal ? () => setPendingPayPal(true) : undefined} />
         {canReopenPayPal && (
-          <PayPalCheckoutModal
-            isOpen={pendingPayPal}
-            onClose={() => setPendingPayPal(false)}
-            orderId={createdOrder.id}
-            orderNumber={createdOrder.orderNumber}
-            totalCents={createdOrder.totalCents}
-            accessToken={paypalTokens.accessToken}
-            guestToken={paypalTokens.guestToken}
-            onSuccess={(paidOrder) => {
-              setCreatedOrder(paidOrder);
-              setPendingPayPal(false);
-            }}
-            onError={(msg) => {
-              setError(msg);
-            }}
-          />
+          <PayPalCheckoutModal isOpen={pendingPayPal} onClose={() => setPendingPayPal(false)} orderId={createdOrder.id} orderNumber={createdOrder.orderNumber} totalCents={createdOrder.totalCents} accessToken={paypalTokens.accessToken} guestToken={paypalTokens.guestToken} onSuccess={(o) => { setCreatedOrder(o); setPendingPayPal(false); }} onError={(msg) => setError(msg)} />
         )}
       </>
     );
   }
 
-  // Show PayPal modal over CheckoutSuccess while waiting for payment
   if (pendingPayPal && createdOrder) {
     return (
       <>
-        <CheckoutSuccess
-          order={createdOrder}
-          bankAccounts={bankAccounts}
-          orderSettings={orderSettings}
-          timeSlots={timeSlots}
-          onNewOrder={handleNewOrder}
-          onPayPal={() => setPendingPayPal(true)}
-        />
-        <PayPalCheckoutModal
-          isOpen={pendingPayPal}
-          onClose={() => {
-            setPendingPayPal(false);
-            setIsSubmitted(true);
-          }}
-          orderId={createdOrder.id}
-          orderNumber={createdOrder.orderNumber}
-          totalCents={createdOrder.totalCents}
-          accessToken={paypalTokens.accessToken}
-          guestToken={paypalTokens.guestToken}
-          onSuccess={(paidOrder) => {
-            setCreatedOrder(paidOrder);
-            setPendingPayPal(false);
-            setIsSubmitted(true);
-          }}
-          onError={(msg) => {
-            setError(msg);
-          }}
-        />
+        <CheckoutSuccess order={createdOrder} bankAccounts={bankAccounts} orderSettings={orderSettings} timeSlots={timeSlots} onNewOrder={handleNewOrder} onPayPal={() => setPendingPayPal(true)} />
+        <PayPalCheckoutModal isOpen={pendingPayPal} onClose={() => { setPendingPayPal(false); setIsSubmitted(true); }} orderId={createdOrder.id} orderNumber={createdOrder.orderNumber} totalCents={createdOrder.totalCents} accessToken={paypalTokens.accessToken} guestToken={paypalTokens.guestToken} onSuccess={(o) => { setCreatedOrder(o); setPendingPayPal(false); setIsSubmitted(true); }} onError={(msg) => setError(msg)} />
       </>
     );
   }
 
-  // Don't render form if cart is empty (will redirect)
   if (displayItems.length === 0) {
+    return <div className="min-h-[60vh] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
+
+  // Auth gate
+  if (showAuthSection) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="py-8 sm:py-10">
+        <h1 className="text-3xl sm:text-4xl font-serif text-center mb-2">Finalizar compra</h1>
+        <p className="text-foreground-secondary text-center mb-8">Elige cómo deseas continuar</p>
+        <div className="max-w-md mx-auto space-y-3">
+          <button onClick={() => { setAuthModalMode("login"); setAuthModalOpen(true); }} className="w-full flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all text-left">
+            <div className="flex items-center gap-3"><LogIn className="h-5 w-5 text-primary" /><div><p className="font-normal">Iniciar sesión</p><p className="text-sm text-foreground-secondary">Ya tengo una cuenta</p></div></div>
+            <ChevronRight className="h-5 w-5 text-foreground-secondary" />
+          </button>
+          <button onClick={() => { setAuthModalMode("register"); setAuthModalOpen(true); }} className="w-full flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all text-left">
+            <div className="flex items-center gap-3"><UserPlus className="h-5 w-5 text-primary" /><div><p className="font-normal">Crear cuenta</p><p className="text-sm text-foreground-secondary">Registrarme para futuras compras</p></div></div>
+            <ChevronRight className="h-5 w-5 text-foreground-secondary" />
+          </button>
+          <button onClick={() => setIsGuestCheckout(true)} className="w-full flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all text-left">
+            <div className="flex items-center gap-3"><User className="h-5 w-5 text-foreground-secondary" /><div><p className="font-normal">Continuar como invitado</p><p className="text-sm text-foreground-secondary">Sin crear cuenta</p></div></div>
+            <ChevronRight className="h-5 w-5 text-foreground-secondary" />
+          </button>
+        </div>
+        <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} initialMode={authModalMode} />
       </div>
     );
   }
 
-  const discountLabel = orderSettings
-    ? `${orderSettings.transferDiscountPercentage} de descuento`
-    : "Descuento por transferencia";
+  // Helper for review step
+  const getTimeSlotLabel = () => {
+    const slot = timeSlots.find((s) => s.id === formData.deliveryTimeSlotId);
+    return slot ? formatTimeSlot(slot.startTime, slot.endTime, slot.displayLabel) : "";
+  };
 
   return (
     <div>
-      {/* Page header */}
-      <div className="py-8 sm:py-10">
-        <h1 className="text-3xl sm:text-4xl font-serif text-center mb-2">Finalizar compra</h1>
-        <p className="text-foreground-secondary text-center">
-          Completa los datos de entrega para recibir tu pedido
-        </p>
-      </div>
+      <div className="py-6 sm:py-8">
+        <h1 className="text-2xl sm:text-3xl font-serif text-center mb-6">Finalizar compra</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      {/* Left column - Forms */}
-      <div className="lg:col-span-7 xl:col-span-8">
-        <div className="space-y-8">
-          {/* Auth Section */}
-          {showAuthSection ? (
-            <div className="bg-background rounded-xl border border-border p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
-                  <User className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-medium">Datos del cliente</h2>
-                  <p className="text-sm text-foreground-secondary">
-                    Elige cómo deseas continuar
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {/* Login option */}
-                <button
-                  onClick={handleOpenLogin}
-                  className="w-full flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all text-left"
-                >
-                  <div className="flex items-center gap-3">
-                    <LogIn className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="font-normal">Iniciar sesión</p>
-                      <p className="text-sm text-foreground-secondary">
-                        Ya tengo una cuenta
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-foreground-secondary" />
-                </button>
-
-                {/* Register option */}
-                <button
-                  onClick={handleOpenRegister}
-                  className="w-full flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all text-left"
-                >
-                  <div className="flex items-center gap-3">
-                    <UserPlus className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="font-normal">Crear cuenta</p>
-                      <p className="text-sm text-foreground-secondary">
-                        Registrarme para futuras compras
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-foreground-secondary" />
-                </button>
-
-                {/* Guest option */}
-                <button
-                  onClick={handleGuestCheckout}
-                  className="w-full flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all text-left"
-                >
-                  <div className="flex items-center gap-3">
-                    <User className="h-5 w-5 text-foreground-secondary" />
-                    <div>
-                      <p className="font-normal">Continuar como invitado</p>
-                      <p className="text-sm text-foreground-secondary">
-                        Sin crear cuenta
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-foreground-secondary" />
-                </button>
+        {/* User info bar */}
+        {user && (
+          <div className="flex items-center justify-center gap-3 mb-6 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center"><Check className="h-3.5 w-3.5 text-green-600" /></div>
+              <span className="text-foreground-secondary truncate">{user.email}</span>
+            </div>
+            <button onClick={() => { logout(); setIsGuestCheckout(false); }} className="text-foreground-muted hover:text-destructive transition-colors"><LogOut className="h-4 w-4" /></button>
+          </div>
+        )}
+        {isGuestCheckout && !user && (
+          <div className="max-w-lg mx-auto mb-6 p-4 border border-border rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm font-normal">Tus datos de contacto</p>
+              <button onClick={() => setIsGuestCheckout(false)} className="text-xs text-primary hover:underline">Iniciar sesión</button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input placeholder="Tu nombre *" value={formData.senderName} onChange={(e) => handleFormChange({ senderName: e.target.value })} />
+              <PhoneInput value={formData.senderPhone} onChange={(val) => handlePhoneChange("senderPhone", val)} />
+              <div className="sm:col-span-2">
+                <Input type="email" placeholder="Tu correo electrónico *" value={formData.senderEmail} onChange={(e) => handleFormChange({ senderEmail: e.target.value })} />
               </div>
             </div>
-          ) : (
-            <>
-              {/* Logged in user info */}
-              {user && (
-                <div className="bg-background rounded-xl border border-border p-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Check className="h-5 w-5 text-green-600" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-normal truncate">Conectado como {user.fullName}</p>
-                        <p className="text-sm text-foreground-secondary truncate">{user.email}</p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleLogout}
-                      className="text-foreground-secondary hover:text-destructive self-start sm:self-auto flex-shrink-0"
-                    >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Cerrar sesión
-                    </Button>
-                  </div>
-                </div>
-              )}
+          </div>
+        )}
 
-              {/* Guest checkout info + sender fields */}
-              {isGuestCheckout && !user && (
-                <div className="bg-background rounded-xl border border-border p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
-                        <User className="h-5 w-5 text-foreground-secondary" />
-                      </div>
-                      <div>
-                        <p className="font-normal">Comprando como invitado</p>
-                        <p className="text-sm text-foreground-secondary">
-                          Completa tus datos a continuación
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsGuestCheckout(false)}
-                      className="text-primary"
-                    >
-                      Iniciar sesión
-                    </Button>
-                  </div>
+        <CheckoutProgress currentStep={currentStep} completedSteps={completedSteps} onStepClick={handleStepClick} />
+      </div>
 
-                  {/* Guest sender info */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="senderName" className="block text-sm font-normal mb-2">
-                        Tu nombre <span className="text-destructive">*</span>
-                      </label>
-                      <Input
-                        type="text"
-                        id="senderName"
-                        name="senderName"
-                        value={formData.senderName}
-                        onChange={handleChange}
-                        placeholder="Tu nombre completo"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="senderPhone" className="block text-sm font-normal mb-2">
-                        Tu teléfono <span className="text-destructive">*</span>
-                      </label>
-                      <PhoneInput
-                        id="senderPhone"
-                        name="senderPhone"
-                        value={formData.senderPhone}
-                        onChange={(val) => setFormData((prev) => ({ ...prev, senderPhone: val }))}
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label htmlFor="senderEmail" className="block text-sm font-normal mb-2">
-                        Tu correo electrónico <span className="text-destructive">*</span>
-                      </label>
-                      <Input
-                        type="email"
-                        id="senderEmail"
-                        name="senderEmail"
-                        value={formData.senderEmail}
-                        onChange={handleChange}
-                        placeholder="correo@ejemplo.com"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Shipping Form */}
-              <form onSubmit={handleSubmit} className="space-y-8" id="checkout-form">
-                {/* Fulfillment Type Toggle */}
-                <div className="bg-background rounded-xl border border-border p-6">
-                  <h2 className="text-xl font-medium mb-4">Tipo de entrega</h2>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, fulfillmentType: "delivery", deliveryZoneId: "", address: "" }))}
-                      className={cn(
-                        "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors",
-                        formData.fulfillmentType === "delivery"
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      )}
-                    >
-                      <Truck className={cn("h-6 w-6", formData.fulfillmentType === "delivery" ? "text-primary" : "text-foreground-muted")} />
-                      <span className={cn("text-sm font-normal", formData.fulfillmentType === "delivery" ? "text-primary" : "text-foreground-secondary")}>
-                        Envío a domicilio
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, fulfillmentType: "pickup", deliveryZoneId: "", address: "" }))}
-                      className={cn(
-                        "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-colors",
-                        formData.fulfillmentType === "pickup"
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      )}
-                    >
-                      <Store className={cn("h-6 w-6", formData.fulfillmentType === "pickup" ? "text-primary" : "text-foreground-muted")} />
-                      <span className={cn("text-sm font-normal", formData.fulfillmentType === "pickup" ? "text-primary" : "text-foreground-secondary")}>
-                        Retiro en tienda
-                      </span>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="bg-background rounded-xl border border-border p-6">
-                  <h2 className="text-xl font-medium mb-6">
-                    {isPickup ? "Información de retiro" : "Información de entrega"}
-                  </h2>
-
-                  {/* Saved Addresses - delivery only */}
-                  {!isPickup && addresses.length > 0 && (
-                    <div className="mb-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-normal text-foreground-secondary">Direcciones guardadas</h3>
-                        <button
-                          type="button"
-                          onClick={handleNewAddress}
-                          className="text-sm text-primary hover:underline flex items-center gap-1"
-                        >
-                          <Plus className="h-4 w-4" />
-                          Nueva dirección
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {addresses.map((addr) => (
-                          <button
-                            key={addr.id}
-                            type="button"
-                            onClick={() => handleSelectAddress(addr)}
-                            className={cn(
-                              "text-left p-3 border rounded-lg transition-all",
-                              selectedAddressId === addr.id
-                                ? "border-primary bg-primary/5"
-                                : "border-border hover:border-primary/50"
-                            )}
-                          >
-                            <div className="flex items-start gap-2">
-                              <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-normal text-sm">{addr.label}</span>
-                                  {addr.isDefault && (
-                                    <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-                                      Predeterminada
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-sm text-foreground-secondary truncate">
-                                  {addr.recipientName}
-                                </p>
-                                <p className="text-xs text-foreground-muted truncate">
-                                  {addr.address}
-                                </p>
-                              </div>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-6">
-                    {/* Recipient info */}
-                    <div className={cn("grid gap-4", isPickup ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
-                      <div>
-                        <label htmlFor="recipientName" className="block text-sm font-normal mb-2">
-                          {isPickup ? "Nombre de quien retira" : "Nombre del destinatario"} <span className="text-destructive">*</span>
-                        </label>
-                        <Input
-                          type="text"
-                          id="recipientName"
-                          name="recipientName"
-                          value={formData.recipientName}
-                          onChange={handleChange}
-                          placeholder={isPickup ? "¿Quién retira el pedido?" : "¿Quién recibe las flores?"}
-                        />
-                      </div>
-                      {!isPickup && (
-                        <div>
-                          <label htmlFor="recipientPhone" className="block text-sm font-normal mb-2">
-                            Teléfono del destinatario <span className="text-destructive">*</span>
-                          </label>
-                          <PhoneInput
-                            id="recipientPhone"
-                            name="recipientPhone"
-                            value={formData.recipientPhone}
-                            onChange={(val) => setFormData((prev) => ({ ...prev, recipientPhone: val }))}
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Pickup: branch selector + info */}
-                    {isPickup && (
-                      <div>
-                        <label className="block text-sm font-normal mb-2">
-                          Sucursal de retiro <span className="text-destructive">*</span>
-                        </label>
-                        {branches.length > 1 ? (
-                          <Select value={formData.branchId} onValueChange={(v) => handleSelectChange("branchId", v)}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecciona una sucursal" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {branches.map((branch) => (
-                                <SelectItem key={branch.id} value={branch.id}>
-                                  {branch.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : branches.length === 1 ? (
-                          <div className="p-3 bg-secondary/30 rounded-lg">
-                            <p className="font-normal text-sm">{branches[0].name}</p>
-                            {branches[0].address && (
-                              <p className="text-sm text-foreground-secondary mt-1">{branches[0].address}</p>
-                            )}
-                          </div>
-                        ) : null}
-                      </div>
-                    )}
-
-                    {/* Delivery-specific fields */}
-                    {!isPickup && (
-                      <>
-                        {/* Address */}
-                        <div>
-                          <label htmlFor="address" className="block text-sm font-normal mb-2">
-                            Dirección de entrega <span className="text-destructive">*</span>
-                          </label>
-                          <Input
-                            type="text"
-                            id="address"
-                            name="address"
-                            value={formData.address}
-                            onChange={handleChange}
-                            placeholder="Calle, número, edificio, referencia..."
-                          />
-                        </div>
-
-                        {/* City and Branch */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
-                            <label htmlFor="cityId" className="block text-sm font-normal mb-2">
-                              Ciudad <span className="text-destructive">*</span>
-                            </label>
-                            <Select value={formData.cityId} onValueChange={(v) => handleSelectChange("cityId", v)}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecciona una ciudad" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {cities.map((city) => (
-                                  <SelectItem key={city.id} value={city.id}>
-                                    {city.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          {/* Branch selector - only show if multiple branches */}
-                          {branches.length > 1 && (
-                            <div>
-                              <label htmlFor="branchId" className="block text-sm font-normal mb-2">
-                                Sucursal <span className="text-destructive">*</span>
-                              </label>
-                              <Select value={formData.branchId} onValueChange={(v) => handleSelectChange("branchId", v)}>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecciona una sucursal" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {branches.map((branch) => (
-                                    <SelectItem key={branch.id} value={branch.id}>
-                                      {branch.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Delivery zone selector */}
-                        {zones.length > 0 && (
-                          <div>
-                            <label className="block text-sm font-normal mb-2">
-                              Zona de entrega <span className="text-destructive">*</span>
-                            </label>
-                            <Select value={formData.deliveryZoneId} onValueChange={(v) => handleSelectChange("deliveryZoneId", v)}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecciona una zona" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {zones.map((zone) => (
-                                  <SelectItem key={zone.id} value={zone.id}>
-                                    {zone.zoneName} — {formatPrice(zone.deliveryFeeCents)}
-                                    {zone.estimatedMinutes ? ` (~${zone.estimatedMinutes} min)` : ""}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
-
-                        {/* Map Picker - shows zones and detects location */}
-                        <MapPicker
-                          latitude={formData.latitude}
-                          longitude={formData.longitude}
-                          onLocationChange={handleMapLocationChange}
-                          zones={zones}
-                          selectedZoneId={formData.deliveryZoneId}
-                        />
-                      </>
-                    )}
-
-                    {/* Reference / Notes - delivery only */}
-                    {!isPickup && (
-                      <div>
-                        <label htmlFor="deliveryReference" className="block text-sm font-normal mb-2">
-                          Referencia de ubicación
-                        </label>
-                        <Textarea
-                          id="deliveryReference"
-                          name="deliveryReference"
-                          value={formData.deliveryReference}
-                          onChange={handleChange}
-                          rows={3}
-                          placeholder="Instrucciones especiales, referencias de ubicación..."
-                        />
-                      </div>
-                    )}
-
-                    {/* Date and time */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="deliveryDate" className="block text-sm font-normal mb-2">
-                          {isPickup ? "Fecha de retiro" : "Fecha de entrega"} <span className="text-destructive">*</span>
-                        </label>
-                        <DatePicker
-                          value={formData.deliveryDate ? new Date(formData.deliveryDate + "T00:00:00") : undefined}
-                          onChange={(date) => {
-                            const dateStr = date ? date.toISOString().split("T")[0] : "";
-                            handleSelectChange("deliveryDate", dateStr);
-                          }}
-                          minDate={new Date(getMinDeliveryDate() + "T00:00:00")}
-                          placeholder="Selecciona una fecha"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="deliveryTimeSlotId" className="block text-sm font-normal mb-2">
-                          {isPickup ? "Horario de retiro" : "Horario de entrega"} <span className="text-destructive">*</span>
-                        </label>
-                        <Select value={formData.deliveryTimeSlotId} onValueChange={(v) => handleSelectChange("deliveryTimeSlotId", v)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona un horario" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {timeSlots.map((slot) => (
-                              <SelectItem key={slot.id} value={slot.id}>
-                                {formatTimeSlot(slot.startTime, slot.endTime, slot.displayLabel)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {/* Special date warning */}
-                    {specialDateWarning && (
-                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
-                        <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-amber-800">{specialDateWarning}</p>
-                      </div>
-                    )}
-
-                    {/* Occasion */}
-                    {occasions.length > 0 && (
-                      <div>
-                        <label htmlFor="occasionId" className="block text-sm font-normal mb-2">
-                          Ocasión
-                        </label>
-                        <Select value={formData.occasionId} onValueChange={(v) => handleSelectChange("occasionId", v)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona una ocasión (opcional)" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {occasions.map((occasion) => (
-                              <SelectItem key={occasion.id} value={occasion.id}>
-                                {occasion.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    {/* Card message & add-ons per item */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <MessageSquare className="h-4 w-4 text-primary" />
-                        <label className="block text-sm font-normal">
-                          Personaliza tu pedido
-                        </label>
-                        <span className="text-xs text-foreground-secondary">(opcional)</span>
-                      </div>
-                      <div className="space-y-4">
-                        {items.map((item) => (
-                          <div key={item.product.id} className="p-3 bg-secondary/20 rounded-lg space-y-3">
-                            <p className="text-sm font-medium text-foreground">
-                              {item.product.name}
-                            </p>
-
-                            {/* Add-ons summary / button */}
-                            {availableAddOns.length > 0 && (
-                              <div>
-                                {item.addOns && item.addOns.length > 0 ? (
-                                  <div className="space-y-1.5">
-                                    {item.addOns.map((addOn) => (
-                                      <div key={addOn.addOnId} className="flex items-center justify-between text-sm">
-                                        <span className="text-foreground-secondary">
-                                          + {addOn.name}{addOn.quantity > 1 ? ` x${addOn.quantity}` : ""}
-                                        </span>
-                                        <span className="text-primary font-normal">
-                                          {formatPrice(addOn.priceCents * addOn.quantity)}
-                                        </span>
-                                      </div>
-                                    ))}
-                                    <button
-                                      type="button"
-                                      onClick={() => setAddOnsModalProductId(item.product.id)}
-                                      className="text-xs text-primary hover:underline mt-1"
-                                    >
-                                      Editar complementos
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => setAddOnsModalProductId(item.product.id)}
-                                    className="flex items-center gap-2 w-full p-2.5 rounded-lg border border-dashed border-primary/40 text-sm text-primary hover:bg-primary/5 transition-colors"
-                                  >
-                                    <Package className="h-4 w-4" />
-                                    <span>Agregar complementos</span>
-                                    <Plus className="h-3.5 w-3.5 ml-auto" />
-                                  </button>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Card message */}
-                            <div>
-                              <label className="block text-xs text-foreground-secondary mb-1">
-                                Dedicatoria de tarjeta
-                              </label>
-                              <Textarea
-                                value={item.cardMessage || ""}
-                                onChange={(e) => updateItemCardMessage(item.product.id, e.target.value)}
-                                rows={2}
-                                maxLength={200}
-                                placeholder="Escribe tu dedicatoria aquí..."
-                              />
-                              <p className="text-xs text-foreground-muted text-right mt-1">
-                                {(item.cardMessage || "").length}/200
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Add-ons Modal */}
-                    {addOnsModalProductId && (
-                      <AddOnsModal
-                        isOpen={!!addOnsModalProductId}
-                        onClose={() => setAddOnsModalProductId(null)}
-                        productName={items.find((i) => i.product.id === addOnsModalProductId)?.product.name || ""}
-                        addOnCategories={addOnCategories}
-                        addOns={availableAddOns}
-                        currentAddOns={items.find((i) => i.product.id === addOnsModalProductId)?.addOns}
-                        onSave={(newAddOns) => updateItemAddOns(addOnsModalProductId, newAddOns)}
-                      />
-                    )}
-
-                    {/* Save Address Option - delivery only, new addresses when logged in */}
-                    {!isPickup && !selectedAddressId && user && (
-                      <div className="p-4 bg-secondary/30 rounded-lg space-y-3">
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <Checkbox
-                            checked={saveAddress}
-                            onCheckedChange={(checked) => setSaveAddress(checked === true)}
-                          />
-                          <div className="flex items-center gap-2">
-                            <Bookmark className="h-4 w-4 text-primary" />
-                            <div>
-                              <span className="text-sm font-normal">Guardar esta dirección</span>
-                              <p className="text-xs text-foreground-secondary">
-                                Para futuros pedidos
-                              </p>
-                            </div>
-                          </div>
-                        </label>
-
-                        {saveAddress && (
-                          <div>
-                            <label htmlFor="addressLabel" className="block text-sm font-normal mb-2">
-                              Etiqueta de la dirección
-                            </label>
-                            <Select value={addressLabel} onValueChange={setAddressLabel}>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Casa">Casa</SelectItem>
-                                <SelectItem value="Trabajo">Trabajo</SelectItem>
-                                <SelectItem value="Oficina">Oficina</SelectItem>
-                                <SelectItem value="Otro">Otro</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Checkboxes */}
-                    <div className="space-y-3">
-                      {!isPickup && (
-                        <>
-                          <label className="flex items-center gap-3 cursor-pointer">
-                            <Checkbox
-                              checked={formData.isSurprise}
-                              onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isSurprise: checked === true }))}
-                            />
-                            <div className="flex items-center gap-2">
-                              <Gift className="h-5 w-5 text-primary flex-shrink-0" />
-                              <div>
-                                <span className="text-sm font-normal">Es una entrega sorpresa</span>
-                                <p className="text-xs text-foreground-secondary">
-                                  No contactaremos al destinatario antes de la entrega
-                                </p>
-                              </div>
-                            </div>
-                          </label>
-                          <label className="flex items-center gap-3 cursor-pointer">
-                            <Checkbox
-                              checked={formData.isAnonymous}
-                              onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isAnonymous: checked === true }))}
-                            />
-                            <div className="flex items-center gap-2">
-                              <EyeOff className="h-5 w-5 text-primary flex-shrink-0" />
-                              <div>
-                                <span className="text-sm font-normal">Envío anónimo</span>
-                                <p className="text-xs text-foreground-secondary">
-                                  El destinatario no sabrá quién le envió el pedido
-                                </p>
-                              </div>
-                            </div>
-                          </label>
-                        </>
-                      )}
-
-                      {user && (
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <Checkbox
-                            checked={formData.differentBuyer}
-                            onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, differentBuyer: checked === true }))}
-                          />
-                          <div className="flex items-center gap-2">
-                            <User className="h-5 w-5 text-primary flex-shrink-0" />
-                            <div>
-                              <span className="text-sm font-normal">El comprador es diferente al usuario de la cuenta</span>
-                              <p className="text-xs text-foreground-secondary">
-                                Agrega los datos del comprador
-                              </p>
-                            </div>
-                          </div>
-                        </label>
-                      )}
-                    </div>
-
-                    {/* Buyer info (conditional) */}
-                    {formData.differentBuyer && user && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-secondary/30 rounded-lg">
-                        <div>
-                          <label htmlFor="senderName" className="block text-sm font-normal mb-2">
-                            Nombre del comprador <span className="text-destructive">*</span>
-                          </label>
-                          <Input
-                            type="text"
-                            id="senderName"
-                            name="senderName"
-                            value={formData.senderName}
-                            onChange={handleChange}
-                            placeholder="Nombre completo"
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="senderPhone" className="block text-sm font-normal mb-2">
-                            Teléfono del comprador <span className="text-destructive">*</span>
-                          </label>
-                          <PhoneInput
-                            id="senderPhone"
-                            name="senderPhone"
-                            value={formData.senderPhone}
-                            onChange={(val) => setFormData((prev) => ({ ...prev, senderPhone: val }))}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Payment Method */}
-                <div className="bg-background rounded-xl border border-border p-6">
-                  <h2 className="text-xl font-medium mb-6">Método de pago</h2>
-
-                  <div className="space-y-3">
-                    {paymentMethods.map((method) => {
-                      const isTransfer = method.value === "bank_transfer";
-                      const isSelected = formData.paymentMethod === method.value;
-                      const description = isTransfer && orderSettings
-                        ? `${orderSettings.transferDiscountPercentage} de descuento por transferencia`
-                        : method.description || "";
-
-                      return (
-                        <button
-                          key={method.value}
-                          type="button"
-                          onClick={() => method.available && handlePaymentMethodChange(method.value)}
-                          disabled={!method.available}
-                          className={cn(
-                            "flex items-center gap-4 p-4 border rounded-lg transition-all w-full text-left",
-                            isSelected
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50",
-                            !method.available && "opacity-50 cursor-not-allowed"
-                          )}
-                        >
-                          <div className={cn(
-                            "h-5 w-5 rounded-full border-2 flex items-center justify-center flex-shrink-0",
-                            isSelected ? "border-primary" : "border-foreground-muted"
-                          )}>
-                            {isSelected && (
-                              <div className="h-2.5 w-2.5 rounded-full bg-primary" />
-                            )}
-                          </div>
-                          <method.icon className={cn("h-5 w-5 flex-shrink-0", isSelected ? "text-primary" : "text-foreground-secondary")} />
-                          <div className="flex-1">
-                            <span className="font-normal">{method.label}</span>
-                            {isTransfer && orderSettings && (
-                              <span className="ml-2 inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                                <Percent className="h-3 w-3" />
-                                {discountLabel}
-                              </span>
-                            )}
-                            {description && (
-                              <p className="text-sm text-foreground-secondary">{description}</p>
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Bank accounts info when transfer selected */}
-                  {formData.paymentMethod === "bank_transfer" && bankAccounts.length > 0 && (
-                    <div className="mt-4 p-4 bg-secondary/30 rounded-lg">
-                      <h3 className="text-sm font-normal mb-3">Cuentas para transferencia</h3>
-                      <div className="space-y-3">
-                        {bankAccounts.map((account) => (
-                          <BankAccountCard key={account.id} account={account} />
-                        ))}
-                      </div>
-                      <p className="text-xs text-foreground-secondary mt-3">
-                        Después de realizar el pedido, podrás subir el comprobante de pago.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Discount Code */}
-                {formData.paymentMethod && (
-                  <div className="bg-background rounded-xl border border-border p-6">
-                    <h2 className="text-xl font-normal mb-4">Código de descuento</h2>
-                    <DiscountCodeInput
-                      subtotalCents={orderPreview?.subtotalCents ?? subtotal}
-                      paymentMethod={formData.paymentMethod}
-                      appliedCode={discountCode}
-                      appliedAmount={discountAmountCents}
-                      onApply={(result) => {
-                        setDiscountCode(result.code);
-                        setDiscountAmountCents(result.discountAmountCents);
-                      }}
-                      onClear={() => {
-                        setDiscountCode(null);
-                        setDiscountAmountCents(0);
-                      }}
-                    />
-                  </div>
-                )}
-
-                {/* Error message */}
-                {error && (
-                  <div className="p-4 bg-destructive/10 text-destructive rounded-lg text-sm">
-                    {error}
-                  </div>
-                )}
-
-              </form>
-            </>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-12">
+        <div className="lg:col-span-7 xl:col-span-8">
+          {currentStep === 1 && (
+            <StepDelivery
+              formData={formData} onFormChange={handleFormChange} onSelectChange={handleSelectChange}
+              onMapLocationChange={handleMapLocationChange} onPhoneChange={handlePhoneChange}
+              cities={cities} branches={branches} zones={zones} addresses={addresses}
+              selectedAddressId={selectedAddressId} onSelectAddress={handleSelectAddress} onNewAddress={handleNewAddress}
+              saveAddress={saveAddress} onSaveAddressChange={setSaveAddress} addressLabel={addressLabel} onAddressLabelChange={setAddressLabel}
+              user={user} isPickup={isPickup} error={error} onNext={handleNext}
+            />
           )}
+          {currentStep === 2 && (
+            <StepSchedule
+              formData={formData} onFormChange={handleFormChange} onSelectChange={handleSelectChange} onPhoneChange={handlePhoneChange}
+              timeSlots={timeSlots} occasions={occasions} specialDateWarning={specialDateWarning}
+              minDeliveryDate={getMinDeliveryDate()} formatTimeSlot={formatTimeSlot} isPickup={isPickup} user={user}
+              items={items} onUpdateCardMessage={updateItemCardMessage} onOpenAddOns={setAddOnsModalProductId} availableAddOns={availableAddOns}
+              error={error} onNext={handleNext} onBack={handleBack}
+            />
+          )}
+          {currentStep === 3 && (
+            <StepPayment
+              paymentMethod={formData.paymentMethod} onPaymentMethodChange={(m) => handleFormChange({ paymentMethod: m })}
+              bankAccounts={bankAccounts} orderSettings={orderSettings}
+              subtotalCents={orderPreview?.subtotalCents ?? subtotal}
+              discountCode={discountCode} discountAmountCents={discountAmountCents}
+              onDiscountApply={(r) => { setDiscountCode(r.code); setDiscountAmountCents(r.discountAmountCents); }}
+              onDiscountClear={() => { setDiscountCode(null); setDiscountAmountCents(0); }}
+              error={error} onNext={handleNext} onBack={handleBack}
+            />
+          )}
+          {currentStep === 4 && (
+            <StepReview
+              formData={formData} items={items} preview={orderPreview} isLoadingPreview={isLoadingPreview} isSubmitting={isSubmitting}
+              cityName={cities.find((c) => c.id === formData.cityId)?.name || ""}
+              zoneName={zones.find((z) => z.id === formData.deliveryZoneId)?.zoneName || ""}
+              timeSlotLabel={getTimeSlotLabel()}
+              paymentMethodLabel={PAYMENT_METHOD_LABELS[formData.paymentMethod] || formData.paymentMethod}
+              discountCode={discountCode} error={error}
+              onGoToStep={goToStep} onSubmit={handleSubmit} onBack={handleBack}
+            />
+          )}
+        </div>
+
+        {/* Summary sidebar */}
+        <div className="lg:col-span-5 xl:col-span-4">
+          <div className="lg:sticky lg:top-24">
+            <OrderSummary
+              items={displayItems} subtotal={orderPreview?.subtotalCents ?? subtotal}
+              shippingCost={shippingCost} transferDiscount={transferDiscount}
+              isLoadingPreview={isLoadingPreview} isPickup={isPickup} preview={orderPreview}
+              forceExpanded={currentStep === 4}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Right column - Order Summary (sticky on desktop) */}
-      <div className="lg:col-span-5 xl:col-span-4">
-        <div className="lg:sticky lg:top-24 space-y-4">
-          <OrderSummary
-            items={displayItems}
-            subtotal={orderPreview?.subtotalCents ?? subtotal}
-            shippingCost={shippingCost}
-            transferDiscount={transferDiscount}
-            isLoadingPreview={isLoadingPreview}
-            isPickup={isPickup}
-            preview={orderPreview}
-            forceExpanded={!!orderPreview}
-          />
-
-          {/* Submit button - mobile (below summary) */}
-          {!showAuthSection && (
-            <div className="lg:hidden">
-              <Button
-                type="submit"
-                form="checkout-form"
-                size="lg"
-                className="w-full h-14 text-base"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Procesando...
-                  </>
-                ) : (
-                  "Confirmar pedido"
-                )}
-              </Button>
-              <p className="text-xs text-foreground-secondary text-center mt-3">
-                Al confirmar, aceptas nuestras políticas de envío y devolución
-              </p>
-            </div>
-          )}
-
-          {/* Submit button - visible on desktop, only when form is shown */}
-          {!showAuthSection && (
-            <div className="hidden lg:block">
-              <Button
-                type="submit"
-                form="checkout-form"
-                size="lg"
-                className="w-full h-14 text-base"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Procesando...
-                  </>
-                ) : (
-                  "Confirmar pedido"
-                )}
-              </Button>
-              <p className="text-xs text-foreground-secondary text-center mt-3">
-                Al confirmar, aceptas nuestras políticas de envío y devolución
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Add-ons Modal */}
+      {addOnsModalProductId && (
+        <AddOnsModal isOpen={!!addOnsModalProductId} onClose={() => setAddOnsModalProductId(null)}
+          productName={items.find((i) => i.product.id === addOnsModalProductId)?.product.name || ""}
+          addOnCategories={addOnCategories} addOns={availableAddOns}
+          currentAddOns={items.find((i) => i.product.id === addOnsModalProductId)?.addOns}
+          onSave={(newAddOns) => updateItemAddOns(addOnsModalProductId, newAddOns)}
+        />
+      )}
 
       {/* Auth Modal */}
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => {
-          setAuthModalOpen(false);
-          // If session had expired and user logged back in, clear the flag
-          if (sessionExpired && useAuthStore.getState().tokens?.accessToken) {
-            setSessionExpired(false);
-          }
-        }}
-        initialMode={authModalMode}
-      />
+      <AuthModal isOpen={authModalOpen} onClose={() => { setAuthModalOpen(false); if (sessionExpired && useAuthStore.getState().tokens?.accessToken) setSessionExpired(false); }} initialMode={authModalMode} />
 
       {/* Session Expired Modal */}
       {sessionExpired && (
@@ -1722,59 +601,16 @@ export function CheckoutForm() {
                   <AlertTriangle className="h-6 w-6 text-amber-600" />
                 </div>
                 <h3 className="text-lg font-normal">Tu sesión ha expirado</h3>
-                <p className="text-sm text-foreground-secondary mt-1">
-                  ¿Cómo deseas continuar con tu pedido?
-                </p>
+                <p className="text-sm text-foreground-secondary mt-1">¿Cómo deseas continuar con tu pedido?</p>
               </div>
               <div className="space-y-2">
-                <Button
-                  className="w-full"
-                  onClick={() => {
-                    setSessionExpired(false);
-                    logout();
-                    setAuthModalMode("login");
-                    setAuthModalOpen(true);
-                  }}
-                >
-                  Iniciar sesión
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    setSessionExpired(false);
-                    logout();
-                    setIsGuestCheckout(true);
-                  }}
-                >
-                  Continuar como invitado
-                </Button>
+                <Button className="w-full" onClick={() => { setSessionExpired(false); logout(); setAuthModalMode("login"); setAuthModalOpen(true); }}>Iniciar sesión</Button>
+                <Button variant="outline" className="w-full" onClick={() => { setSessionExpired(false); logout(); setIsGuestCheckout(true); }}>Continuar como invitado</Button>
               </div>
             </div>
           </div>
         </div>
       )}
-      </div>
-    </div>
-  );
-}
-
-// Bank Account Card sub-component
-function BankAccountCard({ account }: { account: BankAccount }) {
-  const accountTypeLabel = account.accountType === "savings" ? "Ahorros" : "Corriente";
-
-  return (
-    <div className="p-3 bg-background rounded-lg border border-border text-sm">
-      <p className="font-normal">{account.bankName}</p>
-      <p className="text-foreground-secondary">
-        {accountTypeLabel} — {account.accountNumber}
-      </p>
-      <p className="text-foreground-secondary">
-        {account.beneficiary}
-      </p>
-      <p className="text-foreground-secondary">
-        {account.documentType === "cedula" ? "C.I." : "RUC"}: {account.documentNumber}
-      </p>
     </div>
   );
 }
