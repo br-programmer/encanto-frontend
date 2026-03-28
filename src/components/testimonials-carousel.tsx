@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState, useEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight, Star, Quote } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star, Quote, MessageCircle } from "lucide-react";
+import { SafeImage } from "@/components/ui/safe-image";
 import { cn } from "@/lib/utils";
 
 export interface Testimonial {
@@ -11,6 +12,8 @@ export interface Testimonial {
   rating: number;
   comment: string;
   date: string;
+  avatarUrl?: string | null;
+  adminReply?: string | null;
 }
 
 // Mock data — will be replaced with API call
@@ -73,10 +76,6 @@ export function TestimonialsCarousel({ testimonials = MOCK_TESTIMONIALS }: Testi
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const autoplayRef = useRef<NodeJS.Timeout | null>(null);
-  const isResettingRef = useRef(false);
-
-  const loopItems = [...testimonials, ...testimonials, ...testimonials];
-  const setCount = testimonials.length;
 
   const getCardWidth = useCallback(() => {
     const el = scrollRef.current;
@@ -85,56 +84,6 @@ export function TestimonialsCarousel({ testimonials = MOCK_TESTIMONIALS }: Testi
     if (!card) return 320;
     return card.offsetWidth + 16;
   }, []);
-
-  // Start at middle set
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const cardWidth = getCardWidth();
-    el.scrollLeft = setCount * cardWidth;
-  }, [setCount, getCardWidth]);
-
-  // Infinite loop reset
-  const handleScrollEnd = useCallback(() => {
-    if (isResettingRef.current) return;
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const cardWidth = getCardWidth();
-    const oneSetWidth = setCount * cardWidth;
-    const currentScroll = el.scrollLeft;
-
-    if (currentScroll < oneSetWidth * 0.5) {
-      isResettingRef.current = true;
-      el.style.scrollBehavior = "auto";
-      el.scrollLeft = currentScroll + oneSetWidth;
-      el.style.scrollBehavior = "";
-      requestAnimationFrame(() => { isResettingRef.current = false; });
-    } else if (currentScroll > oneSetWidth * 2.5) {
-      isResettingRef.current = true;
-      el.style.scrollBehavior = "auto";
-      el.scrollLeft = currentScroll - oneSetWidth;
-      el.style.scrollBehavior = "";
-      requestAnimationFrame(() => { isResettingRef.current = false; });
-    }
-  }, [setCount, getCardWidth]);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    let scrollTimeout: NodeJS.Timeout;
-    const onScroll = () => {
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(handleScrollEnd, 100);
-    };
-
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      el.removeEventListener("scroll", onScroll);
-      clearTimeout(scrollTimeout);
-    };
-  }, [handleScrollEnd]);
 
   const scroll = useCallback((direction: "left" | "right") => {
     const el = scrollRef.current;
@@ -189,9 +138,9 @@ export function TestimonialsCarousel({ testimonials = MOCK_TESTIMONIALS }: Testi
         className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth py-4 px-2 -mx-2"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        {loopItems.map((testimonial, i) => (
+        {testimonials.map((testimonial) => (
           <div
-            key={`${testimonial.id}-${i}`}
+            key={testimonial.id}
             className="flex-shrink-0 w-[85%] sm:w-[45%] lg:w-[30%]"
           >
             <div className="bg-white dark:bg-stone-900 border border-border p-5 sm:p-6 h-full flex flex-col">
@@ -199,9 +148,22 @@ export function TestimonialsCarousel({ testimonials = MOCK_TESTIMONIALS }: Testi
               <Quote className="h-6 w-6 text-primary/30 mb-3 flex-shrink-0" />
 
               {/* Comment */}
-              <p className="text-sm text-foreground-secondary leading-relaxed flex-1">
+              <p className="text-sm text-foreground-secondary leading-relaxed flex-1 line-clamp-4">
                 &ldquo;{testimonial.comment}&rdquo;
               </p>
+
+              {/* Admin Reply */}
+              {testimonial.adminReply && (
+                <div className="mt-3 p-3 bg-secondary/50 rounded-lg">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <MessageCircle className="h-3 w-3 text-primary" />
+                    <span className="text-xs font-medium text-primary">Encanto</span>
+                  </div>
+                  <p className="text-xs text-foreground-secondary leading-relaxed">
+                    {testimonial.adminReply}
+                  </p>
+                </div>
+              )}
 
               {/* Rating + Author */}
               <div className="mt-4 pt-4 border-t border-border">
@@ -220,9 +182,32 @@ export function TestimonialsCarousel({ testimonials = MOCK_TESTIMONIALS }: Testi
                   ))}
                 </div>
 
-                {/* Name + City */}
-                <p className="text-sm font-normal text-foreground">{testimonial.name}</p>
-                <p className="text-xs text-foreground-muted">{testimonial.city}</p>
+                {/* Author with avatar */}
+                <div className="flex items-center gap-2.5">
+                  {testimonial.avatarUrl ? (
+                    <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                      <SafeImage
+                        src={testimonial.avatarUrl}
+                        alt={testimonial.name}
+                        fill
+                        className="object-cover"
+                        sizes="32px"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-medium text-primary">
+                        {testimonial.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-normal text-foreground">{testimonial.name}</p>
+                    {testimonial.city && (
+                      <p className="text-xs text-foreground-muted">{testimonial.city}</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -10,13 +10,24 @@ import { FeaturedShowcase } from "@/components/featured-showcase";
 import { api } from "@/lib/api";
 
 export default async function Home() {
-  const [productsResponse, instagramResponse] = await Promise.all([
+  const [productsResponse, instagramResponse, reviewsResponse] = await Promise.all([
     api.products.featured(20),
     api.instagram.feed({ limit: 6 }).catch(() => ({ result: [], meta: { total: 0, cachedAt: "", expiresAt: "" } })),
+    api.reviews.featured().catch(() => ({ result: [] })),
   ]);
 
   const featuredProducts = productsResponse.result;
   const instagramPosts = instagramResponse.result;
+  const testimonials = reviewsResponse.result.map((r) => ({
+    id: crypto.randomUUID(),
+    name: r.customerName || "Cliente verificado",
+    city: r.customerCity || "",
+    rating: r.rating,
+    comment: r.comment || "",
+    date: r.createdAt,
+    avatarUrl: r.customerAvatarUrl,
+    adminReply: r.adminReply,
+  }));
 
   return (
     <div className="flex flex-col">
@@ -61,6 +72,34 @@ export default async function Home() {
       <section className="bg-background py-8 sm:py-12">
         <div className="mx-auto max-w-7xl">
           <FeaturedShowcase />
+        </div>
+      </section>
+
+      {/* More Products */}
+      <section className="py-8 sm:py-12 bg-background">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-6 sm:mb-8">
+            <div>
+              <h2 className="font-serif">Explora más detalles</h2>
+              <p className="text-foreground-secondary text-sm sm:text-base mt-1">
+                Arreglos para cada ocasión especial
+              </p>
+            </div>
+            <Button variant="ghost" asChild className="hidden sm:flex">
+              <Link href="/productos">
+                Ver todos
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+
+          <FeaturedProductsCarousel products={featuredProducts} />
+
+          <div className="text-center mt-6 sm:hidden">
+            <Button variant="outline" className="h-11" asChild>
+              <Link href="/productos">Ver todos los productos</Link>
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -139,7 +178,7 @@ export default async function Home() {
               La opinión de quienes confían en nosotros
             </p>
           </div>
-          <TestimonialsCarousel />
+          <TestimonialsCarousel testimonials={testimonials.length > 0 ? testimonials : undefined} />
         </div>
       </section>
 

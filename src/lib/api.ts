@@ -645,6 +645,29 @@ export interface OrderFilters {
   fulfillmentType?: FulfillmentType;
 }
 
+// Review Types
+export interface FeaturedReview {
+  rating: number;
+  comment: string | null;
+  customerName: string | null;
+  customerCity: string | null;
+  customerAvatarUrl: string | null;
+  adminReply: string | null;
+  createdAt: string;
+}
+
+export interface PendingReviewOrder {
+  orderId: string;
+  orderNumber: string;
+  deliveredAt: string;
+  totalCents: number;
+}
+
+export interface CreateReviewRequest {
+  rating: number;
+  comment?: string;
+}
+
 // Delivery Address (API)
 export interface DeliveryAddressApi {
   id: string;
@@ -1208,6 +1231,37 @@ export const api = {
       fetchApiWithTokens<ResultResponse<Order>>(`/orders/${orderId}/paypal/capture`, {
         method: "POST",
       }, accessToken, guestToken).then(r => r.result),
+  },
+
+  // Reviews
+  reviews: {
+    featured: () =>
+      fetchApi<{ result: FeaturedReview[] }>("/reviews/featured"),
+
+    pending: () =>
+      fetchApiAuth<{ result: PendingReviewOrder[] }>("/reviews/pending"),
+
+    pendingWithToken: (accessToken: string) =>
+      fetchApiWithToken<{ result: PendingReviewOrder[] }>("/reviews/pending", accessToken),
+
+    create: (orderId: string, data: CreateReviewRequest) =>
+      fetchApiAuth<ResultResponse<unknown>>(`/reviews/orders/${orderId}`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+
+    createWithToken: (orderId: string, data: CreateReviewRequest, accessToken: string) =>
+      fetchApiWithToken<ResultResponse<unknown>>(`/reviews/orders/${orderId}`, accessToken, {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+
+    createByToken: (reviewToken: string, data: CreateReviewRequest) =>
+      fetchApi<ResultResponse<unknown>>("/reviews/token", {
+        method: "POST",
+        headers: { "x-review-token": reviewToken },
+        body: JSON.stringify(data),
+      }),
   },
 
   // Discount Codes
