@@ -93,16 +93,5 @@ interface FeaturedProductsCarouselProps {
 export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselProps) {
   if (products.length === 0) return null;
 
-  const mid = Math.ceil(products.length / 2);
-  const firstRow = products.slice(0, mid);
-  const secondRow = products.slice(mid);
-
-  return (
-    <div className="space-y-2">
-      <ProductsRow products={firstRow} direction="right" speed={3500} />
-      {secondRow.length > 0 && (
-        <ProductsRow products={secondRow} direction="left" speed={4000} />
-      )}
-    </div>
-  );
+  return <ProductsRow products={products} direction="right" speed={3500} />;
 }

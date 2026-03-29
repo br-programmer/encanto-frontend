@@ -13,7 +13,7 @@ export function TopBanner() {
       href="/flores-en-24-hrs"
       className="block bg-primary text-white text-center py-2 text-xs sm:text-sm font-normal tracking-wide hover:bg-primary-hover transition-colors"
     >
-      FLORES EN MANTA EN 24 HRS 💐
+      DETALLES LISTOS EN 24 HORAS 💐
     </Link>
   );
 }
