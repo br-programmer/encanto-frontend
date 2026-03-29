@@ -50,7 +50,7 @@ export default async function FloresEn24HrsPage({ searchParams }: PageProps) {
             </h1>
             <p className="text-foreground-secondary text-base sm:text-lg leading-relaxed">
               A veces los mejores detalles son los más espontáneos. Estos arreglos están
-              disponibles para entrega al día siguiente en Manta. Haz tu pedido hoy y
+              disponibles para entrega al día siguiente. Haz tu pedido hoy y
               deja que las flores hablen por ti mañana.
             </p>
             <p className="text-foreground-muted text-xs sm:text-sm mt-4 italic">
