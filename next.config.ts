@@ -1,41 +1,22 @@
 import type { NextConfig } from "next";
 
+const cdnHostname = process.env.NEXT_PUBLIC_CDN_HOSTNAME;
+
+const remotePatterns = [
+  ...(cdnHostname
+    ? [{ protocol: "https" as const, hostname: cdnHostname }]
+    : []),
+  { protocol: "https" as const, hostname: "**.cdninstagram.com" },
+  { protocol: "https" as const, hostname: "**.fbcdn.net" },
+];
+
 const nextConfig: NextConfig = {
+  output: "standalone",
   turbopack: {
     root: process.cwd(),
   },
-  output: 'standalone',
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "dev-cdn.encanto.com.ec",
-      },
-      {
-        protocol: "https",
-        hostname: "encanto-storage-dev.nyc3.cdn.digitaloceanspaces.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.digitaloceanspaces.com",
-      },
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-      },
-      {
-        protocol: "https",
-        hostname: "picsum.photos",
-      },
-      {
-        protocol: "https",
-        hostname: "**.cdninstagram.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.fbcdn.net",
-      },
-    ],
+    remotePatterns,
   },
 };
 
