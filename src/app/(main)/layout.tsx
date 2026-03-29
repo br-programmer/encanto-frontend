@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import { TopBanner } from "@/components/layout/top-banner";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { CartSidebar } from "@/components/layout/cart-sidebar";
 import { FloatingCartButton } from "@/components/layout/floating-cart-button";
 import { ScrollToTop } from "@/components/scroll-to-top";
+import { ReviewPromptWrapper } from "@/components/review-prompt-wrapper";
 import { Providers } from "@/components/providers";
 
 export default function MainLayout({
@@ -19,6 +21,9 @@ export default function MainLayout({
       <Footer />
       <CartSidebar />
       <FloatingCartButton />
+      <Suspense fallback={null}>
+        <ReviewPromptWrapper />
+      </Suspense>
       <ScrollToTop />
     </Providers>
   );
