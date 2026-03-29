@@ -123,7 +123,7 @@ export function Footer() {
         <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-border">
           <div className="flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4">
             <p className="text-xs sm:text-sm text-foreground-secondary text-center md:text-left">
-              © {new Date().getFullYear()} Encanto Florería. Todos los derechos reservados.
+              © {new Date().getFullYear()} Encanto Floristería. Todos los derechos reservados.
             </p>
             <div className="flex flex-wrap justify-center gap-3 sm:gap-4 md:gap-6">
               {footerLinks.legal.map((link) => (

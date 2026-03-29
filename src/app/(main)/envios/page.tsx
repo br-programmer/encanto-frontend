@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/breadcrumb";
 
 export const metadata = {
-  title: "Política de Envíos | Encanto Florería",
-  description: "Información sobre entregas, zonas de cobertura, horarios y costos de envío de Encanto Florería en Manta.",
+  title: "Política de Envíos | Encanto Floristería",
+  description: "Información sobre entregas, zonas de cobertura, horarios y costos de envío de Encanto Floristería en Manta.",
 };
 
 export default function EnviosPage() {
@@ -214,7 +214,7 @@ export default function EnviosPage() {
               Si prefiere retirar su pedido personalmente, puede hacerlo sin costo de envío en nuestra tienda:
             </p>
             <div className="bg-secondary/30 rounded-lg p-4 mb-4">
-              <p className="font-normal">Encanto Florería</p>
+              <p className="font-normal">Encanto Floristería</p>
               <p className="text-foreground-secondary">Calle 22, Manta, Ecuador</p>
               <p className="text-foreground-secondary text-sm mt-2">
                 Horario: Lunes a Sábado de 9:00 AM a 7:00 PM

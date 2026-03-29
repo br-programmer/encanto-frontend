@@ -1,7 +1,7 @@
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 
 export const metadata = {
-  title: "Checkout | Encanto Florería",
+  title: "Checkout | Encanto Floristería",
   description: "Completa tu pedido y recibe tus flores frescas en Manta.",
 };
 

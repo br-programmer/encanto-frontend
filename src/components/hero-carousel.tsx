@@ -24,14 +24,14 @@ const DEFAULT_BANNERS: HeroBanner[] = [
     id: "1",
     imageUrl: "/banners/banner-1-desktop.jpg",
     imageUrlMobile: "/banners/banner-1-mobile.jpg",
-    alt: "Encanto Florería - Arreglos florales para toda ocasión",
+    alt: "Encanto Floristería - Arreglos florales para toda ocasión",
     link: "/productos",
   },
   {
     id: "2",
     imageUrl: "/banners/banner-2-desktop.jpg",
     imageUrlMobile: "/banners/banner-2-mobile.jpg",
-    alt: "Encanto Florería - Los mejores arreglos de Manta",
+    alt: "Encanto Floristería - Los mejores arreglos de Manta",
     link: "/productos",
   },
 ];

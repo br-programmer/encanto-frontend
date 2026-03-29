@@ -4,7 +4,7 @@ import { Breadcrumb } from "@/components/breadcrumb";
 import { FaqAccordion } from "@/components/faq-accordion";
 
 export const metadata = {
-  title: "Preguntas Frecuentes | Encanto Florería",
+  title: "Preguntas Frecuentes | Encanto Floristería",
   description: "Encuentra respuestas a las preguntas más comunes sobre nuestros productos, envíos, pagos y más.",
 };
 

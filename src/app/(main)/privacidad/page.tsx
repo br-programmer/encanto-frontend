@@ -1,8 +1,8 @@
 import { Breadcrumb } from "@/components/breadcrumb";
 
 export const metadata = {
-  title: "Política de Privacidad | Encanto Florería",
-  description: "Política de privacidad de Encanto Florería. Conoce cómo recopilamos, usamos y protegemos tu información personal.",
+  title: "Política de Privacidad | Encanto Floristería",
+  description: "Política de privacidad de Encanto Floristería. Conoce cómo recopilamos, usamos y protegemos tu información personal.",
 };
 
 export default function PrivacidadPage() {
@@ -22,7 +22,7 @@ export default function PrivacidadPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-serif mb-4">1. Introducción</h2>
             <p className="text-foreground-secondary mb-4">
-              En Encanto Florería nos comprometemos a proteger la privacidad de nuestros clientes. Esta Política
+              En Encanto Floristería nos comprometemos a proteger la privacidad de nuestros clientes. Esta Política
               de Privacidad describe cómo recopilamos, usamos, almacenamos y protegemos su información personal
               cuando utiliza nuestro sitio web y servicios.
             </p>

@@ -16,12 +16,12 @@ export async function generateMetadata({ params }: CategoryPageProps) {
   try {
     const category = await api.categories.getBySlug(slug);
     return {
-      title: `${category.name} | Encanto Florería`,
+      title: `${category.name} | Encanto Floristería`,
       description: category.description || `Explora nuestra colección de ${category.name.toLowerCase()}.`,
     };
   } catch {
     return {
-      title: "Categoría no encontrada | Encanto Florería",
+      title: "Categoría no encontrada | Encanto Floristería",
     };
   }
 }

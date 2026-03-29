@@ -3,7 +3,7 @@ import { Breadcrumb } from "@/components/breadcrumb";
 import { CategoryCard } from "@/components/category-card";
 
 export const metadata = {
-  title: "Categorías | Encanto Florería",
+  title: "Categorías | Encanto Floristería",
   description: "Explora nuestra colección de flores y arreglos florales por categoría.",
 };
 
