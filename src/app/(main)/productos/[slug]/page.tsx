@@ -15,12 +15,12 @@ export async function generateMetadata({ params }: ProductPageProps) {
   try {
     const product = await api.products.getBySlug(slug);
     return {
-      title: `${product.name} | Encanto Florería`,
-      description: product.description || `Compra ${product.name} en Encanto Florería.`,
+      title: `${product.name} | Encanto Floristería`,
+      description: product.description || `Compra ${product.name} en Encanto Floristería.`,
     };
   } catch {
     return {
-      title: "Producto no encontrado | Encanto Florería",
+      title: "Producto no encontrado | Encanto Floristería",
     };
   }
 }

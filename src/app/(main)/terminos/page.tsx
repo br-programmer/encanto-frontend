@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Breadcrumb } from "@/components/breadcrumb";
 
 export const metadata = {
-  title: "Términos y Condiciones | Encanto Florería",
-  description: "Términos y condiciones de uso de Encanto Florería. Conoce las reglas y políticas que rigen nuestros servicios.",
+  title: "Términos y Condiciones | Encanto Floristería",
+  description: "Términos y condiciones de uso de Encanto Floristería. Conoce las reglas y políticas que rigen nuestros servicios.",
 };
 
 export default function TerminosPage() {
@@ -23,7 +23,7 @@ export default function TerminosPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-serif mb-4">1. Aceptación de los Términos</h2>
             <p className="text-foreground-secondary mb-4">
-              Al acceder y utilizar el sitio web de Encanto Florería y realizar compras a través de nuestra plataforma,
+              Al acceder y utilizar el sitio web de Encanto Floristería y realizar compras a través de nuestra plataforma,
               usted acepta estar sujeto a estos Términos y Condiciones. Si no está de acuerdo con alguna parte de estos
               términos, le recomendamos no utilizar nuestros servicios.
             </p>
@@ -32,7 +32,7 @@ export default function TerminosPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-serif mb-4">2. Descripción del Servicio</h2>
             <p className="text-foreground-secondary mb-4">
-              Encanto Florería es una empresa dedicada a la venta y entrega de arreglos florales, plantas y productos
+              Encanto Floristería es una empresa dedicada a la venta y entrega de arreglos florales, plantas y productos
               relacionados en la ciudad de Manta, Ecuador y zonas aledañas. Nuestros servicios incluyen:
             </p>
             <ul className="list-disc pl-6 text-foreground-secondary space-y-2 mb-4">
@@ -118,7 +118,7 @@ export default function TerminosPage() {
             <h2 className="text-2xl font-serif mb-4">8. Propiedad Intelectual</h2>
             <p className="text-foreground-secondary mb-4">
               Todo el contenido de este sitio web, incluyendo pero no limitado a textos, imágenes, logotipos,
-              diseños y código, es propiedad de Encanto Florería y está protegido por las leyes de propiedad
+              diseños y código, es propiedad de Encanto Floristería y está protegido por las leyes de propiedad
               intelectual. Queda prohibida su reproducción sin autorización expresa.
             </p>
           </section>
@@ -126,7 +126,7 @@ export default function TerminosPage() {
           <section className="mb-8">
             <h2 className="text-2xl font-serif mb-4">9. Limitación de Responsabilidad</h2>
             <p className="text-foreground-secondary mb-4">
-              Encanto Florería no será responsable por daños indirectos, incidentales o consecuentes que
+              Encanto Floristería no será responsable por daños indirectos, incidentales o consecuentes que
               resulten del uso de nuestros servicios. Nuestra responsabilidad máxima se limita al valor
               del pedido en cuestión.
             </p>

@@ -6,7 +6,7 @@ import { ProductFilters } from "@/components/product-filters";
 import { Pagination } from "@/components/pagination";
 
 export const metadata = {
-  title: "Productos | Encanto Florería",
+  title: "Productos | Encanto Floristería",
   description: "Explora nuestra colección completa de flores y arreglos florales.",
 };
 

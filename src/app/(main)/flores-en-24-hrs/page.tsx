@@ -7,7 +7,7 @@ import { CollectionFilters } from "@/components/price-filter";
 import { Clock, ChevronLeft, ChevronRight } from "lucide-react";
 
 export const metadata = {
-  title: "Flores en 24 hrs | Encanto Florería",
+  title: "Flores en 24 hrs | Encanto Floristería",
   description: "Arreglos florales con entrega en 24 horas en Manta. Pide hoy, recibe mañana.",
 };
 

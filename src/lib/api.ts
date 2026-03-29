@@ -1320,6 +1320,24 @@ export const api = {
         body: JSON.stringify(data),
       }).then(r => r.result),
   },
+
+  // Sitemap (internal, protected by API key)
+  sitemap: {
+    products: (sitemapKey: string) =>
+      fetchApi<ResultResponse<SitemapSlug[]>>("/sitemap/products", {
+        headers: { "x-sitemap-key": sitemapKey },
+      }).then((r) => r.result),
+
+    categories: (sitemapKey: string) =>
+      fetchApi<ResultResponse<SitemapSlug[]>>("/sitemap/categories", {
+        headers: { "x-sitemap-key": sitemapKey },
+      }).then((r) => r.result),
+  },
 };
+
+export interface SitemapSlug {
+  slug: string;
+  updatedAt: string;
+}
 
 export { ApiError };

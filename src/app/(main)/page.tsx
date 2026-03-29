@@ -9,6 +9,8 @@ import { TestimonialsCarousel } from "@/components/testimonials-carousel";
 import { FeaturedShowcase } from "@/components/featured-showcase";
 import { api } from "@/lib/api";
 
+export const revalidate = 60;
+
 export default async function Home() {
   const [productsResponse, instagramResponse, reviewsResponse] = await Promise.all([
     api.products.featured(20),

@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/breadcrumb";
 
 export const metadata = {
-  title: "Nosotros | Encanto Florería",
-  description: "Conoce nuestra historia y pasión por las flores. En Encanto Florería creamos arreglos únicos con amor y dedicación.",
+  title: "Nosotros | Encanto Floristería",
+  description: "Conoce nuestra historia y pasión por las flores. En Encanto Floristería creamos arreglos únicos con amor y dedicación.",
 };
 
 export default function NosotrosPage() {
@@ -23,7 +23,7 @@ export default function NosotrosPage() {
                 Nuestra Historia
               </h1>
               <p className="text-lg text-foreground-secondary mb-6 leading-relaxed">
-                Encanto Florería nació de una pasión profunda por las flores y el deseo
+                Encanto Floristería nació de una pasión profunda por las flores y el deseo
                 de llevar alegría a cada hogar en Manta. Desde nuestros inicios, nos hemos
                 dedicado a crear arreglos florales únicos que transmiten emociones y
                 celebran los momentos más especiales de la vida.

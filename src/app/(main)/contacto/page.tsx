@@ -5,7 +5,7 @@ import { ContactForm } from "@/components/contact-form";
 import { Breadcrumb } from "@/components/breadcrumb";
 
 export const metadata = {
-  title: "Contacto | Encanto Florería",
+  title: "Contacto | Encanto Floristería",
   description: "Contáctanos para pedidos personalizados, consultas o cualquier pregunta. Estamos aquí para ayudarte.",
 };
 
