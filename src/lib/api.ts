@@ -668,6 +668,15 @@ export interface CreateReviewRequest {
   comment?: string;
 }
 
+// Contact
+export interface CreateContactRequest {
+  fullName: string;
+  email: string;
+  phone?: string;
+  subject: string;
+  message: string;
+}
+
 // Delivery Address (API)
 export interface DeliveryAddressApi {
   id: string;
@@ -1260,6 +1269,15 @@ export const api = {
       fetchApi<ResultResponse<unknown>>("/reviews/token", {
         method: "POST",
         headers: { "x-review-token": reviewToken },
+        body: JSON.stringify(data),
+      }),
+  },
+
+  // Contact
+  contact: {
+    create: (data: CreateContactRequest) =>
+      fetchApi<ResultResponse<unknown>>("/contact", {
+        method: "POST",
         body: JSON.stringify(data),
       }),
   },

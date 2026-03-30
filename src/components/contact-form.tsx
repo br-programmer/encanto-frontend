@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { submitContactAction } from "@/actions/contact-actions";
 
 interface FormData {
-  name: string;
+  fullName: string;
   email: string;
   phone: string;
   subject: string;
@@ -16,7 +17,7 @@ interface FormData {
 }
 
 const initialFormData: FormData = {
-  name: "",
+  fullName: "",
   email: "",
   phone: "",
   subject: "",
@@ -42,15 +43,30 @@ export function ContactForm() {
     setIsSubmitting(true);
     setError(null);
 
-    // Simulate form submission
-    // In production, replace with actual API call
+    if (formData.message.length < 10) {
+      setError("El mensaje debe tener al menos 10 caracteres.");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const result = await submitContactAction({
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone || undefined,
+        subject: formData.subject,
+        message: formData.message,
+      });
+
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
 
       setIsSubmitted(true);
       setFormData(initialFormData);
     } catch {
-      setError("Hubo un error al enviar el mensaje. Por favor, intenta de nuevo.");
+      setError("Error al enviar el mensaje. Intenta de nuevo.");
     } finally {
       setIsSubmitting(false);
     }
@@ -78,14 +94,14 @@ export function ContactForm() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* Name */}
         <div>
-          <label htmlFor="name" className="block text-sm font-normal mb-2">
+          <label htmlFor="fullName" className="block text-sm font-normal mb-2">
             Nombre completo <span className="text-destructive">*</span>
           </label>
           <Input
             type="text"
-            id="name"
-            name="name"
-            value={formData.name}
+            id="fullName"
+            name="fullName"
+            value={formData.fullName}
             onChange={handleChange}
             required
             placeholder="Tu nombre"
@@ -135,11 +151,11 @@ export function ContactForm() {
               <SelectValue placeholder="Selecciona un asunto" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="pedido">Hacer un pedido</SelectItem>
-              <SelectItem value="consulta">Consulta general</SelectItem>
-              <SelectItem value="personalizado">Arreglo personalizado</SelectItem>
-              <SelectItem value="evento">Evento especial</SelectItem>
-              <SelectItem value="otro">Otro</SelectItem>
+              <SelectItem value="place_order">Hacer un pedido</SelectItem>
+              <SelectItem value="general_inquiry">Consulta general</SelectItem>
+              <SelectItem value="custom_arrangement">Arreglo personalizado</SelectItem>
+              <SelectItem value="special_event">Evento especial</SelectItem>
+              <SelectItem value="other">Otro</SelectItem>
             </SelectContent>
           </Select>
         </div>
