@@ -11,7 +11,7 @@ interface InstagramFeedProps {
 }
 
 export async function InstagramFeed({
-  instagramUrl = "https://www.instagram.com/encanto_ecu",
+  instagramUrl = "https://www.instagram.com/encantofloristeria_ecu",
   limit = 6,
 }: InstagramFeedProps) {
   let posts: InstagramPost[] = [];
@@ -90,7 +90,7 @@ export async function InstagramFeed({
               rel="noopener noreferrer"
             >
               <Instagram className="h-5 w-5 mr-2" />
-              @encanto_ecu
+              @encantofloristeria_ecu
             </a>
           </Button>
         </div>
