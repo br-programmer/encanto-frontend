@@ -24,7 +24,7 @@ export default async function Home() {
   const featuredProducts = featuredResponse.result;
   const exploreProducts = exploreResponse.result;
   const instagramPosts = instagramResponse.result;
-  const showcaseItems: ShowcaseItem[] = featuredProducts.slice(0, 3).map((p) => {
+  const showcaseItems: ShowcaseItem[] = featuredProducts.map((p) => {
     const primaryImage = p.images.find((img) => img.isPrimary) || p.images[0];
     return {
       id: p.id,
