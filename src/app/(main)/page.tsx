@@ -6,20 +6,36 @@ import { InstagramFeed } from "@/components/instagram-feed";
 import { HeroCarousel } from "@/components/hero-carousel";
 import { ScrollRevealSection } from "@/components/scroll-reveal-section";
 import { TestimonialsCarousel } from "@/components/testimonials-carousel";
-import { FeaturedShowcase } from "@/components/featured-showcase";
+import { FeaturedShowcase, type ShowcaseItem } from "@/components/featured-showcase";
 import { api } from "@/lib/api";
 
 export const revalidate = 60;
 
 export default async function Home() {
-  const [productsResponse, instagramResponse, reviewsResponse] = await Promise.all([
-    api.products.featured(20),
+  const [bestSellersResponse, featuredResponse, exploreResponse, instagramResponse, reviewsResponse] = await Promise.all([
+    api.products.bestSellers(10).catch(() => ({ result: [] })),
+    api.products.featured(10),
+    api.products.list({ limit: 10, isActive: true }),
     api.instagram.feed({ limit: 6 }).catch(() => ({ result: [], meta: { total: 0, cachedAt: "", expiresAt: "" } })),
     api.reviews.featured().catch(() => ({ result: [] })),
   ]);
 
-  const featuredProducts = productsResponse.result;
+  const bestSellers = bestSellersResponse.result;
+  const featuredProducts = featuredResponse.result;
+  const exploreProducts = exploreResponse.result;
   const instagramPosts = instagramResponse.result;
+  const showcaseItems: ShowcaseItem[] = featuredProducts.map((p) => {
+    const primaryImage = p.images.find((img) => img.isPrimary) || p.images[0];
+    return {
+      id: p.id,
+      image: primaryImage?.url || "",
+      title: p.name,
+      description: p.description || "",
+      link: `/productos/${p.slug}`,
+      linkLabel: "Ver detalle",
+    };
+  });
+
   const testimonials = reviewsResponse.result.map((r) => ({
     id: crypto.randomUUID(),
     name: r.customerName || "Cliente verificado",
@@ -54,8 +70,8 @@ export default async function Home() {
             </Button>
           </div>
 
-          {featuredProducts.length > 0 ? (
-            <FeaturedProductsCarousel products={featuredProducts} />
+          {(bestSellers.length > 0 ? bestSellers : featuredProducts).length > 0 ? (
+            <FeaturedProductsCarousel products={bestSellers.length > 0 ? bestSellers : featuredProducts} />
           ) : (
             <p className="text-center text-foreground-secondary py-8">
               No hay productos destacados disponibles.
@@ -73,7 +89,7 @@ export default async function Home() {
       {/* Featured Showcase */}
       <section className="bg-background py-8 sm:py-12">
         <div className="mx-auto max-w-7xl">
-          <FeaturedShowcase />
+          <FeaturedShowcase items={showcaseItems.length > 0 ? showcaseItems : undefined} />
         </div>
       </section>
 
@@ -95,7 +111,7 @@ export default async function Home() {
             </Button>
           </div>
 
-          <FeaturedProductsCarousel products={featuredProducts} />
+          <FeaturedProductsCarousel products={exploreProducts} />
 
           <div className="text-center mt-6 sm:hidden">
             <Button variant="outline" className="h-11" asChild>

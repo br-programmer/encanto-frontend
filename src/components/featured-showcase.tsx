@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-interface ShowcaseItem {
+export interface ShowcaseItem {
   id: string;
   image: string;
   title: string;

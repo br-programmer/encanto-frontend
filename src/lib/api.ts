@@ -952,6 +952,11 @@ export const api = {
         params: { isFeatured: true, isActive: true, limit },
       }),
 
+    bestSellers: (limit = 8) =>
+      fetchApi<{ result: Product[] }>("/products/best-sellers", {
+        params: { limit },
+      }),
+
     byCategory: (
       categoryId: string,
       filters?: Omit<ProductFilters, "categoryId">
