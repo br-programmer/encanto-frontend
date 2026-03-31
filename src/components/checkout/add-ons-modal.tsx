@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { SafeImage } from "@/components/ui/safe-image";
 import { X, Minus, Plus, Package, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { cn, formatPrice } from "@/lib/utils";
 import type { AddOn, AddOnCategory } from "@/lib/api";
 import type { CartItemAddOn } from "@/types";
@@ -34,6 +35,8 @@ export function AddOnsModal({
   currentAddOns = [],
   onSave,
 }: AddOnsModalProps) {
+  const [mounted, setMounted] = useState(false);
+
   // Initialize selection from current add-ons
   const [selected, setSelected] = useState<Map<string, SelectedAddOn>>(() => {
     const map = new Map<string, SelectedAddOn>();
@@ -45,13 +48,48 @@ export function AddOnsModal({
     });
     return map;
   });
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
-    () => new Set(addOnCategories.map((c) => c.id))
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    () => new Set(addOnCategories.length > 0 ? [addOnCategories[0].id] : [])
   );
   const [search, setSearch] = useState("");
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Reset state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const map = new Map<string, SelectedAddOn>();
+      currentAddOns.forEach((ca) => {
+        const addOn = addOns.find((a) => a.id === ca.addOnId);
+        if (addOn) {
+          map.set(addOn.id, { addOn, quantity: ca.quantity });
+        }
+      });
+      setSelected(map);
+      setSearch("");
+      setExpandedCategories(
+        new Set(addOnCategories.length > 0 ? [addOnCategories[0].id] : [])
+      );
+    }
+  }, [isOpen, currentAddOns, addOns, addOnCategories]);
+
+  useScrollLock(isOpen);
+
+  // Close on escape
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+    }
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen, onClose]);
+
   const toggleCategory = (categoryId: string) => {
-    setCollapsedCategories((prev) => {
+    setExpandedCategories((prev) => {
       const next = new Set(prev);
       if (next.has(categoryId)) {
         next.delete(categoryId);
@@ -125,34 +163,45 @@ export function AddOnsModal({
     onClose();
   };
 
-  if (!isOpen) return null;
+  if (!mounted) return null;
 
   return createPortal(
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/50 z-[100] transition-opacity"
+        className={cn(
+          "fixed inset-0 bg-black/50 z-[100] transition-opacity duration-300",
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <div className="bg-background rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "fixed right-0 top-0 h-full w-full sm:max-w-md bg-background z-[100] shadow-xl transition-transform duration-300 ease-in-out",
+          isOpen ? "translate-x-0" : "translate-x-full"
+        )}
+      >
+        <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-            <div>
-              <h3 className="font-medium text-lg">Agregar complementos</h3>
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
+            <div className="min-w-0 flex-1 mr-3">
+              <h3 className="font-medium text-lg">Complementos</h3>
               <p className="text-sm text-foreground-secondary truncate">
                 {productName}
               </p>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose}>
+            <button
+              onClick={onClose}
+              className="p-2 text-foreground-secondary hover:text-foreground transition-colors rounded-lg hover:bg-secondary/50 flex-shrink-0"
+            >
               <X className="h-5 w-5" />
-            </Button>
+            </button>
           </div>
 
           {/* Search */}
-          <div className="px-5 py-3 border-b border-border">
+          <div className="px-5 py-3 border-b border-border flex-shrink-0">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted" />
               <input
@@ -160,124 +209,135 @@ export function AddOnsModal({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar complementos..."
-                className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-border bg-background focus:outline-none focus:border-primary transition-colors"
+                className="w-full pl-9 pr-3 py-2.5 text-sm rounded-lg border border-border bg-background focus:outline-none focus:border-primary transition-colors"
               />
             </div>
           </div>
 
           {/* Content */}
           <ScrollArea className="flex-1 overflow-auto">
-            <div className="p-5 space-y-5">
+            <div className="p-5 space-y-4">
+              {grouped.length === 0 && (
+                <div className="text-center py-12">
+                  <Package className="h-10 w-10 text-foreground-muted mx-auto mb-3" />
+                  <p className="text-sm text-foreground-secondary">
+                    No se encontraron complementos
+                  </p>
+                </div>
+              )}
+
               {grouped.map(({ category, items }) => {
-                const isCollapsed = collapsedCategories.has(category.id);
+                const isExpanded = expandedCategories.has(category.id);
                 const selectedInCategory = items.filter((a) => selected.has(a.id)).length;
 
                 return (
-                <div key={category.id}>
-                  <button
-                    type="button"
-                    onClick={() => toggleCategory(category.id)}
-                    className="group flex items-center justify-between w-full mb-3 py-1.5 px-2 -mx-2 rounded-md hover:bg-secondary/50 transition-colors"
-                    title={isCollapsed ? "Expandir categoría" : "Colapsar categoría"}
-                  >
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs font-normal text-foreground-secondary uppercase tracking-wide group-hover:text-foreground transition-colors">
-                        {category.name}
-                      </p>
-                      {selectedInCategory > 0 && (
-                        <span className="text-[10px] bg-primary text-white min-w-5 h-5 inline-flex items-center justify-center rounded-full font-normal">
-                          {selectedInCategory}
-                        </span>
+                  <div key={category.id}>
+                    <button
+                      type="button"
+                      onClick={() => toggleCategory(category.id)}
+                      className="group flex items-center justify-between w-full mb-3 py-2 px-3 -mx-1 rounded-lg hover:bg-secondary/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <p className="text-sm font-medium text-foreground group-hover:text-foreground transition-colors">
+                          {category.name}
+                        </p>
+                        {selectedInCategory > 0 && (
+                          <span className="text-[10px] bg-primary text-white min-w-5 h-5 inline-flex items-center justify-center rounded-full font-normal">
+                            {selectedInCategory}
+                          </span>
+                        )}
+                      </div>
+                      {isExpanded ? (
+                        <ChevronUp className="h-4 w-4 text-foreground-muted group-hover:text-foreground transition-colors" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-foreground-muted group-hover:text-foreground transition-colors" />
                       )}
-                    </div>
-                    {isCollapsed ? (
-                      <ChevronDown className="h-4 w-4 text-foreground-muted group-hover:text-foreground transition-colors" />
-                    ) : (
-                      <ChevronUp className="h-4 w-4 text-foreground-muted group-hover:text-foreground transition-colors" />
-                    )}
-                  </button>
-                  {!isCollapsed && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {items.map((addOn) => {
-                      const entry = selected.get(addOn.id);
-                      const isSelected = !!entry;
+                    </button>
 
-                      return (
-                        <div
-                          key={addOn.id}
-                          className={cn(
-                            "flex flex-col items-center p-3 rounded-lg border transition-colors cursor-pointer text-center",
-                            isSelected
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          )}
-                          onClick={() => !isSelected && handleToggle(addOn)}
-                        >
-                          {/* Image */}
-                          {addOn.imageUrl ? (
-                            <div className="relative w-16 h-16 rounded-md overflow-hidden bg-secondary mb-2">
-                              <SafeImage
-                                src={addOn.imageUrl}
-                                alt={addOn.name}
-                                fill
-                                className="object-cover"
-                                sizes="64px"
-                                fallbackClassName="w-full h-full"
-                                iconSize="md"
-                              />
-                            </div>
-                          ) : (
-                            <div className="w-16 h-16 rounded-md bg-secondary flex items-center justify-center mb-2">
-                              <Package className="h-6 w-6 text-foreground-muted" />
-                            </div>
-                          )}
+                    {isExpanded && (
+                      <div className="space-y-2">
+                        {items.map((addOn) => {
+                          const entry = selected.get(addOn.id);
+                          const isSelected = !!entry;
 
-                          {/* Info */}
-                          <p className="text-xs font-normal line-clamp-2 mb-1">{addOn.name}</p>
-                          <p className="text-xs text-primary font-medium">
-                            +{formatPrice(addOn.priceCents)}
-                          </p>
-
-                          {/* Quantity or checkbox */}
-                          {isSelected ? (
+                          return (
                             <div
-                              className="flex items-center gap-1 mt-2"
-                              onClick={(e) => e.stopPropagation()}
+                              key={addOn.id}
+                              className={cn(
+                                "flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer",
+                                isSelected
+                                  ? "border-primary bg-primary/5"
+                                  : "border-border hover:border-primary/30"
+                              )}
+                              onClick={() => !isSelected && handleToggle(addOn)}
                             >
-                              <button
-                                type="button"
-                                onClick={() => handleQuantity(addOn.id, -1)}
-                                className="w-7 h-7 flex items-center justify-center rounded-md border border-border hover:bg-secondary transition-colors"
-                              >
-                                <Minus className="h-3 w-3" />
-                              </button>
-                              <span className="w-6 text-center text-sm font-normal">
-                                {entry.quantity}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => handleQuantity(addOn.id, 1)}
-                                className="w-7 h-7 flex items-center justify-center rounded-md border border-border hover:bg-secondary transition-colors"
-                              >
-                                <Plus className="h-3 w-3" />
-                              </button>
+                              {/* Image */}
+                              {addOn.imageUrl ? (
+                                <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
+                                  <SafeImage
+                                    src={addOn.imageUrl}
+                                    alt={addOn.name}
+                                    fill
+                                    className="object-cover"
+                                    sizes="56px"
+                                    fallbackClassName="w-full h-full"
+                                    iconSize="sm"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="w-14 h-14 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
+                                  <Package className="h-5 w-5 text-foreground-muted" />
+                                </div>
+                              )}
+
+                              {/* Info */}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-normal line-clamp-1">{addOn.name}</p>
+                                <p className="text-sm text-primary font-medium mt-0.5">
+                                  +{formatPrice(addOn.priceCents)}
+                                </p>
+                              </div>
+
+                              {/* Quantity or checkbox */}
+                              {isSelected ? (
+                                <div
+                                  className="flex items-center gap-1.5 flex-shrink-0"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() => handleQuantity(addOn.id, -1)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-secondary transition-colors"
+                                  >
+                                    <Minus className="h-3.5 w-3.5" />
+                                  </button>
+                                  <span className="w-7 text-center text-sm font-medium">
+                                    {entry.quantity}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleQuantity(addOn.id, 1)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-secondary transition-colors"
+                                  >
+                                    <Plus className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="w-5 h-5 rounded border-2 border-border flex-shrink-0" />
+                              )}
                             </div>
-                          ) : (
-                            <div className="w-5 h-5 rounded border border-border mt-2" />
-                          )}
-                        </div>
-                      );
-                    })}
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                  )}
-                </div>
                 );
               })}
             </div>
           </ScrollArea>
 
           {/* Footer */}
-          <div className="border-t border-border px-5 py-4 space-y-3">
+          <div className="border-t border-border px-5 py-4 space-y-3 flex-shrink-0">
             {selectedTotal > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-foreground-secondary">

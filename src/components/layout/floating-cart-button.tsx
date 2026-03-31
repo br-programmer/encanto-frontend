@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import { ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/stores/cart-store";
+import { useScrollTopStore } from "@/stores/scroll-top-store";
 import { cn } from "@/lib/utils";
 
 export function FloatingCartButton() {
   const { totalItems, openCart, isOpen } = useCartStore();
+  const { isVisible: scrollTopVisible } = useScrollTopStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -21,10 +23,11 @@ export function FloatingCartButton() {
     <button
       onClick={openCart}
       className={cn(
-        "fixed bottom-6 left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 sm:right-6 z-50 flex items-center gap-2 px-5 py-3 rounded-full",
-        "bg-primary text-white shadow-xl hover:bg-primary-hover transition-all duration-200",
+        "fixed right-6 z-50 flex items-center gap-2 px-5 py-3 rounded-full",
+        "bg-primary text-white shadow-xl hover:bg-primary-hover transition-[bottom] duration-300",
         "hover:scale-105 active:scale-95",
-        "animate-in fade-in slide-in-from-bottom-3 duration-300"
+        "animate-in fade-in slide-in-from-bottom-3 duration-300",
+        scrollTopVisible ? "bottom-14" : "bottom-6"
       )}
     >
       <ShoppingBag className="h-5 w-5" />

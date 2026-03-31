@@ -21,7 +21,7 @@ const footerLinks = {
 export function Footer() {
   return (
     <footer className="bg-background-alt border-t border-border">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 pb-20 sm:pb-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {/* Brand */}
           <div className="space-y-3 sm:space-y-4 sm:col-span-2 lg:col-span-1">
@@ -34,17 +34,6 @@ export function Footer() {
               Arreglos florales para toda ocasión. Hacemos de cada momento algo
               especial.
             </p>
-            <div className="flex gap-4">
-              <a
-                href="https://www.instagram.com/encantofloristeria_ecu"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-foreground-secondary hover:text-primary transition-colors"
-              >
-                <Instagram className="h-5 w-5" />
-                <span className="sr-only">Instagram</span>
-              </a>
-            </div>
           </div>
 
           {/* Tienda */}
