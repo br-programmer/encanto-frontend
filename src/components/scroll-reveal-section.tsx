@@ -60,37 +60,16 @@ interface ServiceStep {
   hoverImage: string | null;
 }
 
-interface FallbackStep {
-  number: string;
-  title: string;
-  image: string;
-  contentImage: string;
-}
-
-const FALLBACK_STEPS: FallbackStep[] = [
-  {
-    number: "01",
-    title: "Nació de un sueño",
-    image: "https://images.unsplash.com/photo-1455659817273-f96807779a8a?w=800&q=80",
-    contentImage: "/images/historia-01.png",
-  },
-  {
-    number: "02",
-    title: "Tu florería de confianza",
-    image: "https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&q=80",
-    contentImage: "/images/historia-02.png",
-  },
-];
-
 interface ScrollRevealSectionProps {
   services?: ServiceCatalog[];
 }
 
 export function ScrollRevealSection({ services = [] }: ScrollRevealSectionProps) {
-  const hasServices = services.length >= 2;
+  const hasServices = services.length > 0;
 
-  const serviceSteps: ServiceStep[] = hasServices
-    ? services.slice(0, 2).map((service, i) => {
+  if (!hasServices) return null;
+
+  const serviceSteps: ServiceStep[] = services.slice(0, 2).map((service, i) => {
         const sorted = [...service.images].sort((a, b) => a.displayOrder - b.displayOrder);
         const primary = sorted.find((img) => img.isPrimary) || sorted[0];
         const remaining = sorted.filter((img) => img.id !== primary?.id);
@@ -105,8 +84,7 @@ export function ScrollRevealSection({ services = [] }: ScrollRevealSectionProps)
           secondImage: second?.url || primary?.url || "",
           hoverImage: third?.url || null,
         };
-      })
-    : [];
+      });
 
   return (
     <section className="bg-background-alt overflow-hidden">
@@ -121,8 +99,7 @@ export function ScrollRevealSection({ services = [] }: ScrollRevealSectionProps)
 
       <div className="mx-auto max-w-7xl">
         <div>
-          {hasServices
-            ? serviceSteps.map((step, index) => (
+          {serviceSteps.map((step, index) => (
                 <Link
                   key={step.number}
                   href={`/servicios/${step.slug}`}
@@ -181,47 +158,6 @@ export function ScrollRevealSection({ services = [] }: ScrollRevealSectionProps)
                     </div>
                   </RevealItem>
                 </Link>
-              ))
-            : FALLBACK_STEPS.map((step, index) => (
-                <div
-                  key={step.number}
-                  className="grid grid-cols-1 lg:grid-cols-2"
-                >
-                  <RevealItem
-                    delay={100}
-                    className={`w-full ${index % 2 !== 0 ? "lg:order-2" : ""}`}
-                  >
-                    <div className="relative aspect-4/3 overflow-hidden">
-                      <SafeImage
-                        src={step.image}
-                        alt={step.title}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 1024px) 100vw, 50vw"
-                      />
-                      <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
-                        <span className="text-7xl sm:text-8xl md:text-9xl font-medium text-white/20 font-serif leading-none">
-                          {step.number}
-                        </span>
-                      </div>
-                    </div>
-                  </RevealItem>
-
-                  <RevealItem
-                    delay={200}
-                    className={`w-full ${index % 2 !== 0 ? "lg:order-1" : ""}`}
-                  >
-                    <div className="relative aspect-4/3">
-                      <SafeImage
-                        src={step.contentImage}
-                        alt={step.title}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 1024px) 100vw, 50vw"
-                      />
-                    </div>
-                  </RevealItem>
-                </div>
               ))}
         </div>
       </div>
