@@ -413,10 +413,139 @@ export interface DeliverySettings {
   updatedBy: string | null;
 }
 
+// Service Catalog Types
+export interface ServiceCatalogHighlight {
+  icon?: string;
+  title: string;
+  description?: string;
+}
+
+export interface ServiceCatalogPackage {
+  name: string;
+  description?: string;
+  capacity?: string;
+  isAvailable: boolean;
+}
+
+export interface ServiceCatalogCta {
+  label: string;
+  type: "quote_form" | "whatsapp" | "external_link";
+  value?: string;
+}
+
+export interface ServiceCatalogImage {
+  id: string;
+  url: string;
+  altText: string | null;
+  displayOrder: number;
+  isPrimary: boolean;
+  createdAt: string;
+}
+
+export interface ServiceCatalog {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string | null;
+  shortDescription: string | null;
+  description: string | null;
+  highlights: ServiceCatalogHighlight[] | null;
+  packages: ServiceCatalogPackage[] | null;
+  cta: ServiceCatalogCta | null;
+  isActive: boolean;
+  isFeatured: boolean;
+  displayOrder: number;
+  images: ServiceCatalogImage[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Service Request Types
+export interface CreateServiceRequest {
+  fullName: string;
+  email: string;
+  phone?: string;
+  serviceId?: string;
+  eventDate?: string;
+  isFlexibleDate?: boolean;
+  estimatedGuests?: number;
+  message: string;
+}
+
+export type ServiceRequestStatus = "pending" | "contacted" | "offer_sent" | "completed" | "dismissed";
+
+export interface ServiceRequest {
+  id: string;
+  requestNumber: string;
+  serviceId: string | null;
+  userId: string | null;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  eventDate: string | null;
+  isFlexibleDate: boolean;
+  estimatedGuests: number | null;
+  message: string;
+  status: ServiceRequestStatus;
+  createdAt: string;
+  updatedAt: string;
+  guestToken?: string;
+}
+
+// Service Offer Types
+export type ServiceOfferStatus = "draft" | "sent" | "viewed" | "accepted" | "rejected" | "expired" | "order_created";
+
+export interface ServiceOfferItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPriceCents: number;
+  totalPriceCents: number;
+  taxable: boolean;
+  displayOrder: number;
+}
+
+export interface ServiceOffer {
+  id: string;
+  offerNumber: string;
+  serviceId: string | null;
+  clientName: string;
+  clientEmail: string;
+  clientPhone: string | null;
+  title: string;
+  description: string | null;
+  eventDate: string | null;
+  branchId: string | null;
+  validUntil: string | null;
+  subtotalCents: number;
+  displaySubtotalCents: number;
+  taxCents: number;
+  displayTaxCents: number;
+  status: ServiceOfferStatus;
+  orderId: string | null;
+  items: ServiceOfferItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AcceptServiceOffer {
+  paymentMethod: PaymentMethod;
+}
+
+export interface AcceptOfferResponse {
+  accepted: boolean;
+  offerNumber: string;
+  orderId: string;
+  orderNumber: string;
+  totalCents: number;
+  paymentMethod: PaymentMethod;
+}
+
 // Order Types
+export type OrderType = "product" | "service";
 export type FulfillmentType = "delivery" | "pickup";
 export type PaymentMethod = "bank_transfer" | "paypal" | "datafast";
-export type OrderStatus = "pending_payment" | "paid" | "preparing" | "delivery_assigned" | "out_for_delivery" | "delivered" | "ready_for_pickup" | "picked_up" | "cancelled";
+export type OrderStatus = "pending_payment" | "paid" | "preparing" | "delivery_assigned" | "out_for_delivery" | "delivered" | "ready_for_pickup" | "picked_up" | "cancelled" | "scheduled" | "in_progress" | "completed";
 export type PaymentStatus = "pending" | "awaiting_verification" | "paid" | "cancelled";
 
 export interface OrderItemAddOnRequest {
@@ -581,13 +710,14 @@ export interface OrderDeliveryTimeSlot {
 export interface Order {
   id: string;
   orderNumber: string;
+  orderType: OrderType;
   userId: string | null;
   branchId: string;
-  fulfillmentType: FulfillmentType;
+  fulfillmentType: FulfillmentType | null;
   senderName: string;
   senderEmail: string;
   senderPhone: string;
-  recipientName: string;
+  recipientName: string | null;
   recipientPhone: string | null;
   deliveryAddress: string | null;
   deliveryCity: string | null;
@@ -1344,6 +1474,97 @@ export const api = {
       }).then(r => r.result),
   },
 
+  // Service Catalog
+  serviceCatalog: {
+    list: () =>
+      fetchApi<{ result: ServiceCatalog[] }>("/service-catalog"),
+
+    featured: () =>
+      fetchApi<{ result: ServiceCatalog[] }>("/service-catalog/featured"),
+
+    getBySlug: (slug: string) =>
+      fetchApi<ResultResponse<ServiceCatalog>>(`/service-catalog/slug/${slug}`).then(r => r.result),
+
+    getById: (id: string) =>
+      fetchApi<ResultResponse<ServiceCatalog>>(`/service-catalog/${id}`).then(r => r.result),
+  },
+
+  // Service Requests
+  serviceRequests: {
+    create: (data: CreateServiceRequest) =>
+      fetchApi<{ result: ServiceRequest; guestToken?: string }>("/service-requests", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+
+    mine: (filters?: { page?: number; limit?: number }) =>
+      fetchApiAuth<PaginatedResponse<ServiceRequest>>("/service-requests/mine", {
+        params: filters as QueryParams,
+      }),
+
+    mineWithToken: (accessToken: string, filters?: { page?: number; limit?: number }) =>
+      fetchApiWithToken<PaginatedResponse<ServiceRequest>>("/service-requests/mine", accessToken, {
+        params: filters as QueryParams,
+      }),
+
+    getById: (id: string) => {
+      const authHeader = getAuthHeader();
+      const guestToken = typeof window !== "undefined" ? localStorage.getItem("encanto-service-request-token") : null;
+      const headers: Record<string, string> = { ...authHeader };
+      if (guestToken) headers["X-Guest-Token"] = guestToken;
+      return fetchApi<ResultResponse<ServiceRequest>>(`/service-requests/${id}`, { headers }).then(r => r.result);
+    },
+  },
+
+  // Service Offers
+  serviceOffers: {
+    getById: (id: string) => {
+      const authHeader = getAuthHeader();
+      const guestToken = typeof window !== "undefined" ? localStorage.getItem("encanto-service-offer-token") : null;
+      const headers: Record<string, string> = { ...authHeader };
+      if (guestToken) headers["X-Guest-Token"] = guestToken;
+      return fetchApi<ResultResponse<ServiceOffer>>(`/service-offers/${id}`, { headers }).then(r => r.result);
+    },
+
+    accept: (id: string, data: AcceptServiceOffer) => {
+      const authHeader = getAuthHeader();
+      const guestToken = typeof window !== "undefined" ? localStorage.getItem("encanto-service-offer-token") : null;
+      const headers: Record<string, string> = { ...authHeader };
+      if (guestToken) headers["X-Guest-Token"] = guestToken;
+      return fetchApi<ResultResponse<AcceptOfferResponse>>(`/service-offers/${id}/accept`, {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers,
+      }).then(r => r.result);
+    },
+
+    reject: (id: string) => {
+      const authHeader = getAuthHeader();
+      const guestToken = typeof window !== "undefined" ? localStorage.getItem("encanto-service-offer-token") : null;
+      const headers: Record<string, string> = { ...authHeader };
+      if (guestToken) headers["X-Guest-Token"] = guestToken;
+      return fetchApi<ResultResponse<{ rejected: boolean; offerNumber: string }>>(`/service-offers/${id}/reject`, {
+        method: "POST",
+        headers,
+      }).then(r => r.result);
+    },
+
+    mine: (filters?: { page?: number; limit?: number }) =>
+      fetchApiAuth<PaginatedResponse<ServiceOffer>>("/service-offers/mine", {
+        params: filters as QueryParams,
+      }),
+
+    mineWithToken: (accessToken: string, filters?: { page?: number; limit?: number }) =>
+      fetchApiWithToken<PaginatedResponse<ServiceOffer>>("/service-offers/mine", accessToken, {
+        params: filters as QueryParams,
+      }),
+
+    claim: (id: string) =>
+      fetchApiAuth<ResultResponse<ServiceOffer>>(`/service-offers/${id}/claim`, {
+        method: "POST",
+      }).then(r => r.result),
+  },
+
   // Sitemap (internal, protected by API key)
   sitemap: {
     products: (sitemapKey: string) =>
@@ -1353,6 +1574,11 @@ export const api = {
 
     categories: (sitemapKey: string) =>
       fetchApi<ResultResponse<SitemapSlug[]>>("/sitemap/categories", {
+        headers: { "x-sitemap-key": sitemapKey },
+      }).then((r) => r.result),
+
+    serviceCatalog: (sitemapKey: string) =>
+      fetchApi<ResultResponse<SitemapSlug[]>>("/sitemap/service-catalog", {
         headers: { "x-sitemap-key": sitemapKey },
       }).then((r) => r.result),
   },

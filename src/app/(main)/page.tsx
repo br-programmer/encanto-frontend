@@ -12,18 +12,20 @@ import { api } from "@/lib/api";
 export const revalidate = 60;
 
 export default async function Home() {
-  const [bestSellersResponse, featuredResponse, exploreResponse, instagramResponse, reviewsResponse] = await Promise.all([
+  const [bestSellersResponse, featuredResponse, exploreResponse, instagramResponse, reviewsResponse, servicesResponse] = await Promise.all([
     api.products.bestSellers(10).catch(() => ({ result: [] })),
     api.products.featured(10),
     api.products.list({ limit: 10, isActive: true }),
     api.instagram.feed({ limit: 6 }).catch(() => ({ result: [], meta: { total: 0, cachedAt: "", expiresAt: "" } })),
     api.reviews.featured().catch(() => ({ result: [] })),
+    api.serviceCatalog.featured().catch(() => ({ result: [] })),
   ]);
 
   const bestSellers = bestSellersResponse.result;
   const featuredProducts = featuredResponse.result;
   const exploreProducts = exploreResponse.result;
   const instagramPosts = instagramResponse.result;
+  const featuredServices = servicesResponse.result;
   const showcaseItems: ShowcaseItem[] = featuredProducts.map((p) => {
     const primaryImage = p.images.find((img) => img.isPrimary) || p.images[0];
     return {
@@ -184,8 +186,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Scroll Reveal Section */}
-      <ScrollRevealSection />
+      {/* Scroll Reveal Section / Services */}
+      <ScrollRevealSection services={featuredServices} />
 
       {/* Testimonials */}
       <section className="py-8 sm:py-12 bg-background">

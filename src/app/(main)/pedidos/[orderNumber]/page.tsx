@@ -24,6 +24,9 @@ const ORDER_STATUS_LABELS: Record<string, { label: string; color: string }> = {
   delivered: { label: "Entregado", color: "bg-green-100 text-green-800" },
   ready_for_pickup: { label: "Listo para retirar", color: STATUS_COLOR },
   picked_up: { label: "Retirado", color: "bg-green-100 text-green-800" },
+  scheduled: { label: "Agendado", color: STATUS_COLOR },
+  in_progress: { label: "En ejecución", color: STATUS_COLOR },
+  completed: { label: "Completado", color: "bg-green-100 text-green-800" },
   cancelled: { label: "Cancelado", color: "bg-red-100 text-red-800" },
 };
 
@@ -352,6 +355,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const statusInfo = ORDER_STATUS_LABELS[order.orderStatus] || { label: order.orderStatus, color: "bg-gray-100 text-gray-800" };
   const isTransfer = order.paymentMethod === "bank_transfer";
   const isPickup = order.fulfillmentType === "pickup";
+  const isService = order.orderType === "service";
   const canCancel = order.orderStatus === "pending_payment";
   const isPayPal = order.paymentMethod === "paypal";
   const canUploadProof = isTransfer && order.paymentStatus === "pending" && !order.transferProofUrl;
@@ -359,7 +363,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const showTransferRejection = isTransfer && order.paymentStatus === "pending" && order.transferRejectionReason;
 
   // Timeline steps
-  const timelineSteps = isPickup
+  const timelineSteps = isService
+    ? [
+        { key: "created", label: "Orden creada", date: order.createdAt, active: true },
+        { key: "paid", label: "Pago confirmado", date: order.paymentStatus === "paid" ? order.updatedAt : null, active: order.paymentStatus === "paid" },
+        { key: "scheduled", label: "Agendado", date: null, active: ["scheduled", "in_progress", "completed"].includes(order.orderStatus) },
+        { key: "in_progress", label: "En ejecución", date: null, active: ["in_progress", "completed"].includes(order.orderStatus) },
+        { key: "completed", label: "Completado", date: null, active: order.orderStatus === "completed" },
+      ]
+    : isPickup
     ? [
         { key: "created", label: "Pedido creado", date: order.createdAt, active: true },
         { key: "paid", label: "Pago confirmado", date: order.paymentStatus === "paid" ? order.updatedAt : null, active: order.paymentStatus === "paid" },
@@ -572,7 +584,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
           </div>
         )}
 
-        {/* Delivery / Pickup Info */}
+        {/* Delivery / Pickup Info (not shown for service orders) */}
+        {!isService && (
         <div className="bg-background rounded-xl border border-border p-6 mb-6">
           <h2 className="font-medium mb-4">
             {isPickup ? "Información de retiro" : "Información de entrega"}
@@ -644,10 +657,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             )}
           </div>
         </div>
+        )}
 
         {/* Products */}
         <div className="bg-background rounded-xl border border-border p-6 mb-6">
-          <h2 className="font-medium mb-4">Productos</h2>
+          <h2 className="font-medium mb-4">{isService ? "Detalle" : "Productos"}</h2>
           <div className="space-y-4">
             {order.items.map((item) => (
               <div key={item.id} className="flex items-start gap-4">
