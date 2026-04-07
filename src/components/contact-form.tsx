@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Send, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { submitContactAction } from "@/actions/contact-actions";
@@ -128,16 +129,15 @@ export function ContactForm() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* Phone */}
         <div>
-          <label htmlFor="phone" className="block text-sm font-normal mb-2">
+          <label className="block text-sm font-normal mb-2">
             Teléfono
           </label>
-          <Input
-            type="tel"
-            id="phone"
-            name="phone"
+          <PhoneInput
             value={formData.phone}
-            onChange={handleChange}
-            placeholder="+593 99 999 9999"
+            onChange={(phone) => {
+              setFormData((prev) => ({ ...prev, phone }));
+              setError(null);
+            }}
           />
         </div>
 
