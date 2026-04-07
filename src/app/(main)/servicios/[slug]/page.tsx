@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, Users, MessageCircle, ExternalLink, Sparkles } from "lucide-react";
 import { api } from "@/lib/api";
-import { SafeImage } from "@/components/ui/safe-image";
+import { ProductGallery } from "@/components/product-gallery";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { Button } from "@/components/ui/button";
 import type { Metadata } from "next";
@@ -86,8 +86,15 @@ export default async function ServiceDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const primaryImage = service.images.find((img) => img.isPrimary) || service.images[0];
-  const galleryImages = service.images.filter((img) => !img.isPrimary).sort((a, b) => a.displayOrder - b.displayOrder);
+  const galleryImages = service.images.map((img) => ({
+    id: img.id,
+    productId: service.id,
+    url: img.url,
+    altText: img.altText,
+    displayOrder: img.displayOrder,
+    isPrimary: img.isPrimary,
+    createdAt: img.createdAt,
+  }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -101,39 +108,13 @@ export default async function ServiceDetailPage({ params }: PageProps) {
       {/* Hero */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-          {/* Image */}
-          <div className="space-y-3">
-            <div className="relative aspect-[4/3] rounded-xl overflow-hidden">
-              {primaryImage ? (
-                <SafeImage
-                  src={primaryImage.url}
-                  alt={service.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  priority
-                />
-              ) : (
-                <div className="w-full h-full bg-secondary flex items-center justify-center">
-                  <Sparkles className="h-12 w-12 text-foreground-muted" />
-                </div>
-              )}
-            </div>
-
-            {/* Gallery thumbnails */}
-            {galleryImages.length > 0 && (
-              <div className="grid grid-cols-4 gap-2">
-                {galleryImages.slice(0, 4).map((img) => (
-                  <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden">
-                    <SafeImage
-                      src={img.url}
-                      alt={img.altText || service.name}
-                      fill
-                      className="object-cover"
-                      sizes="120px"
-                    />
-                  </div>
-                ))}
+          {/* Gallery */}
+          <div>
+            {galleryImages.length > 0 ? (
+              <ProductGallery images={galleryImages} productName={service.name} />
+            ) : (
+              <div className="aspect-square bg-secondary rounded-xl flex items-center justify-center">
+                <Sparkles className="h-12 w-12 text-foreground-muted" />
               </div>
             )}
           </div>
@@ -222,20 +203,6 @@ export default async function ServiceDetailPage({ params }: PageProps) {
         </section>
       )}
 
-      {/* Bottom CTA */}
-      <section className="py-12 bg-primary">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl font-serif text-white mb-3">¿Te interesa este servicio?</h2>
-          <p className="text-white/80 mb-6 max-w-lg mx-auto">
-            Solicita una cotización sin compromiso y te contactaremos pronto.
-          </p>
-          <Button size="lg" variant="secondary" asChild>
-            <Link href={`/solicitar-servicio?service=${service.slug}`}>
-              Solicitar cotización
-            </Link>
-          </Button>
-        </div>
-      </section>
     </div>
   );
 }

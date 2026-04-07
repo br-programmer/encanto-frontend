@@ -18,13 +18,6 @@ export default async function SolicitarServicioPage() {
       <Breadcrumb items={[{ label: "Solicitar Servicio" }]} />
 
       <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-serif mb-3">Solicitar cotización</h1>
-          <p className="text-foreground-secondary">
-            Cuéntanos qué necesitas y te enviaremos una propuesta personalizada.
-          </p>
-        </div>
-
         <Suspense fallback={null}>
           <ServiceRequestForm services={services} />
         </Suspense>

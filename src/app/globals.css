@@ -123,6 +123,9 @@
   --color-toast-cart-bg: var(--toast-cart-bg);
   --color-toast-cart-border: var(--toast-cart-border);
 
+  --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --font-serif: 'DM Serif Display', serif;
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

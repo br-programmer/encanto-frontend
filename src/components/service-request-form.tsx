@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Send, Check, Loader2, Calendar } from "lucide-react";
+import { Send, Check, Loader2 } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuthStore } from "@/stores/auth-store";
@@ -40,26 +43,31 @@ interface ServiceRequestFormProps {
 export function ServiceRequestForm({ services }: ServiceRequestFormProps) {
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
-  const [formData, setFormData] = useState<FormData>(initialFormData);
+
+  const serviceSlug = searchParams.get("service");
+  const matchedService = serviceSlug
+    ? services.find((s) => s.slug === serviceSlug)
+    : null;
+
+  const [formData, setFormData] = useState<FormData>({
+    ...initialFormData,
+    serviceId: matchedService?.id || "",
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Pre-fill from user profile and query params
+  // Pre-fill from user profile
   useEffect(() => {
-    const serviceSlug = searchParams.get("service");
-    const matchedService = serviceSlug
-      ? services.find((s) => s.slug === serviceSlug)
-      : null;
-
-    setFormData((prev) => ({
-      ...prev,
-      fullName: user?.fullName || prev.fullName,
-      email: user?.email || prev.email,
-      phone: user?.phone || prev.phone,
-      serviceId: matchedService?.id || prev.serviceId,
-    }));
-  }, [user, searchParams, services]);
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: user.fullName || prev.fullName,
+        email: user.email || prev.email,
+        phone: user.phone || prev.phone,
+      }));
+    }
+  }, [user]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -133,6 +141,13 @@ export function ServiceRequestForm({ services }: ServiceRequestFormProps) {
   }
 
   return (
+    <>
+    <div className="text-center mb-8">
+      <h1 className="text-3xl font-serif mb-3">Solicitar cotización</h1>
+      <p className="text-foreground-secondary">
+        Cuéntanos qué necesitas y te enviaremos una propuesta personalizada.
+      </p>
+    </div>
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* Name */}
@@ -171,16 +186,15 @@ export function ServiceRequestForm({ services }: ServiceRequestFormProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* Phone */}
         <div>
-          <label htmlFor="phone" className="block text-sm font-normal mb-2">
+          <label className="block text-sm font-normal mb-2">
             Teléfono
           </label>
-          <Input
-            type="tel"
-            id="phone"
-            name="phone"
+          <PhoneInput
             value={formData.phone}
-            onChange={handleChange}
-            placeholder="+593 99 999 9999"
+            onChange={(phone) => {
+              setFormData((prev) => ({ ...prev, phone }));
+              setError(null);
+            }}
           />
         </div>
 
@@ -213,28 +227,27 @@ export function ServiceRequestForm({ services }: ServiceRequestFormProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* Event Date */}
         <div>
-          <label htmlFor="eventDate" className="block text-sm font-normal mb-2">
+          <label className="block text-sm font-normal mb-2">
             Fecha del evento
           </label>
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted pointer-events-none" />
-            <Input
-              type="date"
-              id="eventDate"
-              name="eventDate"
-              value={formData.eventDate}
-              onChange={handleChange}
-              className="pl-9"
-              min={new Date().toISOString().split("T")[0]}
-            />
-          </div>
-          <label className="flex items-center gap-2 mt-2 cursor-pointer">
-            <input
-              type="checkbox"
-              name="isFlexibleDate"
+          <DatePicker
+            value={formData.eventDate ? new Date(formData.eventDate + "T00:00:00") : undefined}
+            onChange={(date) => {
+              setFormData((prev) => ({
+                ...prev,
+                eventDate: date ? date.toISOString().split("T")[0] : "",
+              }));
+              setError(null);
+            }}
+            placeholder="Selecciona una fecha"
+            minDate={new Date()}
+          />
+          <label className="flex items-center gap-3 mt-2 cursor-pointer">
+            <Checkbox
               checked={formData.isFlexibleDate}
-              onChange={handleChange}
-              className="rounded border-border text-primary focus:ring-primary/20"
+              onCheckedChange={(checked) => {
+                setFormData((prev) => ({ ...prev, isFlexibleDate: checked === true }));
+              }}
             />
             <span className="text-xs text-foreground-secondary">Mi fecha es flexible</span>
           </label>
@@ -295,5 +308,6 @@ export function ServiceRequestForm({ services }: ServiceRequestFormProps) {
         )}
       </Button>
     </form>
+    </>
   );
 }
