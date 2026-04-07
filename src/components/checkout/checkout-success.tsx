@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check, Package, ArrowRight, Upload, Loader2, Building2, Copy, CheckCircle2, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
+import { BUSINESS } from "@/lib/constants";
 import { uploadTransferProofAction } from "@/actions/order-actions";
 import type { Order, BankAccount, OrderSettings, DeliveryTimeSlot } from "@/lib/api";
 
@@ -389,7 +390,7 @@ export function CheckoutSuccess({
           </Button>
           <Button variant="outline" size="lg" asChild>
             <a
-              href="https://wa.me/593982742191?text=Hola!%20Acabo%20de%20realizar%20un%20pedido"
+              href={BUSINESS.whatsapp.url("Hola! Acabo de realizar un pedido")}
               target="_blank"
               rel="noopener noreferrer"
             >

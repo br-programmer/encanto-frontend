@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useCartStore } from "@/stores/cart-store";
+import { BUSINESS } from "@/lib/constants";
 
 export function FloatingWhatsAppButton() {
   const [mounted, setMounted] = useState(false);
@@ -24,7 +25,7 @@ export function FloatingWhatsAppButton() {
 
   return (
     <button
-      onClick={() => window.open("https://wa.me/593982742191?text=Hola!%20Me%20interesa%20un%20arreglo%20floral", "_blank")}
+      onClick={() => window.open(BUSINESS.whatsapp.url(), "_blank")}
       className="fixed right-6 z-50 w-12 h-12 flex items-center justify-center rounded-full text-white shadow-lg"
       style={{
         backgroundColor: "#25D366",

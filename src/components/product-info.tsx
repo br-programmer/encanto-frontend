@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useCartStore } from "@/stores/cart-store";
 import { useToast } from "@/components/ui/toast";
 import { formatPrice, calculateDiscount, getPrimaryImage, cn } from "@/lib/utils";
+import { BUSINESS } from "@/lib/constants";
 import type { Product, AddOn, AddOnCategory, CartItemAddOn } from "@/types";
 
 interface SelectedAddOn {
@@ -385,7 +386,7 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
             <p className="text-sm text-foreground-secondary mt-1">
               Programa tu entrega con al menos 2 días de anticipación. ¿Lo necesitas hoy?{" "}
               <a
-                href="https://wa.me/593982742191?text=Hola!%20Necesito%20un%20pedido%20para%20hoy"
+                href={BUSINESS.whatsapp.url("Hola! Necesito un pedido para hoy")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"

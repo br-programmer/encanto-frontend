@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { FaqAccordion } from "@/components/faq-accordion";
+import { BUSINESS } from "@/lib/constants";
 
 export const metadata = {
   title: "Preguntas Frecuentes | Encanto Floristería",
@@ -51,7 +52,7 @@ const faqs = [
       },
       {
         question: "¿Qué hago si las flores llegaron maltratadas?",
-        answer: "Tu satisfacción es nuestra prioridad. Si las flores llegan en mal estado, contáctanos inmediatamente con fotos del arreglo y lo resolveremos. Puedes enviarnos un WhatsApp o llamarnos al 098 274 2191."
+        answer: `Tu satisfacción es nuestra prioridad. Si las flores llegan en mal estado, contáctanos inmediatamente con fotos del arreglo y lo resolveremos. Puedes enviarnos un WhatsApp o llamarnos al ${BUSINESS.phone.display}.`
       },
       {
         question: "¿Puedo agregar chocolates u otros complementos?",
@@ -89,7 +90,7 @@ const faqs = [
       },
       {
         question: "¿Tienen promociones para fechas especiales?",
-        answer: "Sí, en fechas como San Valentín, Día de la Madre y otras ocasiones especiales ofrecemos promociones y productos exclusivos. Síguenos en Instagram @encantofloristeria_ecu para enterarte de todas nuestras ofertas."
+        answer: `Sí, en fechas como San Valentín, Día de la Madre y otras ocasiones especiales ofrecemos promociones y productos exclusivos. Síguenos en Instagram ${BUSINESS.social.instagram.handle} para enterarte de todas nuestras ofertas.`
       },
       {
         question: "¿Puedo incluir una tarjeta con mensaje?",
@@ -137,7 +138,7 @@ export default function PreguntasFrecuentesPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild>
               <a
-                href="https://wa.me/593982742191?text=Hola!%20Tengo%20una%20pregunta"
+                href={BUSINESS.whatsapp.url("Hola! Tengo una pregunta")}
                 target="_blank"
                 rel="noopener noreferrer"
               >

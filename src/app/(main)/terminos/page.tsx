@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Breadcrumb } from "@/components/breadcrumb";
+import { BUSINESS } from "@/lib/constants";
 
 export const metadata = {
   title: "Términos y Condiciones | Encanto Floristería",
@@ -147,9 +148,9 @@ export default function TerminosPage() {
               Si tiene preguntas sobre estos Términos y Condiciones, puede contactarnos a través de:
             </p>
             <ul className="list-disc pl-6 text-foreground-secondary space-y-2">
-              <li>Teléfono: 098 274 2191</li>
-              <li>Instagram: @encantofloristeria_ecu</li>
-              <li>Dirección: Calle 22, Manta, Ecuador</li>
+              <li>Teléfono: {BUSINESS.phone.display}</li>
+              <li>Instagram: {BUSINESS.social.instagram.handle}</li>
+              <li>Dirección: {BUSINESS.address.full}</li>
             </ul>
           </section>
         </div>

@@ -1,4 +1,5 @@
 import { Breadcrumb } from "@/components/breadcrumb";
+import { BUSINESS } from "@/lib/constants";
 
 export const metadata = {
   title: "Política de Privacidad | Encanto Floristería",
@@ -72,9 +73,9 @@ export default function PrivacidadPage() {
               personal, puedes contactarnos a través de:
             </p>
             <ul className="list-disc pl-6 text-foreground-secondary space-y-2">
-              <li>Teléfono: 098 274 2191</li>
-              <li>Instagram: @encantofloristeria_ecu</li>
-              <li>Dirección: Calle 22, Manta, Ecuador</li>
+              <li>Teléfono: {BUSINESS.phone.display}</li>
+              <li>Instagram: <a href={BUSINESS.social.instagram.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{BUSINESS.social.instagram.handle}</a></li>
+              <li>Dirección: {BUSINESS.address.full}</li>
             </ul>
           </section>
         </div>

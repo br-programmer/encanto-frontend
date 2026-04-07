@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, Users, MessageCircle, ExternalLink, Sparkles } from "lucide-react";
 import { api } from "@/lib/api";
+import { BUSINESS } from "@/lib/constants";
 import { ProductGallery } from "@/components/product-gallery";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { Button } from "@/components/ui/button";
@@ -51,7 +52,7 @@ function CtaButton({ cta, serviceSlug }: { cta: ServiceCatalog["cta"]; serviceSl
     return (
       <Button size="lg" asChild>
         <a
-          href={`https://wa.me/593982742191?text=${encodeURIComponent(message)}`}
+          href={`https://wa.me/${BUSINESS.whatsapp.number}?text=${encodeURIComponent(message)}`}
           target="_blank"
           rel="noopener noreferrer"
         >

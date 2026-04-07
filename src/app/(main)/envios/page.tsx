@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Truck, Clock, MapPin, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/breadcrumb";
+import { BUSINESS } from "@/lib/constants";
 
 export const metadata = {
   title: "Política de Envíos | Encanto Floristería",
@@ -203,8 +204,8 @@ export default function EnviosPage() {
               Para reportar cualquier inconveniente, comuníquese con nosotros por:
             </p>
             <ul className="list-disc pl-6 text-foreground-secondary space-y-2 mb-4">
-              <li>WhatsApp: 098 274 2191</li>
-              <li>Instagram: @encantofloristeria_ecu</li>
+              <li>WhatsApp: {BUSINESS.phone.display}</li>
+              <li>Instagram: {BUSINESS.social.instagram.handle}</li>
             </ul>
           </section>
 
@@ -215,7 +216,7 @@ export default function EnviosPage() {
             </p>
             <div className="bg-secondary/30 rounded-lg p-4 mb-4">
               <p className="font-normal">Encanto Floristería</p>
-              <p className="text-foreground-secondary">Calle 22, Manta, Ecuador</p>
+              <p className="text-foreground-secondary">{BUSINESS.address.full}</p>
               <p className="text-foreground-secondary text-sm mt-2">
                 Horario: Lunes a Sábado de 9:00 AM a 7:00 PM
               </p>
@@ -238,7 +239,7 @@ export default function EnviosPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild>
               <a
-                href="https://wa.me/593982742191?text=Hola!%20Tengo%20una%20pregunta%20sobre%20envíos"
+                href={BUSINESS.whatsapp.url("Hola! Tengo una pregunta sobre envíos")}
                 target="_blank"
                 rel="noopener noreferrer"
               >
