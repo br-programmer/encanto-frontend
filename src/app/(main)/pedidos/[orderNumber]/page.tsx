@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { Loader2, Package, ChevronLeft, AlertTriangle, Phone, Bike, Car, User, CreditCard, Gift, EyeOff, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BUSINESS } from "@/lib/constants";
 import { TransferProofUpload } from "@/components/orders/transfer-proof-upload";
 import { PayPalProvider } from "@/components/checkout/paypal-provider";
 import { PayPalCheckoutModal } from "@/components/checkout/paypal-checkout";
@@ -315,7 +316,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 </Button>
                 <Button variant="outline" asChild>
                   <a
-                    href="https://wa.me/593982742191?text=Hola!%20No%20puedo%20ver%20mi%20pedido"
+                    href={BUSINESS.whatsapp.url("Hola! No puedo ver mi pedido")}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -823,7 +824,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
           )}
           <Button variant="outline" asChild>
             <a
-              href={`https://wa.me/593982742191?text=Hola!%20Tengo%20una%20consulta%20sobre%20mi%20pedido%20${order.orderNumber}`}
+              href={BUSINESS.whatsapp.url(`Hola! Tengo una consulta sobre mi pedido ${order.orderNumber}`)}
               target="_blank"
               rel="noopener noreferrer"
             >

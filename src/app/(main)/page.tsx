@@ -8,6 +8,7 @@ import { ScrollRevealSection } from "@/components/scroll-reveal-section";
 import { TestimonialsCarousel } from "@/components/testimonials-carousel";
 import { FeaturedShowcase, type ShowcaseItem } from "@/components/featured-showcase";
 import { api } from "@/lib/api";
+import { BUSINESS } from "@/lib/constants";
 
 export const revalidate = 60;
 
@@ -203,7 +204,7 @@ export default async function Home() {
       </section>
 
       {/* Instagram Feed */}
-      <InstagramFeed posts={instagramPosts} instagramUrl="https://www.instagram.com/encantofloristeria_ecu" />
+      <InstagramFeed posts={instagramPosts} instagramUrl={BUSINESS.social.instagram.url} />
 
       {/* WhatsApp CTA */}
       <section className="py-8 sm:py-12 bg-secondary">
@@ -215,7 +216,7 @@ export default async function Home() {
           </p>
           <Button size="lg" className="h-12 px-6 sm:px-8" asChild>
             <a
-              href="https://wa.me/593982742191?text=Hola!%20Me%20interesa%20un%20arreglo%20floral"
+              href={BUSINESS.whatsapp.url()}
               target="_blank"
               rel="noopener noreferrer"
             >

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Instagram, Phone, MapPin } from "lucide-react";
+import { BUSINESS } from "@/lib/constants";
 
 const footerLinks = {
   tienda: [
@@ -82,26 +83,26 @@ export function Footer() {
             <ul className="space-y-3">
               <li className="flex items-center gap-2 text-sm text-foreground-secondary">
                 <MapPin className="h-4 w-4 flex-shrink-0" />
-                <span>Calle 22, Manta, Ecuador</span>
+                <span>{BUSINESS.address.full}</span>
               </li>
               <li>
                 <a
-                  href="tel:+593982742191"
+                  href={`tel:${BUSINESS.phone.raw}`}
                   className="flex items-center gap-2 text-sm text-foreground-secondary hover:text-primary transition-colors"
                 >
                   <Phone className="h-4 w-4 flex-shrink-0" />
-                  <span>098 274 2191</span>
+                  <span>{BUSINESS.phone.display}</span>
                 </a>
               </li>
               <li>
                 <a
-                  href="https://www.instagram.com/encantofloristeria_ecu"
+                  href={BUSINESS.social.instagram.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm text-foreground-secondary hover:text-primary transition-colors"
                 >
                   <Instagram className="h-4 w-4 flex-shrink-0" />
-                  <span>@encantofloristeria_ecu</span>
+                  <span>{BUSINESS.social.instagram.handle}</span>
                 </a>
               </li>
             </ul>

@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/api";
 import { formatPrice, cn } from "@/lib/utils";
+import { BUSINESS } from "@/lib/constants";
 import type { ServiceOffer, PaymentMethod } from "@/lib/api";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -336,7 +337,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
         <p className="text-sm text-foreground-secondary mb-3">¿Tienes dudas sobre esta propuesta?</p>
         <Button variant="outline" asChild>
           <a
-            href={`https://wa.me/593982742191?text=Hola!%20Tengo%20una%20consulta%20sobre%20la%20propuesta%20${offer.offerNumber}`}
+            href={BUSINESS.whatsapp.url(`Hola! Tengo una consulta sobre la propuesta ${offer.offerNumber}`)}
             target="_blank"
             rel="noopener noreferrer"
           >

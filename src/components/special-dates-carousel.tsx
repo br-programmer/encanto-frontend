@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, useRef } from "react";
 import { SafeImage } from "@/components/ui/safe-image";
+import { BUSINESS } from "@/lib/constants";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { SpecialDate } from "@/lib/api";
@@ -248,8 +249,8 @@ export function SpecialDatesCarousel({
 
         {/* Footer Social Links (decorative) */}
         <div className="absolute bottom-6 right-8 hidden lg:flex gap-6 text-white/50 text-sm">
-          <span className="hover:text-white/80 cursor-pointer">facebook</span>
-          <span className="hover:text-white/80 cursor-pointer">instagram</span>
+          <a href={BUSINESS.social.tiktok.url} target="_blank" rel="noopener noreferrer" className="hover:text-white/80">tiktok</a>
+          <a href={BUSINESS.social.instagram.url} target="_blank" rel="noopener noreferrer" className="hover:text-white/80">instagram</a>
         </div>
       </div>
     </section>

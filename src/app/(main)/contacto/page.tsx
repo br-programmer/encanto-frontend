@@ -3,6 +3,7 @@ import { MapPin, Phone, Clock, MessageCircle, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ContactForm } from "@/components/contact-form";
 import { Breadcrumb } from "@/components/breadcrumb";
+import { BUSINESS } from "@/lib/constants";
 
 export const metadata = {
   title: "Contacto | Encanto Floristería",
@@ -38,8 +39,8 @@ export default function ContactoPage() {
               <div>
                 <h3 className="font-medium mb-1">Ubicación</h3>
                 <p className="text-foreground-secondary text-sm">
-                  Calle 22<br />
-                  Manta, Ecuador
+                  {BUSINESS.address.street}<br />
+                  {BUSINESS.address.city}, {BUSINESS.address.country}
                 </p>
               </div>
             </div>
@@ -52,10 +53,10 @@ export default function ContactoPage() {
               <div>
                 <h3 className="font-medium mb-1">Teléfono</h3>
                 <a
-                  href="tel:+593982742191"
+                  href={`tel:${BUSINESS.phone.raw}`}
                   className="text-foreground-secondary text-sm hover:text-primary transition-colors"
                 >
-                  098 274 2191
+                  {BUSINESS.phone.display}
                 </a>
               </div>
             </div>
@@ -68,12 +69,12 @@ export default function ContactoPage() {
               <div>
                 <h3 className="font-medium mb-1">Instagram</h3>
                 <a
-                  href="https://www.instagram.com/encantofloristeria_ecu"
+                  href={BUSINESS.social.instagram.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-foreground-secondary text-sm hover:text-primary transition-colors"
                 >
-                  @encantofloristeria_ecu
+                  {BUSINESS.social.instagram.handle}
                 </a>
               </div>
             </div>
@@ -103,7 +104,7 @@ export default function ContactoPage() {
               </p>
               <Button className="w-full bg-green-600 hover:bg-green-700" asChild>
                 <a
-                  href="https://wa.me/593982742191?text=Hola!%20Me%20gustaría%20hacer%20una%20consulta"
+                  href={BUSINESS.whatsapp.url("Hola! Me gustaría hacer una consulta")}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

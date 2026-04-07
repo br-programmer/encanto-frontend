@@ -2,6 +2,7 @@ import { SafeImage } from "@/components/ui/safe-image";
 import { Instagram, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { BUSINESS } from "@/lib/constants";
 import type { InstagramPost } from "@/types";
 
 interface InstagramFeedProps {
@@ -11,7 +12,7 @@ interface InstagramFeedProps {
 }
 
 export async function InstagramFeed({
-  instagramUrl = "https://www.instagram.com/encantofloristeria_ecu",
+  instagramUrl = BUSINESS.social.instagram.url,
   limit = 6,
 }: InstagramFeedProps) {
   let posts: InstagramPost[] = [];
@@ -90,7 +91,7 @@ export async function InstagramFeed({
               rel="noopener noreferrer"
             >
               <Instagram className="h-5 w-5 mr-2" />
-              @encantofloristeria_ecu
+              {BUSINESS.social.instagram.handle}
             </a>
           </Button>
         </div>
