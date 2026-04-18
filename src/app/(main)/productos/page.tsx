@@ -4,6 +4,7 @@ import { Breadcrumb } from "@/components/breadcrumb";
 import { ProductCard } from "@/components/product-card";
 import { ProductFilters } from "@/components/product-filters";
 import { Pagination } from "@/components/pagination";
+import { getActiveSpecialDatesAction } from "@/actions/special-date-actions";
 
 export const metadata = {
   title: "Productos | Encanto Floristería",
@@ -14,6 +15,7 @@ interface ProductosPageProps {
   searchParams: Promise<{
     page?: string;
     category?: string | string[];
+    specialDate?: string;
     minPrice?: string;
     maxPrice?: string;
     inStock?: string;
@@ -32,19 +34,21 @@ export default async function ProductosPage({ searchParams }: ProductosPageProps
       ? [params.category]
       : [];
 
-  // Fetch products and categories in parallel
-  const [productsResponse, categoriesResponse] = await Promise.all([
+  // Fetch products, categories, and active special dates in parallel
+  const [productsResponse, categoriesResponse, specialDates] = await Promise.all([
     api.products.list({
       page,
       limit,
       isActive: true,
       categorySlug: selectedSlugs.length > 0 ? selectedSlugs.join(",") : undefined,
+      specialDateSlug: params.specialDate || undefined,
       minPrice: params.minPrice ? Number(params.minPrice) : undefined,
       maxPrice: params.maxPrice ? Number(params.maxPrice) : undefined,
       inStock: params.inStock === "true" ? true : undefined,
       search: params.search || undefined,
     }),
     api.categories.list({ isActive: true, rootOnly: true, limit: 100 }),
+    getActiveSpecialDatesAction(),
   ]);
 
   const { result: products, meta } = productsResponse;
@@ -91,6 +95,7 @@ export default async function ProductosPage({ searchParams }: ProductosPageProps
               maxPrice={params.maxPrice}
               inStock={params.inStock === "true"}
               search={params.search}
+              specialDates={specialDates}
             />
           </aside>
 

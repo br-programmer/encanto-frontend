@@ -103,6 +103,7 @@ export function ServiceRequestForm({ services }: ServiceRequestFormProps) {
         isFlexibleDate: formData.isFlexibleDate || undefined,
         estimatedGuests: formData.estimatedGuests ? parseInt(formData.estimatedGuests) : undefined,
         message: formData.message,
+        ...(user ? { userId: user.id } : {}),
       });
 
       if (!result.success) {

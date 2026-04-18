@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Plus, Minus, ShoppingBag, Trash2 } from "lucide-react";
+import { X, Plus, Minus, ShoppingBag, Trash2, Sparkles, AlertTriangle } from "lucide-react";
 import { SafeImage } from "@/components/ui/safe-image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useCartStore } from "@/stores/cart-store";
+import { useSpecialDatesStore } from "@/stores/special-dates-store";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
 import { formatPrice } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -16,16 +17,41 @@ export function CartSidebar() {
   const [mounted, setMounted] = useState(false);
   const { items, isOpen, closeCart, removeItem, updateQuantity, totalPrice } =
     useCartStore();
+  const { getById: getSpecialDateById, fetch: fetchSpecialDates } = useSpecialDatesStore();
 
   // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
-  }, []);
+    fetchSpecialDates();
+  }, [fetchSpecialDates]);
 
   useScrollLock(isOpen);
 
   // Use empty array on server, real items after mount
   const displayItems = mounted ? items : [];
+
+  // Detect cart mix conflicts
+  const uniqueCampaignIds = Array.from(
+    new Set(
+      displayItems
+        .map((it) => it.product.specialDateId)
+        .filter((id): id is string => !!id)
+    )
+  );
+  const hasRegular = displayItems.some((it) => !it.product.specialDateId);
+  const hasSpecial = uniqueCampaignIds.length > 0;
+  const campaignNames = uniqueCampaignIds
+    .map((id) => getSpecialDateById(id)?.name)
+    .filter((n): n is string => !!n);
+  const mixWarning: string | null = (() => {
+    if (hasSpecial && hasRegular && campaignNames.length > 0) {
+      return `Mezclas productos regulares con ${campaignNames.join(", ")}. Solo podrás entregarlos durante la campaña (los regulares quedarán bloqueados).`;
+    }
+    if (uniqueCampaignIds.length > 1) {
+      return `Tu carrito tiene productos de varias campañas (${campaignNames.join(", ")}). Es posible que no puedas entregarlos en la misma fecha.`;
+    }
+    return null;
+  })();
 
   return (
     <>
@@ -75,9 +101,17 @@ export function CartSidebar() {
             </div>
           ) : (
             <>
+              {mixWarning && (
+                <div className="mx-4 mt-3 sm:mx-6 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-800">{mixWarning}</p>
+                </div>
+              )}
               <ScrollArea className="flex-1 p-4 sm:p-6">
                 <div className="space-y-3 sm:space-y-4">
-                  {displayItems.map((item) => (
+                  {displayItems.map((item) => {
+                    const specialDate = getSpecialDateById(item.product.specialDateId);
+                    return (
                     <div
                       key={item.product.id}
                       className="flex gap-3 sm:gap-4 p-2 sm:p-3 bg-warm-white rounded-lg"
@@ -110,6 +144,16 @@ export function CartSidebar() {
                         >
                           {item.product.name}
                         </Link>
+                        {specialDate && (
+                          <Link
+                            href={`/fechas-especiales/${specialDate.slug}`}
+                            onClick={closeCart}
+                            className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] sm:text-xs hover:bg-primary/20 transition-colors"
+                          >
+                            <Sparkles className="h-3 w-3" />
+                            {specialDate.name}
+                          </Link>
+                        )}
                         <p className="text-primary font-medium text-sm sm:text-base mt-1">
                           {formatPrice(item.product.priceCents)}
                         </p>
@@ -176,7 +220,8 @@ export function CartSidebar() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </ScrollArea>
 

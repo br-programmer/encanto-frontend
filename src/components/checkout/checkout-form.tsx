@@ -16,6 +16,7 @@ import { PhoneInput, normalizePhoneValue } from "@/components/ui/phone-input";
 import { useCartStore } from "@/stores/cart-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { useAddressesStore, type DeliveryAddress } from "@/stores/addresses-store";
+import { useSpecialDatesStore } from "@/stores/special-dates-store";
 import { useCheckoutData } from "@/hooks/use-checkout-data";
 import { StepGuestInfo } from "./steps/step-guest-info";
 import { StepDelivery } from "./steps/step-delivery";
@@ -163,14 +164,52 @@ export function CheckoutForm() {
   const { items, totalPrice, clearCart, updateItemCardMessage, updateItemAddOns } = useCartStore();
   const { user, tokens, logout } = useAuthStore();
   const { addresses, addAddress, getDefaultAddress } = useAddressesStore();
+  const fetchSpecialDatesStore = useSpecialDatesStore((s) => s.fetch);
+  const getSpecialDateById = useSpecialDatesStore((s) => s.getById);
+
+  useEffect(() => {
+    fetchSpecialDatesStore();
+  }, [fetchSpecialDatesStore]);
 
   const {
-    cities, branches, zones, timeSlots, specialDates, bankAccounts, occasions, orderSettings,
+    cities, branches, zones, timeSlots, bankAccounts, occasions, orderSettings,
     addOnCategories, addOns: availableAddOns,
     isLoading: isLoadingCheckoutData, error: checkoutDataError,
     selectedCityId, selectedBranchId, setSelectedCityId, setSelectedBranchId,
-    getSpecialDateForDate, getZoneById,
+    getSpecialDateMatch, getZoneById,
   } = useCheckoutData();
+
+  // Compute blocked cart items for the selected delivery date
+  const specialDateMatch = getSpecialDateMatch(formData.deliveryDate);
+  const invalidCartItemIds = new Set<string>(
+    !formData.deliveryDate
+      ? []
+      : items
+          .filter((item) => {
+            const productSpecialDateId = item.product.specialDateId;
+            // Product tied to a campaign: must be active on this delivery date
+            if (productSpecialDateId) {
+              return !specialDateMatch.allowedSpecialDateIds.has(productSpecialDateId);
+            }
+            // Regular product: only blocked when an active campaign blocks regulars
+            return specialDateMatch.blocking;
+          })
+          .map((item) => item.product.id)
+  );
+  const hasBlockingConflict = invalidCartItemIds.size > 0;
+  const blockingCampaign = specialDateMatch.blocking
+    ? specialDateMatch.matching.find((sd) => sd.blockRegularProducts) ?? null
+    : null;
+  // First campaign tied to an invalid item (for "Ver productos" link when no blocking campaign)
+  const firstInvalidItemCampaign = (() => {
+    if (blockingCampaign) return null;
+    for (const item of items) {
+      if (item.product.specialDateId && invalidCartItemIds.has(item.product.id)) {
+        return getSpecialDateById(item.product.specialDateId);
+      }
+    }
+    return null;
+  })();
 
   // Mount + restore
   useEffect(() => {
@@ -225,21 +264,60 @@ export function CheckoutForm() {
     if (mounted && items.length === 0 && !isSubmitted && !pendingPayPal) router.push("/productos");
   }, [mounted, items.length, isSubmitted, pendingPayPal, router]);
 
-  // Special date check
+  // Auto-select delivery date when cart has items from exactly one special-date campaign
   useEffect(() => {
-    if (formData.deliveryDate) {
-      const sd = getSpecialDateForDate(formData.deliveryDate);
-      setSpecialDateWarning(sd?.warningMessage || null);
-      if (sd && sd.requiresAdvanceDays > 0) {
-        const today = new Date(); today.setHours(0, 0, 0, 0);
-        const deliveryDate = new Date(formData.deliveryDate + "T00:00:00");
-        const diffDays = Math.ceil((deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        if (diffDays < sd.requiresAdvanceDays) {
-          setError(`Para ${sd.name} se requiere un mínimo de ${sd.requiresAdvanceDays} días de anticipación`);
-        }
+    if (!mounted) return;
+    if (formData.deliveryDate) return;
+    if (items.length === 0) return;
+
+    const ids = new Set(items.map((it) => it.product.specialDateId));
+    const uniqueIds = Array.from(ids);
+    if (uniqueIds.length !== 1) return;
+    const onlyId = uniqueIds[0];
+    if (!onlyId) return;
+
+    const campaign = getSpecialDateById(onlyId);
+    if (!campaign) return;
+
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const minAdvanceDays = Math.max(
+      orderSettings?.minAdvanceDays ?? 2,
+      campaign.requiresAdvanceDays ?? 0
+    );
+    const earliestByAdvance = new Date(today);
+    earliestByAdvance.setDate(earliestByAdvance.getDate() + minAdvanceDays);
+
+    const campaignStart = new Date(campaign.startDate + "T00:00:00");
+    const campaignEnd = new Date(campaign.endDate + "T00:00:00");
+    const target = earliestByAdvance > campaignStart ? earliestByAdvance : campaignStart;
+    if (target > campaignEnd) return; // no valid day left in campaign
+
+    const iso = target.toISOString().split("T")[0];
+    setFormData((p) => ({ ...p, deliveryDate: iso }));
+  }, [mounted, items, formData.deliveryDate, getSpecialDateById, orderSettings?.minAdvanceDays]);
+
+  // Special date check (by range)
+  useEffect(() => {
+    if (!formData.deliveryDate) {
+      setSpecialDateWarning(null);
+      return;
+    }
+    const match = getSpecialDateMatch(formData.deliveryDate);
+    setSpecialDateWarning(match.warningMessage);
+    if (match.maxRequiresAdvanceDays > 0) {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const deliveryDate = new Date(formData.deliveryDate + "T00:00:00");
+      const diffDays = Math.ceil(
+        (deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      if (diffDays < match.maxRequiresAdvanceDays) {
+        const name = match.matching[0]?.name ?? "esta fecha especial";
+        setError(
+          `Para ${name} se requiere un mínimo de ${match.maxRequiresAdvanceDays} días de anticipación`
+        );
       }
-    } else { setSpecialDateWarning(null); }
-  }, [formData.deliveryDate, getSpecialDateForDate]);
+    }
+  }, [formData.deliveryDate, getSpecialDateMatch]);
 
   const isPickup = formData.fulfillmentType === "pickup";
 
@@ -352,13 +430,28 @@ export function CheckoutForm() {
         if (!formData.senderName.trim()) { setError("Ingresa el nombre del comprador"); return false; }
         if (!formData.senderPhone.trim()) { setError("Ingresa el teléfono del comprador"); return false; }
       }
-      const sd = getSpecialDateForDate(formData.deliveryDate);
-      if (sd && sd.requiresAdvanceDays > 0) {
+      const match = getSpecialDateMatch(formData.deliveryDate);
+      if (match.maxRequiresAdvanceDays > 0) {
         const today = new Date(); today.setHours(0, 0, 0, 0);
         const dd = new Date(formData.deliveryDate + "T00:00:00");
-        if (Math.ceil((dd.getTime() - today.getTime()) / 86400000) < sd.requiresAdvanceDays) {
-          setError(`Para ${sd.name} se requiere ${sd.requiresAdvanceDays} días de anticipación`); return false;
+        if (Math.ceil((dd.getTime() - today.getTime()) / 86400000) < match.maxRequiresAdvanceDays) {
+          const sdName = match.matching[0]?.name ?? "esta fecha especial";
+          setError(`Para ${sdName} se requiere ${match.maxRequiresAdvanceDays} días de anticipación`); return false;
         }
+      }
+      if (hasBlockingConflict) {
+        if (blockingCampaign) {
+          setError(
+            `Para esta fecha solo están disponibles productos de ${blockingCampaign.name}. Retira los productos marcados en tu carrito o cambia la fecha.`
+          );
+        } else if (firstInvalidItemCampaign) {
+          setError(
+            `Los productos de ${firstInvalidItemCampaign.name} solo se pueden entregar dentro del rango de la campaña. Cambia la fecha o retira esos productos.`
+          );
+        } else {
+          setError("Hay productos incompatibles con la fecha de entrega seleccionada.");
+        }
+        return false;
       }
     }
     if (name === "payment") {
@@ -444,7 +537,21 @@ export function CheckoutForm() {
       } else { setIsSubmitted(true); }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
-      setError(msg && msg !== "API Error: 400 Bad Request" && !msg.startsWith("API Error:") ? msg : "Hubo un error al procesar tu pedido. Por favor, intenta de nuevo.");
+      const lower = msg.toLowerCase();
+      let friendly: string | null = null;
+      if (lower.includes("regularproductnotallowed") || lower.includes("regular_product_not_allowed") || lower.includes("regular product")) {
+        friendly = "Uno o más productos del carrito no están disponibles para la fecha seleccionada. Solo se permiten productos de la fecha especial activa.";
+      } else if (lower.includes("productfromdifferentspecialdate") || lower.includes("different_special_date") || lower.includes("different special date")) {
+        friendly = "Uno o más productos pertenecen a otra fecha especial y no están disponibles para la fecha de entrega seleccionada.";
+      } else if (lower.includes("specialdateadvance") || lower.includes("special_date_advance") || lower.includes("days of advance")) {
+        friendly = "Esta fecha especial requiere más días de anticipación. Elige otra fecha de entrega.";
+      }
+      setError(
+        friendly ||
+          (msg && msg !== "API Error: 400 Bad Request" && !msg.startsWith("API Error:")
+            ? msg
+            : "Hubo un error al procesar tu pedido. Por favor, intenta de nuevo.")
+      );
     } finally { setIsSubmitting(false); }
   };
 
@@ -595,6 +702,14 @@ export function CheckoutForm() {
               <StepSchedule
                 formData={formData} onFormChange={handleFormChange} onSelectChange={handleSelectChange} onPhoneChange={handlePhoneChange}
                 timeSlots={timeSlots} occasions={occasions} specialDateWarning={specialDateWarning}
+                blockingCampaign={
+                  blockingCampaign
+                    ? { name: blockingCampaign.name, slug: blockingCampaign.slug, kind: "blocking" }
+                    : firstInvalidItemCampaign
+                      ? { name: firstInvalidItemCampaign.name, slug: firstInvalidItemCampaign.slug, kind: "out-of-range" }
+                      : null
+                }
+                invalidCartItemIds={invalidCartItemIds}
                 minDeliveryDate={getMinDeliveryDate()} formatTimeSlot={formatTimeSlot} isPickup={isPickup} user={user}
                 items={items} onUpdateCardMessage={updateItemCardMessage} onOpenAddOns={setAddOnsModalProductId} availableAddOns={availableAddOns}
                 error={error} onNext={handleNext} onBack={handleBack}

@@ -19,6 +19,14 @@ import type {
   AddOn,
 } from "@/lib/api";
 
+export interface SpecialDateMatch {
+  matching: SpecialDate[];
+  blocking: boolean;
+  allowedSpecialDateIds: Set<string>;
+  warningMessage: string | null;
+  maxRequiresAdvanceDays: number;
+}
+
 interface CheckoutData {
   cities: City[];
   branches: Branch[];
@@ -37,6 +45,7 @@ interface CheckoutData {
   setSelectedCityId: (cityId: string) => void;
   setSelectedBranchId: (branchId: string) => void;
   getSpecialDateForDate: (date: string) => SpecialDate | null;
+  getSpecialDateMatch: (date: string) => SpecialDateMatch;
   getZoneById: (zoneId: string) => DeliveryZone | undefined;
 }
 
@@ -144,11 +153,42 @@ export function useCheckoutData(): CheckoutData {
     setSelectedBranchIdState(branchId);
   }, []);
 
-  const getSpecialDateForDate = useCallback(
-    (date: string): SpecialDate | null => {
-      return specialDates.find((sd) => sd.date === date) || null;
+  const getMatchingSpecialDates = useCallback(
+    (date: string): SpecialDate[] => {
+      if (!date) return [];
+      return specialDates.filter(
+        (sd) => sd.isActive && date >= sd.startDate && date <= sd.endDate
+      );
     },
     [specialDates]
+  );
+
+  const getSpecialDateForDate = useCallback(
+    (date: string): SpecialDate | null => {
+      return getMatchingSpecialDates(date)[0] || null;
+    },
+    [getMatchingSpecialDates]
+  );
+
+  const getSpecialDateMatch = useCallback(
+    (date: string): SpecialDateMatch => {
+      const matching = getMatchingSpecialDates(date);
+      const blocking = matching.some((sd) => sd.blockRegularProducts);
+      const allowedSpecialDateIds = new Set(matching.map((sd) => sd.id));
+      const firstWithWarning = matching.find((sd) => sd.warningMessage);
+      const maxRequiresAdvanceDays = matching.reduce(
+        (acc, sd) => Math.max(acc, sd.requiresAdvanceDays ?? 0),
+        0
+      );
+      return {
+        matching,
+        blocking,
+        allowedSpecialDateIds,
+        warningMessage: firstWithWarning?.warningMessage ?? null,
+        maxRequiresAdvanceDays,
+      };
+    },
+    [getMatchingSpecialDates]
   );
 
   const getZoneById = useCallback(
@@ -176,6 +216,7 @@ export function useCheckoutData(): CheckoutData {
     setSelectedCityId,
     setSelectedBranchId,
     getSpecialDateForDate,
+    getSpecialDateMatch,
     getZoneById,
   };
 }

@@ -121,6 +121,7 @@ export interface Product {
   sku: string | null;
   categoryId: string | null;
   branchId: string | null;
+  specialDateId: string | null;
   includesCard: boolean;
   cardMessageFeeCents: number | null;
   isActive: boolean;
@@ -146,6 +147,7 @@ export interface ProductFilters {
   search?: string;
   categoryId?: string;
   categorySlug?: string;
+  specialDateSlug?: string;
   isActive?: boolean;
   isFeatured?: boolean;
   isQuickDelivery?: boolean;
@@ -290,20 +292,18 @@ export interface DeliveryTimeSlot {
 // Special Date
 export interface SpecialDate {
   id: string;
-  date: string;
+  slug: string;
   name: string;
+  startDate: string;
+  endDate: string;
   warningMessage: string | null;
+  bannerUrl: string | null;
+  blockRegularProducts: boolean;
   orderLimitOverride: number | null;
   requiresAdvanceDays: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface SpecialDateFilters {
-  page?: number;
-  limit?: number;
-  isActive?: boolean;
 }
 
 // Bank Account
@@ -460,6 +460,24 @@ export interface ServiceCatalog {
   updatedAt: string;
 }
 
+export interface PromotionalBanner {
+  id: string;
+  title: string;
+  altText: string | null;
+  imageUrl: string;
+  linkUrl: string | null;
+  isActive: boolean;
+  isFeatured: boolean;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FeaturedContent {
+  services: ServiceCatalog[];
+  banners: PromotionalBanner[];
+}
+
 // Service Request Types
 export interface CreateServiceRequest {
   fullName: string;
@@ -470,6 +488,7 @@ export interface CreateServiceRequest {
   isFlexibleDate?: boolean;
   estimatedGuests?: number;
   message: string;
+  userId?: string;
 }
 
 export type ServiceRequestStatus = "pending" | "contacted" | "offer_sent" | "completed" | "dismissed";
@@ -1167,12 +1186,11 @@ export const api = {
 
   // Special Dates
   specialDates: {
-    list: (filters?: SpecialDateFilters) =>
-      fetchApi<PaginatedResponse<SpecialDate>>("/special-dates", {
-        params: filters as QueryParams,
-      }),
+    active: () =>
+      fetchApi<ResultResponse<SpecialDate[]>>("/special-dates").then((r) => r.result),
 
-    getById: (id: string) => fetchApi<SpecialDate>(`/special-dates/${id}`),
+    getBySlug: (slug: string) =>
+      fetchApi<ResultResponse<SpecialDate>>(`/special-dates/${slug}`).then((r) => r.result),
   },
 
   // Bank Accounts
@@ -1480,7 +1498,7 @@ export const api = {
       fetchApi<{ result: ServiceCatalog[] }>("/service-catalog"),
 
     featured: () =>
-      fetchApi<{ result: ServiceCatalog[] }>("/service-catalog/featured"),
+      fetchApi<{ result: FeaturedContent }>("/service-catalog/featured"),
 
     getBySlug: (slug: string) =>
       fetchApi<ResultResponse<ServiceCatalog>>(`/service-catalog/slug/${slug}`).then(r => r.result),
@@ -1507,23 +1525,30 @@ export const api = {
         params: filters as QueryParams,
       }),
 
-    getById: (id: string) => {
+    getByNumber: (requestNumber: string) => {
       const authHeader = getAuthHeader();
       const guestToken = typeof window !== "undefined" ? localStorage.getItem("encanto-service-request-token") : null;
       const headers: Record<string, string> = { ...authHeader };
       if (guestToken) headers["X-Guest-Token"] = guestToken;
-      return fetchApi<ResultResponse<ServiceRequest>>(`/service-requests/${id}`, { headers }).then(r => r.result);
+      return fetchApi<ResultResponse<ServiceRequest>>(`/service-requests/${requestNumber}`, { headers }).then(r => r.result);
     },
   },
 
   // Service Offers
   serviceOffers: {
-    getById: (id: string) => {
+    getByNumber: (offerNumber: string) => {
       const authHeader = getAuthHeader();
       const guestToken = typeof window !== "undefined" ? localStorage.getItem("encanto-service-offer-token") : null;
       const headers: Record<string, string> = { ...authHeader };
       if (guestToken) headers["X-Guest-Token"] = guestToken;
-      return fetchApi<ResultResponse<ServiceOffer>>(`/service-offers/${id}`, { headers }).then(r => r.result);
+      return fetchApi<ResultResponse<ServiceOffer>>(`/service-offers/${offerNumber}`, { headers }).then(r => r.result);
+    },
+
+    getByNumberWithToken: (offerNumber: string, accessToken?: string, guestToken?: string) => {
+      const headers: Record<string, string> = {};
+      if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+      if (guestToken) headers["X-Guest-Token"] = guestToken;
+      return fetchApi<ResultResponse<ServiceOffer>>(`/service-offers/${offerNumber}`, { headers }).then(r => r.result);
     },
 
     accept: (id: string, data: AcceptServiceOffer) => {
@@ -1538,10 +1563,31 @@ export const api = {
       }).then(r => r.result);
     },
 
+    acceptWithToken: (id: string, data: AcceptServiceOffer, accessToken?: string, guestToken?: string) => {
+      const headers: Record<string, string> = {};
+      if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+      if (guestToken) headers["X-Guest-Token"] = guestToken;
+      return fetchApi<ResultResponse<AcceptOfferResponse>>(`/service-offers/${id}/accept`, {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers,
+      }).then(r => r.result);
+    },
+
     reject: (id: string) => {
       const authHeader = getAuthHeader();
       const guestToken = typeof window !== "undefined" ? localStorage.getItem("encanto-service-offer-token") : null;
       const headers: Record<string, string> = { ...authHeader };
+      if (guestToken) headers["X-Guest-Token"] = guestToken;
+      return fetchApi<ResultResponse<{ rejected: boolean; offerNumber: string }>>(`/service-offers/${id}/reject`, {
+        method: "POST",
+        headers,
+      }).then(r => r.result);
+    },
+
+    rejectWithToken: (id: string, accessToken?: string, guestToken?: string) => {
+      const headers: Record<string, string> = {};
+      if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
       if (guestToken) headers["X-Guest-Token"] = guestToken;
       return fetchApi<ResultResponse<{ rejected: boolean; offerNumber: string }>>(`/service-offers/${id}/reject`, {
         method: "POST",

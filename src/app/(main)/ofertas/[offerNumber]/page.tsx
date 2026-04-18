@@ -3,13 +3,18 @@
 import { useState, useEffect, use } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, FileText, CheckCircle2, XCircle, Clock, AlertTriangle } from "lucide-react";
+import { Loader2, FileText, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
-import { api } from "@/lib/api";
+import {
+  getServiceOfferAction,
+  acceptServiceOfferAction,
+  rejectServiceOfferAction,
+} from "@/actions/service-offer-actions";
 import { formatPrice, cn } from "@/lib/utils";
 import { BUSINESS } from "@/lib/constants";
+import { useAuthStore } from "@/stores/auth-store";
 import type { ServiceOffer, PaymentMethod } from "@/lib/api";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -40,6 +45,11 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bank_transfer");
   const [isAccepting, setIsAccepting] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
+  const tokens = useAuthStore((s) => s.tokens);
+  const accessToken = tokens?.accessToken;
+
+  const getGuestToken = () =>
+    typeof window !== "undefined" ? localStorage.getItem("encanto-service-offer-token") ?? undefined : undefined;
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -50,12 +60,13 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
     async function fetchOffer() {
       setIsLoading(true);
       try {
-        const data = await api.serviceOffers.getById(offerNumber);
+        const guestToken = token || getGuestToken();
+        const data = await getServiceOfferAction(offerNumber, accessToken ?? undefined, guestToken);
         setOffer(data);
       } catch (err) {
         if (err instanceof Error) {
           if (err.message.includes("404")) setError("not_found");
-          else if (err.message.includes("403")) setError("no_access");
+          else if (err.message.includes("403") || err.message.includes("401")) setError("no_access");
           else setError("generic");
         } else {
           setError("generic");
@@ -66,15 +77,22 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
     }
 
     fetchOffer();
-  }, [offerNumber, searchParams]);
+  }, [offerNumber, searchParams, accessToken]);
 
   const handleAccept = async () => {
     if (!offer) return;
     setIsAccepting(true);
     try {
-      const result = await api.serviceOffers.accept(offer.id, { paymentMethod });
+      const guestToken = getGuestToken();
+      const result = await acceptServiceOfferAction(offer.id, { paymentMethod }, accessToken ?? undefined, guestToken);
       addToast("Propuesta aceptada. Redirigiendo al pedido...", "success");
-      router.push(`/pedidos/${result.orderNumber}`);
+      // For guests, pass the offer token to the order page
+      if (!accessToken && guestToken) {
+        localStorage.setItem("encanto-guest-token", guestToken);
+        router.push(`/pedidos/${result.orderNumber}?token=${guestToken}`);
+      } else {
+        router.push(`/pedidos/${result.orderNumber}`);
+      }
     } catch (err) {
       addToast(err instanceof Error ? err.message : "Error al aceptar la propuesta", "error");
     } finally {
@@ -86,7 +104,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
     if (!offer) return;
     setIsRejecting(true);
     try {
-      await api.serviceOffers.reject(offer.id);
+      await rejectServiceOfferAction(offer.id, accessToken ?? undefined, getGuestToken());
       setOffer({ ...offer, status: "rejected" });
       addToast("Propuesta rechazada", "info");
     } catch (err) {
@@ -112,18 +130,29 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
       <div className="mx-auto max-w-3xl px-4 sm:px-6 py-16 text-center">
         <FileText className="h-12 w-12 text-foreground-muted mx-auto mb-4" />
         <h1 className="text-2xl font-semibold mb-2">
-          {error === "not_found" ? "Propuesta no encontrada" : error === "no_access" ? "Sin acceso" : "Error"}
+          {error === "not_found" ? "Propuesta no encontrada" : error === "no_access" ? "Enlace expirado o no válido" : "Algo salió mal"}
         </h1>
         <p className="text-foreground-secondary mb-6">
           {error === "not_found"
-            ? "No pudimos encontrar esta propuesta."
+            ? "No pudimos encontrar esta propuesta. Verifica el enlace o contacta con nosotros."
             : error === "no_access"
-            ? "No tienes acceso a esta propuesta."
-            : "Hubo un error al cargar la propuesta."}
+            ? "El enlace para ver esta propuesta ha expirado o no es válido. Revisa tu correo para obtener el enlace original o contáctanos por WhatsApp."
+            : "No pudimos cargar la propuesta en este momento. Intenta de nuevo más tarde."}
         </p>
-        <Button asChild>
-          <Link href="/">Volver al inicio</Link>
-        </Button>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Button variant="outline" asChild>
+            <a
+              href={BUSINESS.whatsapp.url(`Hola! No puedo acceder a la propuesta ${offerNumber}`)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Contactar por WhatsApp
+            </a>
+          </Button>
+          <Button variant="ghost" asChild>
+            <Link href="/">Volver al inicio</Link>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -271,36 +300,32 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
             ))}
           </div>
 
-          <div className="flex gap-3">
-            <Button
-              onClick={handleAccept}
-              className="flex-1"
-              disabled={isAccepting || isRejecting}
-            >
-              {isAccepting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Aceptando...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Aceptar propuesta
-                </>
-              )}
-            </Button>
-            <Button
-              variant="outline"
+          <Button
+            onClick={handleAccept}
+            className="w-full"
+            disabled={isAccepting || isRejecting}
+          >
+            {isAccepting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Aceptando...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                Aceptar propuesta
+              </>
+            )}
+          </Button>
+          <div className="text-center mt-3">
+            <button
+              type="button"
               onClick={handleReject}
               disabled={isAccepting || isRejecting}
-              className="text-destructive hover:text-destructive"
+              className="text-sm text-foreground-secondary hover:text-destructive transition-colors disabled:opacity-50"
             >
-              {isRejecting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <XCircle className="h-4 w-4" />
-              )}
-            </Button>
+              {isRejecting ? "Rechazando..." : "Rechazar propuesta"}
+            </button>
           </div>
         </div>
       )}

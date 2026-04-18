@@ -8,21 +8,29 @@ import type {
   PaginatedResponse,
 } from "@/lib/api";
 
-export async function getServiceOfferAction(id: string): Promise<ServiceOffer> {
-  return api.serviceOffers.getById(id);
+export async function getServiceOfferAction(
+  offerNumber: string,
+  accessToken?: string,
+  guestToken?: string
+): Promise<ServiceOffer> {
+  return api.serviceOffers.getByNumberWithToken(offerNumber, accessToken, guestToken);
 }
 
 export async function acceptServiceOfferAction(
   id: string,
-  data: AcceptServiceOffer
+  data: AcceptServiceOffer,
+  accessToken?: string,
+  guestToken?: string
 ): Promise<AcceptOfferResponse> {
-  return api.serviceOffers.accept(id, data);
+  return api.serviceOffers.acceptWithToken(id, data, accessToken, guestToken);
 }
 
 export async function rejectServiceOfferAction(
-  id: string
+  id: string,
+  accessToken?: string,
+  guestToken?: string
 ): Promise<{ rejected: boolean; offerNumber: string }> {
-  return api.serviceOffers.reject(id);
+  return api.serviceOffers.rejectWithToken(id, accessToken, guestToken);
 }
 
 export async function getMyServiceOffersAction(

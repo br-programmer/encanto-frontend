@@ -14,24 +14,32 @@ const faqs = [
     category: "Pedidos y Envíos",
     questions: [
       {
-        question: "¿Cuál es el tiempo de entrega?",
-        answer: "Realizamos entregas el mismo día para pedidos confirmados antes de las 2:00 PM. Los pedidos después de esa hora se entregan al día siguiente. Para fechas especiales como San Valentín o Día de la Madre, te recomendamos hacer tu pedido con anticipación."
+        question: "¿Cuál es el horario de entrega?",
+        answer: "Nuestro rango de entregas es de 8:30 a 12:00 y de 13:00 a 19:00. Entregas fuera de este rango se podrán realizar previa coordinación. Ten en cuenta que por variables como tráfico o disponibilidad de parqueo, no podemos garantizar una hora exacta de entrega."
       },
       {
-        question: "¿Hacen entregas los domingos?",
-        answer: "No, los domingos permanecemos cerrados. Si necesitas una entrega para domingo, puedes coordinarla para el sábado anterior o el lunes siguiente."
+        question: "¿Hacen entregas los fines de semana y feriados?",
+        answer: "Sí, pero las entregas para Sábado, Domingo y Feriados deben ser agendadas al menos con 48 horas de anticipación. Si realizas la compra en esos días sin anticipación, la entrega se hará el día laborable más próximo en horario de 9:30 a 14:00."
       },
       {
         question: "¿Cuál es el costo de envío?",
-        answer: "El costo de envío varía según la zona de entrega en Manta. Durante el proceso de compra podrás ver el costo exacto según tu dirección. Para zonas fuera de nuestra cobertura, contáctanos para coordinar."
+        answer: "El costo de envío no está incluido en el precio del arreglo y se calcula según la dirección de entrega. En Manta se toma como referencia nuestra tienda matriz en calle 22 y Av. Flavio Reyes. Para Portoviejo los envíos son por Manporcar ($2,50). En Quevedo y Valencia se calcula desde nuestras tiendas locales."
       },
       {
-        question: "¿Puedo programar una entrega para una fecha específica?",
-        answer: "¡Sí! Puedes programar tu entrega para la fecha y hora que prefieras. Solo selecciona la fecha deseada durante el proceso de compra o indícalo en los comentarios del pedido."
+        question: "¿Puedo retirar mi pedido en tienda?",
+        answer: "Sí, puedes retirar tu pedido sin costo adicional. Para días normales necesitas agendar con 24 horas de anticipación. Para fines de semana o feriados, de 48 a 72 horas de anticipación."
       },
       {
-        question: "¿Entregan fuera de Manta?",
-        answer: "Actualmente nuestro servicio de entrega cubre Manta y zonas aledañas. Para entregas fuera de esta área, contáctanos por WhatsApp para verificar disponibilidad y costos adicionales."
+        question: "¿Qué pasa si no hay nadie en la dirección de entrega?",
+        answer: "Si no hay nadie que reciba el producto, nuestro delivery continuará su ruta y retornará el arreglo a nuestra tienda. Podrás retirarlo sin costo adicional o pagar un nuevo envío. Si hay familiares o personal de servicio presentes, se realizará la entrega a ellos."
+      },
+      {
+        question: "¿Qué sucede en fechas especiales como San Valentín o Día de la Madre?",
+        answer: "En fechas importantes (San Valentín, Día de la Mujer, Día de la Madre, Día del Padre) las entregas se realizan en el transcurso del día de 8:00 a 12:00 y de 14:00 a 19:00. Te recomendamos hacer tu pedido con anticipación."
+      },
+      {
+        question: "¿En qué ciudades tienen cobertura?",
+        answer: "Actualmente tenemos tiendas y realizamos entregas en Manta, Portoviejo (vía Manporcar), Quevedo y Valencia. Para otras ciudades, contáctanos por WhatsApp."
       }
     ]
   },
@@ -40,61 +48,82 @@ const faqs = [
     questions: [
       {
         question: "¿Las flores son frescas?",
-        answer: "¡Absolutamente! Trabajamos únicamente con flores frescas que seleccionamos cuidadosamente cada día. Nuestros arreglos se preparan al momento de tu pedido para garantizar la máxima frescura y duración."
+        answer: "Trabajamos únicamente con flores frescas que seleccionamos cuidadosamente. Nuestros arreglos se preparan al momento de tu pedido para garantizar la máxima frescura y duración."
+      },
+      {
+        question: "¿Pueden cambiar las flores de mi arreglo?",
+        answer: "Sí, al realizar una compra aceptas que puede ser necesario reemplazar follajes, tonos de flores, cajas o papel. Si por temporada alguna flor está escasa, se reemplazará por otra de similares características. Nuestros decoradores se encargarán de cuidar los detalles y aspecto del diseño floral."
       },
       {
         question: "¿Puedo personalizar un arreglo?",
-        answer: "¡Por supuesto! Nos encanta crear arreglos personalizados. Contáctanos por WhatsApp con tus ideas, colores preferidos, ocasión y presupuesto, y crearemos algo único para ti."
+        answer: "Nos encanta crear arreglos personalizados. Contáctanos por WhatsApp con tus ideas, colores preferidos, ocasión y presupuesto, y crearemos algo único para ti."
       },
       {
         question: "¿Cuánto duran las flores?",
-        answer: "Con el cuidado adecuado, nuestros arreglos pueden durar entre 7 y 14 días. Incluimos una tarjeta con instrucciones de cuidado en cada entrega para que disfrutes tus flores por más tiempo."
+        answer: "Con el cuidado adecuado, nuestros arreglos pueden durar entre 7 y 14 días. Incluimos instrucciones de cuidado en cada entrega. Es importante recordar que las flores son perecederas."
       },
       {
-        question: "¿Qué hago si las flores llegaron maltratadas?",
-        answer: `Tu satisfacción es nuestra prioridad. Si las flores llegan en mal estado, contáctanos inmediatamente con fotos del arreglo y lo resolveremos. Puedes enviarnos un WhatsApp o llamarnos al ${BUSINESS.phone.display}.`
-      },
-      {
-        question: "¿Puedo agregar chocolates u otros complementos?",
+        question: "¿Puedo agregar complementos a mi arreglo?",
         answer: "Sí, ofrecemos varios complementos como chocolates, peluches, globos y tarjetas personalizadas. Puedes agregarlos durante el proceso de compra o solicitarlos por WhatsApp."
-      }
-    ]
-  },
-  {
-    category: "Pagos",
-    questions: [
-      {
-        question: "¿Qué métodos de pago aceptan?",
-        answer: "Aceptamos transferencias bancarias, depósitos, tarjetas de crédito/débito y pagos en efectivo contra entrega (solo en Manta). Para pagos con tarjeta, utilizamos una plataforma segura."
-      },
-      {
-        question: "¿Puedo pagar contra entrega?",
-        answer: "Sí, ofrecemos pago contra entrega en efectivo para pedidos dentro de Manta. El monto exacto debe estar disponible ya que nuestros repartidores no manejan cambio."
-      },
-      {
-        question: "¿Emiten factura?",
-        answer: "Sí, emitimos factura electrónica. Solo necesitas proporcionarnos tus datos fiscales (nombre/razón social, RUC/cédula, dirección y correo electrónico) al momento de realizar tu pedido."
-      }
-    ]
-  },
-  {
-    category: "Ocasiones Especiales",
-    questions: [
-      {
-        question: "¿Hacen arreglos para eventos corporativos?",
-        answer: "Sí, realizamos arreglos para eventos corporativos, inauguraciones, conferencias y más. Contáctanos con anticipación para discutir tus necesidades y presupuesto."
-      },
-      {
-        question: "¿Ofrecen servicio para bodas?",
-        answer: "¡Sí! Creamos bouquets de novia, arreglos para ceremonia, centros de mesa y toda la decoración floral para tu boda. Agenda una cita con nosotros para planificar cada detalle."
-      },
-      {
-        question: "¿Tienen promociones para fechas especiales?",
-        answer: `Sí, en fechas como San Valentín, Día de la Madre y otras ocasiones especiales ofrecemos promociones y productos exclusivos. Síguenos en Instagram ${BUSINESS.social.instagram.handle} para enterarte de todas nuestras ofertas.`
       },
       {
         question: "¿Puedo incluir una tarjeta con mensaje?",
-        answer: "¡Claro! Todos nuestros arreglos incluyen una tarjeta de dedicatoria sin costo adicional. Puedes escribir tu mensaje personalizado durante el proceso de compra."
+        answer: "Todos nuestros arreglos incluyen una tarjeta de dedicatoria. Puedes escribir tu mensaje personalizado durante el proceso de compra."
+      }
+    ]
+  },
+  {
+    category: "Pagos y Facturación",
+    questions: [
+      {
+        question: "¿Qué métodos de pago aceptan?",
+        answer: "Aceptamos efectivo, depósito o transferencia bancaria, tarjetas de crédito y débito, y pago vía PayPal. Los arreglos serán elaborados y despachados únicamente una vez confirmado el pago."
+      },
+      {
+        question: "¿Los precios incluyen el envío?",
+        answer: "No, los precios de nuestros arreglos son precios finales independiente de la forma de pago, pero no incluyen el servicio de entrega a domicilio. El costo de envío se calcula según la dirección de entrega."
+      },
+      {
+        question: "¿Emiten factura?",
+        answer: "Sí, facturamos toda orden ingresada por la web o telefónicamente. Las facturas son electrónicas y llegan directamente al correo del comprador. No se realizarán cambios en los datos de las facturas (fechas, remitentes o remitidos) bajo ningún concepto."
+      }
+    ]
+  },
+  {
+    category: "Reclamos y Cancelaciones",
+    questions: [
+      {
+        question: "¿Qué hago si las flores llegaron en mal estado?",
+        answer: `El reclamo debe realizarse durante las siguientes 12 horas pasada la entrega, telefónicamente y por escrito con fotografías. Una vez verificada nuestra responsabilidad, se realizará la reposición del producto (no devolución de dinero). Si no deseas la reposición, se emitirá una nota de crédito. Contáctanos al ${BUSINESS.phone.display}.`
+      },
+      {
+        question: "¿Puedo cancelar o reagendar mi pedido?",
+        answer: "Puedes cambiar o cancelar tu pedido hasta 48 horas antes de la fecha agendada de entrega. En caso de cancelación, NO se realizan devoluciones de dinero, sino una nota de crédito para usar cuando lo desees."
+      },
+      {
+        question: "¿Qué pasa si el destinatario no quiere recibir las flores?",
+        answer: "ENCANTO FLORISTERÍA comunicará la situación al cliente. El arreglo regresará a la tienda y podrás retirarlo sin costo o solicitar un nuevo envío con valor adicional. Si no es retirado, no nos hacemos responsables por el estado del arreglo ya que las flores son perecederas."
+      },
+      {
+        question: "¿Qué pasa si el arreglo vuelve a la tienda y no lo retiro?",
+        answer: "Los arreglos florales que retornan a nuestra tienda y no son retirados serán destruidos dentro de los siguientes 7 días calendario. No se realizarán devoluciones de dinero, cambio de producto ni notas de crédito."
+      }
+    ]
+  },
+  {
+    category: "Servicios Especiales",
+    questions: [
+      {
+        question: "¿Ofrecen servicios para eventos y bodas?",
+        answer: "Sí, ofrecemos servicios de decoración floral para bodas, eventos corporativos, propuestas y más. Puedes explorar nuestros servicios y solicitar una cotización personalizada desde nuestra sección de Servicios."
+      },
+      {
+        question: "¿Cómo solicito una cotización para un evento?",
+        answer: "Puedes completar nuestro formulario de solicitud de servicio en la web o contactarnos por WhatsApp. Cuéntanos sobre tu evento y te enviaremos una propuesta personalizada."
+      },
+      {
+        question: "¿Tienen promociones para fechas especiales?",
+        answer: `Sí, en fechas como San Valentín, Día de la Madre y otras ocasiones especiales ofrecemos productos y promociones exclusivas. Síguenos en Instagram ${BUSINESS.social.instagram.handle} para enterarte de todas nuestras novedades.`
       }
     ]
   }

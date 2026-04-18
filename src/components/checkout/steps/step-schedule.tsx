@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertTriangle, MessageSquare, Package, Plus, Gift, EyeOff, User, ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, Ban, MessageSquare, Package, Plus, Gift, EyeOff, Sparkles, User, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +12,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import type { DeliveryTimeSlot, Occasion } from "@/lib/api";
 import type { CartItem } from "@/types";
 import type { AddOn, AddOnCategory } from "@/lib/api";
+import { useSpecialDatesStore } from "@/stores/special-dates-store";
 import { formatPrice } from "@/lib/utils";
 
 interface StepScheduleProps {
@@ -30,6 +32,8 @@ interface StepScheduleProps {
   timeSlots: DeliveryTimeSlot[];
   occasions: Occasion[];
   specialDateWarning: string | null;
+  blockingCampaign?: { name: string; slug: string; kind: "blocking" | "out-of-range" } | null;
+  invalidCartItemIds?: Set<string>;
   minDeliveryDate: string;
   formatTimeSlot: (start: string, end: string, label: string | null) => string;
   isPickup: boolean;
@@ -52,6 +56,8 @@ export function StepSchedule({
   timeSlots,
   occasions,
   specialDateWarning,
+  blockingCampaign,
+  invalidCartItemIds,
   minDeliveryDate,
   formatTimeSlot,
   isPickup,
@@ -64,6 +70,8 @@ export function StepSchedule({
   onNext,
   onBack,
 }: StepScheduleProps) {
+  const getSpecialDateById = useSpecialDatesStore((s) => s.getById);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onFormChange({ [e.target.name]: e.target.value });
   };
@@ -113,6 +121,37 @@ export function StepSchedule({
             <p className="text-sm text-amber-800">{specialDateWarning}</p>
           </div>
         )}
+
+        {blockingCampaign && invalidCartItemIds && invalidCartItemIds.size > 0 && (
+          <div className="mt-4 p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3">
+            <Ban className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+            <div className="text-sm space-y-2 flex-1">
+              <p className="text-destructive font-normal">
+                {blockingCampaign.kind === "blocking"
+                  ? `Para esta fecha solo están disponibles productos de ${blockingCampaign.name}.`
+                  : `Los productos de ${blockingCampaign.name} solo se pueden entregar dentro del rango de la campaña.`}
+              </p>
+              <p className="text-foreground-secondary">
+                Los siguientes productos de tu carrito no aplican:
+              </p>
+              <ul className="list-disc list-inside text-foreground-secondary">
+                {items
+                  .filter((it) => invalidCartItemIds.has(it.product.id))
+                  .map((it) => (
+                    <li key={it.product.id}>{it.product.name}</li>
+                  ))}
+              </ul>
+              <Link
+                href={`/fechas-especiales/${blockingCampaign.slug}`}
+                className="inline-block text-primary text-sm hover:underline mt-1"
+              >
+                {blockingCampaign.kind === "blocking"
+                  ? `Ver productos de ${blockingCampaign.name} →`
+                  : `Ver fechas válidas para ${blockingCampaign.name} →`}
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Occasion */}
@@ -136,9 +175,22 @@ export function StepSchedule({
           <span className="text-xs text-foreground-secondary">(opcional)</span>
         </div>
         <div className="space-y-4">
-          {items.map((item) => (
+          {items.map((item) => {
+            const specialDate = getSpecialDateById(item.product.specialDateId);
+            return (
             <div key={item.product.id} className="p-3 bg-secondary/20 rounded-lg space-y-3">
-              <p className="text-sm font-normal text-foreground">{item.product.name}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-normal text-foreground">{item.product.name}</p>
+                {specialDate && (
+                  <Link
+                    href={`/fechas-especiales/${specialDate.slug}`}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] hover:bg-primary/20 transition-colors"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    {specialDate.name}
+                  </Link>
+                )}
+              </div>
 
               {availableAddOns.length > 0 && (
                 <div>
@@ -190,7 +242,8 @@ export function StepSchedule({
                 <p className="text-xs text-foreground-muted text-right mt-1">{(item.cardMessage || "").length}/200</p>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

@@ -1,12 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Search, X, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import type { Category } from "@/types";
+import type { Category, SpecialDate } from "@/types";
 
 interface ProductFiltersProps {
   categories: Category[];
@@ -15,6 +16,7 @@ interface ProductFiltersProps {
   maxPrice?: string;
   inStock?: boolean;
   search?: string;
+  specialDates?: SpecialDate[];
 }
 
 export function ProductFilters({
@@ -24,6 +26,7 @@ export function ProductFilters({
   maxPrice,
   inStock,
   search,
+  specialDates = [],
 }: ProductFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -115,6 +118,24 @@ export function ProductFilters({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted" />
         </form>
       </div>
+
+      {/* Special Dates */}
+      {specialDates.length > 0 && (
+        <div>
+          <h3 className="font-normal mb-3">Fechas Especiales</h3>
+          <div className="space-y-1">
+            {specialDates.map((sd) => (
+              <Link
+                key={sd.id}
+                href={`/fechas-especiales/${sd.slug}`}
+                className="block px-3 py-2 rounded-lg text-sm transition-colors hover:bg-secondary"
+              >
+                {sd.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Categories */}
       <div>

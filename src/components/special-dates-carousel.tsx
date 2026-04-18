@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import { SafeImage } from "@/components/ui/safe-image";
 import { BUSINESS } from "@/lib/constants";
 import Link from "next/link";
+import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SpecialDate } from "@/lib/api";
 
@@ -14,6 +15,7 @@ export interface CarouselSlide {
   subtitle?: string;
   imageUrl: string;
   link: string;
+  warning?: string | null;
 }
 
 interface SpecialDatesCarouselProps {
@@ -25,7 +27,7 @@ interface SpecialDatesCarouselProps {
 // Convert API special dates to carousel slides
 function specialDatesToSlides(dates: SpecialDate[]): CarouselSlide[] {
   return dates
-    .filter((sd) => sd.isActive)
+    .filter((sd) => sd.isActive && sd.bannerUrl)
     .slice(0, 6)
     .map((sd, index) => {
       const nameParts = sd.name.split(" ");
@@ -38,61 +40,27 @@ function specialDatesToSlides(dates: SpecialDate[]): CarouselSlide[] {
         number: String(index + 1).padStart(2, "0"),
         title,
         subtitle: subtitle || undefined,
-        imageUrl: `https://picsum.photos/seed/${sd.date}/800/600`,
-        link: "/productos",
+        imageUrl: sd.bannerUrl!,
+        link: `/fechas-especiales/${sd.slug}`,
+        warning: sd.warningMessage,
       };
     });
 }
-
-// Fallback mock data
-const FALLBACK_SLIDES: CarouselSlide[] = [
-  {
-    id: "1",
-    number: "01",
-    title: "Día de las",
-    subtitle: "Madres",
-    imageUrl: "https://picsum.photos/seed/mothers/800/600",
-    link: "/productos?ocasion=dia-madres",
-  },
-  {
-    id: "2",
-    number: "02",
-    title: "San",
-    subtitle: "Valentín",
-    imageUrl: "https://picsum.photos/seed/valentine/800/600",
-    link: "/productos?ocasion=san-valentin",
-  },
-  {
-    id: "3",
-    number: "03",
-    title: "Feliz",
-    subtitle: "Navidad",
-    imageUrl: "https://picsum.photos/seed/christmas/800/600",
-    link: "/productos?ocasion=navidad",
-  },
-  {
-    id: "4",
-    number: "04",
-    title: "Día del",
-    subtitle: "Padre",
-    imageUrl: "https://picsum.photos/seed/fathers/800/600",
-    link: "/productos?ocasion=dia-padre",
-  },
-];
 
 export function SpecialDatesCarousel({
   slides,
   specialDates,
   autoplayDelay = 5000,
 }: SpecialDatesCarouselProps) {
-  const resolvedSlides = slides
-    ?? (specialDates && specialDates.length > 0 ? specialDatesToSlides(specialDates) : FALLBACK_SLIDES);
+  const resolvedSlides =
+    slides ?? (specialDates ? specialDatesToSlides(specialDates) : []);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const nextIndex = (currentIndex + 1) % resolvedSlides.length;
+  const hasSlides = resolvedSlides.length > 0;
+  const nextIndex = hasSlides ? (currentIndex + 1) % resolvedSlides.length : 0;
 
   const goToSlide = useCallback(
     (index: number) => {
@@ -123,7 +91,7 @@ export function SpecialDatesCarousel({
     };
   }, [currentIndex, autoplayDelay, goToNext, resolvedSlides.length]);
 
-  if (resolvedSlides.length === 0) return null;
+  if (!hasSlides) return null;
 
   const currentSlide = resolvedSlides[currentIndex];
   const nextSlide = resolvedSlides[nextIndex];
@@ -166,6 +134,19 @@ export function SpecialDatesCarousel({
                     )}
                   </h2>
                 </div>
+
+                {/* Warning badge */}
+                {currentSlide.warning && (
+                  <div
+                    className={cn(
+                      "inline-flex items-center gap-2 bg-amber-500/90 text-white px-3 py-1.5 rounded-full mb-4 backdrop-blur-sm transition-all duration-500",
+                      isTransitioning && "opacity-0"
+                    )}
+                  >
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    <span className="text-xs font-normal">{currentSlide.warning}</span>
+                  </div>
+                )}
 
                 {/* View Button */}
                 <Link
