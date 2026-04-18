@@ -27,11 +27,11 @@ export interface CheckoutInitialData {
 }
 
 export async function getCheckoutInitialDataAction(): Promise<CheckoutInitialData> {
-  const [cities, timeSlots, specialDatesResponse, bankAccounts, occasions, orderSettings, addOnCategories, addOns] =
+  const [cities, timeSlots, specialDates, bankAccounts, occasions, orderSettings, addOnCategories, addOns] =
     await Promise.all([
       api.cities.active(),
       api.timeSlots.active(),
-      api.specialDates.list({ isActive: true, limit: 50 }),
+      api.specialDates.active().catch(() => []),
       api.bankAccounts.active(),
       api.occasions.active(),
       api.orderSettings.get(),
@@ -42,7 +42,7 @@ export async function getCheckoutInitialDataAction(): Promise<CheckoutInitialDat
   return {
     cities,
     timeSlots,
-    specialDates: specialDatesResponse.result,
+    specialDates,
     bankAccounts,
     occasions,
     orderSettings,

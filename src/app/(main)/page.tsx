@@ -7,26 +7,30 @@ import { HeroCarousel } from "@/components/hero-carousel";
 import { ScrollRevealSection } from "@/components/scroll-reveal-section";
 import { TestimonialsCarousel } from "@/components/testimonials-carousel";
 import { FeaturedShowcase, type ShowcaseItem } from "@/components/featured-showcase";
+import type { HeroBanner } from "@/components/hero-carousel";
 import { api } from "@/lib/api";
+import { getActiveSpecialDatesAction } from "@/actions/special-date-actions";
 import { BUSINESS } from "@/lib/constants";
 
 export const revalidate = 60;
 
 export default async function Home() {
-  const [bestSellersResponse, featuredResponse, exploreResponse, instagramResponse, reviewsResponse, servicesResponse] = await Promise.all([
+  const [bestSellersResponse, featuredResponse, exploreResponse, instagramResponse, reviewsResponse, servicesResponse, specialDates] = await Promise.all([
     api.products.bestSellers(10).catch(() => ({ result: [] })),
     api.products.featured(10),
     api.products.list({ limit: 10, isActive: true }),
     api.instagram.feed({ limit: 6 }).catch(() => ({ result: [], meta: { total: 0, cachedAt: "", expiresAt: "" } })),
     api.reviews.featured().catch(() => ({ result: [] })),
-    api.serviceCatalog.featured().catch(() => ({ result: [] })),
+    api.serviceCatalog.featured().catch(() => ({ result: { services: [], banners: [] } })),
+    getActiveSpecialDatesAction(),
   ]);
 
   const bestSellers = bestSellersResponse.result;
   const featuredProducts = featuredResponse.result;
   const exploreProducts = exploreResponse.result;
   const instagramPosts = instagramResponse.result;
-  const featuredServices = servicesResponse.result;
+  const featuredServices = servicesResponse.result.services;
+  const featuredBanners = servicesResponse.result.banners;
   const showcaseItems: ShowcaseItem[] = featuredProducts.map((p) => {
     const primaryImage = p.images.find((img) => img.isPrimary) || p.images[0];
     return {
@@ -38,6 +42,15 @@ export default async function Home() {
       linkLabel: "Ver detalle",
     };
   });
+
+  const specialDateHeroBanners: HeroBanner[] = specialDates
+    .filter((sd) => sd.isActive && sd.bannerUrl)
+    .map((sd) => ({
+      id: `special-${sd.id}`,
+      imageUrl: sd.bannerUrl!,
+      alt: sd.name,
+      link: `/fechas-especiales/${sd.slug}`,
+    }));
 
   const testimonials = reviewsResponse.result.map((r) => ({
     id: crypto.randomUUID(),
@@ -53,7 +66,9 @@ export default async function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero Banner */}
-      <HeroCarousel />
+      {specialDateHeroBanners.length > 0 && (
+        <HeroCarousel banners={specialDateHeroBanners} />
+      )}
 
       {/* Featured Products Section */}
       <section className="py-8 sm:py-12 bg-background">
@@ -188,7 +203,7 @@ export default async function Home() {
       </section>
 
       {/* Scroll Reveal Section / Services */}
-      <ScrollRevealSection services={featuredServices} />
+      <ScrollRevealSection services={featuredServices} banners={featuredBanners} />
 
       {/* Testimonials */}
       <section className="py-8 sm:py-12 bg-background">

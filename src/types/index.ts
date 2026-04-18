@@ -59,6 +59,24 @@ export type {
   DeliveryAddressApi,
   CreateDeliveryAddressRequest,
   UpdateDeliveryAddressRequest,
+  // Service Catalog
+  ServiceCatalog,
+  ServiceCatalogImage,
+  ServiceCatalogHighlight,
+  ServiceCatalogPackage,
+  ServiceCatalogCta,
+  PromotionalBanner,
+  FeaturedContent,
+  // Service Requests
+  ServiceRequest,
+  ServiceRequestStatus,
+  CreateServiceRequest,
+  // Service Offers
+  ServiceOffer,
+  ServiceOfferItem,
+  ServiceOfferStatus,
+  AcceptServiceOffer,
+  AcceptOfferResponse,
 } from "@/lib/api";
 
 // Cart types
@@ -78,6 +96,7 @@ export interface CartItem {
     priceCents: number;
     image: string | null;
     isQuickDelivery?: boolean;
+    specialDateId?: string | null;
   };
   quantity: number;
   cardMessage?: string;

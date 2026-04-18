@@ -102,7 +102,7 @@ export const MOCK_PRODUCTS: Product[] = [
         createdAt: new Date().toISOString(),
       },
     ],
-    branchId: null, includesCard: true, cardMessageFeeCents: null, preparationMinutes: 15, inStock: true, availableQuantity: 10, hasRecipe: false, materialCostCents: null, displayPriceCents: 3850, transferPriceCents: 3500,
+    branchId: null, specialDateId: null, includesCard: true, cardMessageFeeCents: null, preparationMinutes: 15, inStock: true, availableQuantity: 10, hasRecipe: false, materialCostCents: null, displayPriceCents: 3850, transferPriceCents: 3500,
   },
   {
     id: "2",
@@ -129,7 +129,7 @@ export const MOCK_PRODUCTS: Product[] = [
         createdAt: new Date().toISOString(),
       },
     ],
-    branchId: null, includesCard: true, cardMessageFeeCents: null, preparationMinutes: 15, inStock: true, availableQuantity: 5, hasRecipe: false, materialCostCents: null, displayPriceCents: 7150, transferPriceCents: 6500,
+    branchId: null, specialDateId: null, includesCard: true, cardMessageFeeCents: null, preparationMinutes: 15, inStock: true, availableQuantity: 5, hasRecipe: false, materialCostCents: null, displayPriceCents: 7150, transferPriceCents: 6500,
   },
   {
     id: "3",
@@ -156,7 +156,7 @@ export const MOCK_PRODUCTS: Product[] = [
         createdAt: new Date().toISOString(),
       },
     ],
-    branchId: null, includesCard: true, cardMessageFeeCents: null, preparationMinutes: 15, inStock: true, availableQuantity: 8, hasRecipe: false, materialCostCents: null, displayPriceCents: 4950, transferPriceCents: 4500,
+    branchId: null, specialDateId: null, includesCard: true, cardMessageFeeCents: null, preparationMinutes: 15, inStock: true, availableQuantity: 8, hasRecipe: false, materialCostCents: null, displayPriceCents: 4950, transferPriceCents: 4500,
   },
   {
     id: "4",
@@ -183,7 +183,7 @@ export const MOCK_PRODUCTS: Product[] = [
         createdAt: new Date().toISOString(),
       },
     ],
-    branchId: null, includesCard: true, cardMessageFeeCents: null, preparationMinutes: 20, inStock: true, availableQuantity: 3, hasRecipe: false, materialCostCents: null, displayPriceCents: 8800, transferPriceCents: 8000,
+    branchId: null, specialDateId: null, includesCard: true, cardMessageFeeCents: null, preparationMinutes: 20, inStock: true, availableQuantity: 3, hasRecipe: false, materialCostCents: null, displayPriceCents: 8800, transferPriceCents: 8000,
   },
   {
     id: "5",
@@ -210,7 +210,7 @@ export const MOCK_PRODUCTS: Product[] = [
         createdAt: new Date().toISOString(),
       },
     ],
-    branchId: null, includesCard: true, cardMessageFeeCents: null, preparationMinutes: 15, inStock: true, availableQuantity: 6, hasRecipe: false, materialCostCents: null, displayPriceCents: 3300, transferPriceCents: 3000,
+    branchId: null, specialDateId: null, includesCard: true, cardMessageFeeCents: null, preparationMinutes: 15, inStock: true, availableQuantity: 6, hasRecipe: false, materialCostCents: null, displayPriceCents: 3300, transferPriceCents: 3000,
   },
   {
     id: "6",
@@ -237,7 +237,7 @@ export const MOCK_PRODUCTS: Product[] = [
         createdAt: new Date().toISOString(),
       },
     ],
-    branchId: null, includesCard: true, cardMessageFeeCents: null, preparationMinutes: 15, inStock: true, availableQuantity: 4, hasRecipe: false, materialCostCents: null, displayPriceCents: 5500, transferPriceCents: 5000,
+    branchId: null, specialDateId: null, includesCard: true, cardMessageFeeCents: null, preparationMinutes: 15, inStock: true, availableQuantity: 4, hasRecipe: false, materialCostCents: null, displayPriceCents: 5500, transferPriceCents: 5000,
   },
   {
     id: "7",
@@ -264,7 +264,7 @@ export const MOCK_PRODUCTS: Product[] = [
         createdAt: new Date().toISOString(),
       },
     ],
-    branchId: null, includesCard: true, cardMessageFeeCents: null, preparationMinutes: 10, inStock: true, availableQuantity: 12, hasRecipe: false, materialCostCents: null, displayPriceCents: 2750, transferPriceCents: 2500,
+    branchId: null, specialDateId: null, includesCard: true, cardMessageFeeCents: null, preparationMinutes: 10, inStock: true, availableQuantity: 12, hasRecipe: false, materialCostCents: null, displayPriceCents: 2750, transferPriceCents: 2500,
   },
   {
     id: "8",
@@ -291,6 +291,6 @@ export const MOCK_PRODUCTS: Product[] = [
         createdAt: new Date().toISOString(),
       },
     ],
-    branchId: null, includesCard: true, cardMessageFeeCents: null, preparationMinutes: 25, inStock: true, availableQuantity: 7, hasRecipe: false, materialCostCents: null, displayPriceCents: 11000, transferPriceCents: 10000,
+    branchId: null, specialDateId: null, includesCard: true, cardMessageFeeCents: null, preparationMinutes: 25, inStock: true, availableQuantity: 7, hasRecipe: false, materialCostCents: null, displayPriceCents: 11000, transferPriceCents: 10000,
   },
 ];
