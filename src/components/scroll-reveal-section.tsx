@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { SafeImage } from "@/components/ui/safe-image";
 import { ArrowRight } from "lucide-react";
-import type { ServiceCatalog } from "@/lib/api";
+import type { ServiceCatalog, PromotionalBanner } from "@/lib/api";
 
 interface RevealItemProps {
   children: React.ReactNode;
@@ -53,12 +53,16 @@ function RevealItem({ children, delay = 0, className = "" }: RevealItemProps) {
 
 interface ScrollRevealSectionProps {
   services?: ServiceCatalog[];
+  banners?: PromotionalBanner[];
 }
 
-export function ScrollRevealSection({ services = [] }: ScrollRevealSectionProps) {
+export function ScrollRevealSection({ services = [], banners = [] }: ScrollRevealSectionProps) {
+  const hasContent = services.length > 0 || banners.length > 0;
   const hasServices = services.length > 0;
   const service1 = services[0] ?? null;
   const service2 = services[1] ?? null;
+  const banner1 = banners[0] ?? null;
+  const banner2 = banners[1] ?? null;
 
   const getServiceImages = (service: ServiceCatalog) => {
     const sorted = [...service.images].sort((a, b) => a.displayOrder - b.displayOrder);
@@ -74,7 +78,7 @@ export function ScrollRevealSection({ services = [] }: ScrollRevealSectionProps)
 
   return (
     <section className="bg-background-alt overflow-hidden">
-      {hasServices && (
+      {hasContent && (
       <div className="text-center pt-10 sm:pt-14 pb-6 sm:pb-8 px-4">
         <h2 className="font-serif mb-2 sm:mb-3">Servicios especiales</h2>
         <p className="text-foreground-secondary text-sm sm:text-base">
@@ -138,33 +142,85 @@ export function ScrollRevealSection({ services = [] }: ScrollRevealSectionProps)
             )}
           </RevealItem>
 
-          {/* F1C2 — Historia 01 (estática) */}
+          {/* F1C2 — Banner 1 or fallback */}
           <RevealItem delay={200} className="w-full">
-            <div className="relative aspect-4/3">
-              <SafeImage
-                src="/images/historia-01.png"
-                alt="Nuestra historia"
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-              />
-            </div>
+            {banner1 ? (
+              banner1.linkUrl ? (
+                <a href={banner1.linkUrl} target="_blank" rel="noopener noreferrer" className="block">
+                  <div className="relative aspect-4/3 overflow-hidden">
+                    <SafeImage
+                      src={banner1.imageUrl}
+                      alt={banner1.altText || banner1.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                    />
+                  </div>
+                </a>
+              ) : (
+                <div className="relative aspect-4/3 overflow-hidden">
+                  <SafeImage
+                    src={banner1.imageUrl}
+                    alt={banner1.altText || banner1.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                  />
+                </div>
+              )
+            ) : (
+              <div className="relative aspect-4/3">
+                <SafeImage
+                  src="/images/historia-01.png"
+                  alt="Nuestra historia"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                />
+              </div>
+            )}
           </RevealItem>
         </div>
 
         {/* Fila 2 */}
         <div className="grid grid-cols-1 lg:grid-cols-2">
-          {/* F2C1 — Historia 02 (estática) */}
+          {/* F2C1 — Banner 2 or fallback */}
           <RevealItem delay={100} className="w-full">
-            <div className="relative aspect-4/3">
-              <SafeImage
-                src="/images/historia-02.png"
-                alt="Nuestra historia"
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-              />
-            </div>
+            {banner2 ? (
+              banner2.linkUrl ? (
+                <a href={banner2.linkUrl} target="_blank" rel="noopener noreferrer" className="block">
+                  <div className="relative aspect-4/3 overflow-hidden">
+                    <SafeImage
+                      src={banner2.imageUrl}
+                      alt={banner2.altText || banner2.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                    />
+                  </div>
+                </a>
+              ) : (
+                <div className="relative aspect-4/3 overflow-hidden">
+                  <SafeImage
+                    src={banner2.imageUrl}
+                    alt={banner2.altText || banner2.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                  />
+                </div>
+              )
+            ) : (
+              <div className="relative aspect-4/3">
+                <SafeImage
+                  src="/images/historia-02.png"
+                  alt="Nuestra historia"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                />
+              </div>
+            )}
           </RevealItem>
 
           {/* F2C2 — Servicio 2 o imagen por defecto */}
@@ -221,7 +277,7 @@ export function ScrollRevealSection({ services = [] }: ScrollRevealSectionProps)
         </div>
       </div>
 
-      {hasServices && (
+      {hasContent && (
         <div className="text-center pt-6 sm:pt-8 pb-10 sm:pb-14">
           <Link
             href="/servicios"

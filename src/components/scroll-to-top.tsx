@@ -37,7 +37,7 @@ export function ScrollToTop() {
     <button
       onClick={scrollToTop}
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center gap-2 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-sm text-foreground text-xs font-medium tracking-wide uppercase transition-all duration-300",
+        "fixed bottom-0 left-0 right-0 z-50 hidden sm:flex items-center justify-center gap-2 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-sm text-foreground text-xs font-medium tracking-wide uppercase transition-all duration-300",
         isVisible && !isOpen ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"
       )}
       style={{ background: "linear-gradient(to right, transparent 0%, color-mix(in srgb, var(--secondary) 95%, transparent) 15%, color-mix(in srgb, var(--secondary) 95%, transparent) 85%, transparent 100%)" }}
