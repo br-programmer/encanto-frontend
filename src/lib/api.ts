@@ -1501,10 +1501,7 @@ export const api = {
       fetchApi<{ result: FeaturedContent }>("/service-catalog/featured"),
 
     getBySlug: (slug: string) =>
-      fetchApi<ResultResponse<ServiceCatalog>>(`/service-catalog/slug/${slug}`).then(r => r.result),
-
-    getById: (id: string) =>
-      fetchApi<ResultResponse<ServiceCatalog>>(`/service-catalog/${id}`).then(r => r.result),
+      fetchApi<ResultResponse<ServiceCatalog>>(`/service-catalog/${slug}`).then(r => r.result),
   },
 
   // Service Requests

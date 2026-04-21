@@ -40,7 +40,7 @@ export default async function ServiciosPage() {
                 <Link
                   key={service.id}
                   href={`/servicios/${service.slug}`}
-                  className="group bg-background rounded-xl border border-border overflow-hidden hover:shadow-lg transition-all duration-300"
+                  className="group bg-background border border-border overflow-hidden hover:shadow-lg transition-all duration-300"
                 >
                   {/* Image */}
                   <div className="relative aspect-[4/3] overflow-hidden">
@@ -66,9 +66,6 @@ export default async function ServiciosPage() {
 
                   {/* Content */}
                   <div className="p-5">
-                    {service.icon && (
-                      <span className="text-2xl mb-2 block">{service.icon}</span>
-                    )}
                     <h2 className="text-lg font-medium mb-2 group-hover:text-primary transition-colors">
                       {service.name}
                     </h2>

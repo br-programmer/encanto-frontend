@@ -112,9 +112,9 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           {/* Gallery */}
           <div>
             {galleryImages.length > 0 ? (
-              <ProductGallery images={galleryImages} productName={service.name} />
+              <ProductGallery images={galleryImages} productName={service.name} rounded={false} />
             ) : (
-              <div className="aspect-square bg-secondary rounded-xl flex items-center justify-center">
+              <div className="aspect-square bg-secondary flex items-center justify-center">
                 <Sparkles className="h-12 w-12 text-foreground-muted" />
               </div>
             )}
@@ -122,9 +122,6 @@ export default async function ServiceDetailPage({ params }: PageProps) {
 
           {/* Content */}
           <div>
-            {service.icon && (
-              <span className="text-3xl mb-3 block">{service.icon}</span>
-            )}
             <h1 className="text-3xl sm:text-4xl font-serif mb-4">{service.name}</h1>
 
             {service.shortDescription && (
