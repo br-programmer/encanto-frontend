@@ -488,7 +488,6 @@ export interface CreateServiceRequest {
   isFlexibleDate?: boolean;
   estimatedGuests?: number;
   message: string;
-  userId?: string;
 }
 
 export type ServiceRequestStatus = "pending" | "contacted" | "offer_sent" | "completed" | "dismissed";
