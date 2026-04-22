@@ -397,8 +397,46 @@ export interface OrderSettings {
   bouquetIncludesCard: boolean;
   bouquetCardMessageFeeCents: number | null;
   minAdvanceDays: number;
+  finalConsumerLimitCents: number;
   updatedAt: string;
   updatedBy: string | null;
+}
+
+// Invoice / SRI
+export type InvoiceDocumentType = "cedula" | "ruc" | "pasaporte" | "final_consumer";
+
+export interface UserInvoiceProfile {
+  id: string;
+  userId: string;
+  nickname: string | null;
+  documentType: Exclude<InvoiceDocumentType, "final_consumer">;
+  documentNumber: string;
+  fullName: string;
+  email: string;
+  address: string | null;
+  phone: string | null;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateUserInvoiceProfileRequest {
+  nickname?: string;
+  documentType: Exclude<InvoiceDocumentType, "final_consumer">;
+  documentNumber: string;
+  fullName: string;
+  email: string;
+  address?: string;
+  phone?: string;
+  isDefault?: boolean;
+}
+
+export type UpdateUserInvoiceProfileRequest = Partial<CreateUserInvoiceProfileRequest>;
+
+export interface UserInvoiceProfileFilters {
+  search?: string;
+  page?: number;
+  limit?: number;
 }
 
 // Delivery Settings
@@ -600,6 +638,14 @@ export interface CreateOrderRequest {
   isSurprise?: boolean;
   isAnonymous?: boolean;
   discountCode?: string;
+  // Invoice (SRI). Required starting 2026-04.
+  invoiceDocumentType: InvoiceDocumentType;
+  invoiceDocumentNumber?: string;
+  invoiceFullName?: string;
+  invoiceEmail?: string;
+  invoiceAddress?: string;
+  invoicePhone?: string;
+  invoiceProfileId?: string;
 }
 
 export interface PreviewOrderRequest {
@@ -1491,6 +1537,52 @@ export const api = {
       }).then(r => r.result),
   },
 
+  // User Invoice Profiles (SRI)
+  userInvoiceProfiles: {
+    listWithToken: (accessToken: string, filters?: UserInvoiceProfileFilters) =>
+      fetchApiWithToken<PaginatedResponse<UserInvoiceProfile>>("/user-invoice-profiles", accessToken, {
+        params: filters as QueryParams,
+      }),
+
+    getDefaultWithToken: (accessToken: string) =>
+      fetchApiWithToken<ResultResponse<UserInvoiceProfile | null>>(
+        "/user-invoice-profiles/default",
+        accessToken
+      ).then((r) => r.result),
+
+    getByIdWithToken: (id: string, accessToken: string) =>
+      fetchApiWithToken<ResultResponse<UserInvoiceProfile>>(
+        `/user-invoice-profiles/${id}`,
+        accessToken
+      ).then((r) => r.result),
+
+    createWithToken: (data: CreateUserInvoiceProfileRequest, accessToken: string) =>
+      fetchApiWithToken<ResultResponse<UserInvoiceProfile>>(
+        "/user-invoice-profiles",
+        accessToken,
+        { method: "POST", body: JSON.stringify(data) }
+      ).then((r) => r.result),
+
+    updateWithToken: (id: string, data: UpdateUserInvoiceProfileRequest, accessToken: string) =>
+      fetchApiWithToken<ResultResponse<UserInvoiceProfile>>(
+        `/user-invoice-profiles/${id}`,
+        accessToken,
+        { method: "PATCH", body: JSON.stringify(data) }
+      ).then((r) => r.result),
+
+    deleteWithToken: (id: string, accessToken: string) =>
+      fetchApiWithToken<void>(`/user-invoice-profiles/${id}`, accessToken, {
+        method: "DELETE",
+      }),
+
+    setDefaultWithToken: (id: string, accessToken: string) =>
+      fetchApiWithToken<ResultResponse<UserInvoiceProfile>>(
+        `/user-invoice-profiles/${id}/default`,
+        accessToken,
+        { method: "PATCH" }
+      ).then((r) => r.result),
+  },
+
   // Service Catalog
   serviceCatalog: {
     list: () =>
@@ -1528,6 +1620,13 @@ export const api = {
       if (guestToken) headers["X-Guest-Token"] = guestToken;
       return fetchApi<ResultResponse<ServiceRequest>>(`/service-requests/${requestNumber}`, { headers }).then(r => r.result);
     },
+
+    claimGuestRequestsWithToken: (accessToken: string) =>
+      fetchApiWithToken<ResultResponse<{ claimedCount: number }>>(
+        "/service-requests/claim-guest-requests",
+        accessToken,
+        { method: "POST" }
+      ).then((r) => r.result),
   },
 
   // Service Offers
@@ -1605,6 +1704,13 @@ export const api = {
       fetchApiAuth<ResultResponse<ServiceOffer>>(`/service-offers/${id}/claim`, {
         method: "POST",
       }).then(r => r.result),
+
+    claimGuestOffersWithToken: (accessToken: string) =>
+      fetchApiWithToken<ResultResponse<{ claimedCount: number }>>(
+        "/service-offers/claim-guest-offers",
+        accessToken,
+        { method: "POST" }
+      ).then((r) => r.result),
   },
 
   // Sitemap (internal, protected by API key)

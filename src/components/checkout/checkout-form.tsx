@@ -21,11 +21,17 @@ import { useCheckoutData } from "@/hooks/use-checkout-data";
 import { StepGuestInfo } from "./steps/step-guest-info";
 import { StepDelivery } from "./steps/step-delivery";
 import { StepSchedule } from "./steps/step-schedule";
+import { StepBilling, type BillingFormState } from "./steps/step-billing";
 import { StepPayment } from "./steps/step-payment";
 import { StepReview } from "./steps/step-review";
 
 import { previewOrderAction, createOrderAction } from "@/actions/order-actions";
-import type { Order, OrderPreview, BankAccount, DeliveryZone, FulfillmentType } from "@/lib/api";
+import {
+  getInvoiceProfilesAction,
+  createInvoiceProfileAction,
+} from "@/actions/invoice-profile-actions";
+import type { Order, OrderPreview, BankAccount, DeliveryZone, FulfillmentType, UserInvoiceProfile } from "@/lib/api";
+import { validateDocumentByType } from "@/lib/ecuadorian-document";
 import { cn, formatPrice } from "@/lib/utils";
 
 interface FormData {
@@ -114,23 +120,23 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
 };
 
 // Step mapping: guest has extra step 1 (guest info)
-type StepName = "guest_info" | "delivery" | "schedule" | "payment" | "review";
+type StepName = "guest_info" | "delivery" | "schedule" | "billing" | "payment" | "review";
 
 function getStepNumber(name: StepName, isGuest: boolean): number {
   if (isGuest) {
-    const map: Record<StepName, number> = { guest_info: 1, delivery: 2, schedule: 3, payment: 4, review: 5 };
+    const map: Record<StepName, number> = { guest_info: 1, delivery: 2, schedule: 3, billing: 4, payment: 5, review: 6 };
     return map[name];
   }
-  const map: Record<StepName, number> = { guest_info: 0, delivery: 1, schedule: 2, payment: 3, review: 4 };
+  const map: Record<StepName, number> = { guest_info: 0, delivery: 1, schedule: 2, billing: 3, payment: 4, review: 5 };
   return map[name];
 }
 
 function getStepName(step: number, isGuest: boolean): StepName {
   if (isGuest) {
-    const map: Record<number, StepName> = { 1: "guest_info", 2: "delivery", 3: "schedule", 4: "payment", 5: "review" };
+    const map: Record<number, StepName> = { 1: "guest_info", 2: "delivery", 3: "schedule", 4: "billing", 5: "payment", 6: "review" };
     return map[step] || "guest_info";
   }
-  const map: Record<number, StepName> = { 1: "delivery", 2: "schedule", 3: "payment", 4: "review" };
+  const map: Record<number, StepName> = { 1: "delivery", 2: "schedule", 3: "billing", 4: "payment", 5: "review" };
   return map[step] || "delivery";
 }
 
@@ -160,6 +166,17 @@ export function CheckoutForm() {
   const [discountAmountCents, setDiscountAmountCents] = useState(0);
   const previewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [addOnsModalProductId, setAddOnsModalProductId] = useState<string | null>(null);
+  const [invoiceProfiles, setInvoiceProfiles] = useState<UserInvoiceProfile[]>([]);
+  const [billing, setBilling] = useState<BillingFormState>({
+    invoiceProfileId: "",
+    documentType: "cedula",
+    documentNumber: "",
+    fullName: "",
+    email: "",
+    address: "",
+    phone: "",
+    saveProfile: false,
+  });
 
   const { items, totalPrice, clearCart, updateItemCardMessage, updateItemAddOns } = useCartStore();
   const { user, tokens, logout } = useAuthStore();
@@ -170,6 +187,37 @@ export function CheckoutForm() {
   useEffect(() => {
     fetchSpecialDatesStore();
   }, [fetchSpecialDatesStore]);
+
+  // Load invoice profiles when logged in; pre-fill billing with default profile
+  useEffect(() => {
+    const accessToken = tokens?.accessToken;
+    if (!accessToken) {
+      setInvoiceProfiles([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await getInvoiceProfilesAction(accessToken, { limit: 50 });
+        if (cancelled) return;
+        setInvoiceProfiles(res.result);
+        const def = res.result.find((p) => p.isDefault) || res.result[0];
+        if (def) {
+          setBilling((prev) => prev.invoiceProfileId ? prev : ({
+            invoiceProfileId: def.id,
+            documentType: def.documentType,
+            documentNumber: def.documentNumber,
+            fullName: def.fullName,
+            email: def.email,
+            address: def.address || "",
+            phone: def.phone || "",
+            saveProfile: false,
+          }));
+        }
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, [tokens?.accessToken]);
 
   const {
     cities, branches, zones, timeSlots, bankAccounts, occasions, orderSettings,
@@ -454,6 +502,25 @@ export function CheckoutForm() {
         return false;
       }
     }
+    if (name === "billing") {
+      const limit = orderSettings?.finalConsumerLimitCents;
+      const total = orderPreview?.totalCents ?? subtotal;
+      if (billing.documentType === "final_consumer") {
+        if (limit != null && total >= limit) {
+          setError(`El total supera ${formatPrice(limit)}. Debes identificar al adquirente con cédula, RUC o pasaporte.`);
+          return false;
+        }
+      } else {
+        if (!billing.fullName.trim()) { setError("Ingresa el nombre o razón social"); return false; }
+        if (!billing.email.trim()) { setError("Ingresa el correo para la factura"); return false; }
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(billing.email.trim())) { setError("Correo de facturación inválido"); return false; }
+        const docCheck = validateDocumentByType(
+          billing.documentType as "cedula" | "ruc" | "pasaporte",
+          billing.documentNumber.trim()
+        );
+        if (!docCheck.valid) { setError(docCheck.error || "Documento inválido"); return false; }
+      }
+    }
     if (name === "payment") {
       if (!formData.paymentMethod) { setError("Selecciona un método de pago"); return false; }
     }
@@ -484,8 +551,8 @@ export function CheckoutForm() {
   const handleSubmit = async () => {
     // Validate all steps before submit
     const stepsToValidate: StepName[] = isGuest
-      ? ["guest_info", "delivery", "schedule", "payment"]
-      : ["delivery", "schedule", "payment"];
+      ? ["guest_info", "delivery", "schedule", "billing", "payment"]
+      : ["delivery", "schedule", "billing", "payment"];
     for (const name of stepsToValidate) {
       if (!validateStepByName(name)) return;
     }
@@ -509,6 +576,19 @@ export function CheckoutForm() {
         occasionId: formData.occasionId || undefined,
         isSurprise: formData.isSurprise, isAnonymous: formData.isAnonymous,
         ...(discountCode ? { discountCode } : {}),
+        // Invoice (SRI)
+        invoiceDocumentType: billing.documentType,
+        ...(billing.invoiceProfileId && billing.invoiceProfileId !== "new" && billing.invoiceProfileId !== "final_consumer"
+          ? { invoiceProfileId: billing.invoiceProfileId }
+          : billing.documentType === "final_consumer"
+            ? {}
+            : {
+                invoiceDocumentNumber: billing.documentNumber.trim(),
+                invoiceFullName: billing.fullName.trim(),
+                invoiceEmail: billing.email.trim(),
+                ...(billing.address.trim() ? { invoiceAddress: billing.address.trim() } : {}),
+                ...(billing.phone.trim() ? { invoicePhone: billing.phone.trim() } : {}),
+              }),
       };
 
       let validAccessToken: string | undefined;
@@ -531,6 +611,27 @@ export function CheckoutForm() {
       setCreatedOrder(order); clearCart(); clearSavedFormData();
       sessionStorage.setItem("encanto-order-created", "true");
 
+      // Save billing profile in background if user opted in
+      if (
+        billing.saveProfile &&
+        validAccessToken &&
+        billing.documentType !== "final_consumer" &&
+        (billing.invoiceProfileId === "new" || billing.invoiceProfileId === "")
+      ) {
+        createInvoiceProfileAction(
+          {
+            documentType: billing.documentType as "cedula" | "ruc" | "pasaporte",
+            documentNumber: billing.documentNumber.trim(),
+            fullName: billing.fullName.trim(),
+            email: billing.email.trim(),
+            ...(billing.address.trim() ? { address: billing.address.trim() } : {}),
+            ...(billing.phone.trim() ? { phone: billing.phone.trim() } : {}),
+            isDefault: invoiceProfiles.length === 0,
+          },
+          validAccessToken
+        ).catch(() => { /* non-critical */ });
+      }
+
       if (formData.paymentMethod === "paypal") {
         setPaypalTokens({ accessToken: validAccessToken, guestToken: order.guestToken || guestToken });
         setPendingPayPal(true);
@@ -545,6 +646,10 @@ export function CheckoutForm() {
         friendly = "Uno o más productos pertenecen a otra fecha especial y no están disponibles para la fecha de entrega seleccionada.";
       } else if (lower.includes("specialdateadvance") || lower.includes("special_date_advance") || lower.includes("days of advance")) {
         friendly = "Esta fecha especial requiere más días de anticipación. Elige otra fecha de entrega.";
+      } else if (lower.includes("invoicefinalconsumerlimit") || lower.includes("final_consumer")) {
+        friendly = "El total del pedido supera el límite para consumidor final. Debes identificar al adquirente con cédula, RUC o pasaporte.";
+      } else if (lower.includes("invoiceprofilerequiresauth")) {
+        friendly = "Solo usuarios autenticados pueden usar un perfil de facturación guardado.";
       }
       setError(
         friendly ||
@@ -713,6 +818,19 @@ export function CheckoutForm() {
                 minDeliveryDate={getMinDeliveryDate()} formatTimeSlot={formatTimeSlot} isPickup={isPickup} user={user}
                 items={items} onUpdateCardMessage={updateItemCardMessage} onOpenAddOns={setAddOnsModalProductId} availableAddOns={availableAddOns}
                 error={error} onNext={handleNext} onBack={handleBack}
+              />
+            )}
+            {currentStepName === "billing" && (
+              <StepBilling
+                billing={billing}
+                onChange={(u) => setBilling((prev) => ({ ...prev, ...u }))}
+                profiles={invoiceProfiles}
+                isLoggedIn={!!user}
+                totalCents={orderPreview?.totalCents ?? subtotal}
+                finalConsumerLimitCents={orderSettings?.finalConsumerLimitCents}
+                error={error}
+                onNext={handleNext}
+                onBack={handleBack}
               />
             )}
             {currentStepName === "payment" && (

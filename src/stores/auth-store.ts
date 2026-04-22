@@ -8,6 +8,8 @@ import {
   getMeAction,
 } from "@/actions/auth-actions";
 import { claimGuestOrdersAction } from "@/actions/order-actions";
+import { claimGuestServiceOffersAction } from "@/actions/service-offer-actions";
+import { claimGuestServiceRequestsAction } from "@/actions/service-request-actions";
 
 export interface User {
   id: string;
@@ -93,17 +95,26 @@ function isTokenExpiringSoon(token: string, bufferSeconds = 60): boolean {
 
 const GUEST_TOKEN_KEY = "encanto-guest-token";
 
-// Claim guest orders and clear guest token after login/register
-async function claimGuestAndCleanup(accessToken: string) {
+// Claim guest orders/offers/requests and clear guest token after login/register.
+// Runs all three claim endpoints in parallel; each is idempotent and cheap.
+export async function claimAllGuestResources(
+  accessToken: string,
+  options: { emailVerified?: boolean } = {}
+) {
   if (typeof window === "undefined") return;
-  const guestToken = localStorage.getItem(GUEST_TOKEN_KEY);
-  if (!guestToken) return;
+  await Promise.allSettled([
+    claimGuestOrdersAction(accessToken),
+    claimGuestServiceOffersAction(accessToken),
+    // Service-requests claim requires verified email per backend
+    options.emailVerified
+      ? claimGuestServiceRequestsAction(accessToken)
+      : Promise.resolve(),
+  ]);
+}
 
-  try {
-    await claimGuestOrdersAction(accessToken);
-  } catch {
-    // Non-critical — don't block login
-  }
+async function claimGuestAndCleanup(accessToken: string, emailVerified?: boolean) {
+  if (typeof window === "undefined") return;
+  await claimAllGuestResources(accessToken, { emailVerified });
   localStorage.removeItem(GUEST_TOKEN_KEY);
 }
 
@@ -180,8 +191,8 @@ export const useAuthStore = create<AuthState>()(
 
           set({ user, isLoading: false });
 
-          // Claim guest orders and clean up guest token
-          claimGuestAndCleanup(tokens.accessToken);
+          // Claim guest orders/offers/requests and clean up guest token
+          claimGuestAndCleanup(tokens.accessToken, user.emailVerified);
 
           return { success: true };
         } catch (error) {
@@ -218,8 +229,8 @@ export const useAuthStore = create<AuthState>()(
 
           set({ user, isLoading: false });
 
-          // Claim guest orders and clean up guest token
-          claimGuestAndCleanup(tokens.accessToken);
+          // Claim guest orders/offers/requests and clean up guest token
+          claimGuestAndCleanup(tokens.accessToken, user.emailVerified);
 
           return { success: true };
         } catch (error) {

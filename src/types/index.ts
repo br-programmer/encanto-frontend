@@ -59,6 +59,12 @@ export type {
   DeliveryAddressApi,
   CreateDeliveryAddressRequest,
   UpdateDeliveryAddressRequest,
+  // Invoice / SRI
+  InvoiceDocumentType,
+  UserInvoiceProfile,
+  CreateUserInvoiceProfileRequest,
+  UpdateUserInvoiceProfileRequest,
+  UserInvoiceProfileFilters,
   // Service Catalog
   ServiceCatalog,
   ServiceCatalogImage,

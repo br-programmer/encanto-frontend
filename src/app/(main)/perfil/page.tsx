@@ -35,6 +35,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
+import { InvoiceProfilesSection } from "@/components/profile/invoice-profiles-section";
 
 const MapPicker = dynamic(() => import("@/components/checkout/map-picker").then(m => ({ default: m.MapPicker })), {
   ssr: false,
@@ -434,8 +435,8 @@ export default function PerfilPage() {
           </div>
         </div>
 
-        {/* Right Column - Addresses */}
-        <div className="lg:col-span-2">
+        {/* Right Column - Addresses + Invoice Profiles */}
+        <div className="lg:col-span-2 space-y-6">
           <div className="bg-background rounded-xl border border-border p-4 sm:p-6">
             <div className="flex items-start sm:items-center justify-between gap-3 mb-6">
               <div className="flex items-center gap-3">
@@ -702,6 +703,16 @@ export default function PerfilPage() {
               </div>
             )}
           </div>
+
+          {/* Invoice Profiles (SRI) */}
+          {tokens?.accessToken && (
+            <InvoiceProfilesSection
+              accessToken={tokens.accessToken}
+              userEmail={user.email}
+              userPhone={user.phone}
+              userFullName={user.fullName}
+            />
+          )}
         </div>
       </div>
     </div>

@@ -39,3 +39,9 @@ export async function getMyServiceOffersAction(
 ): Promise<PaginatedResponse<ServiceOffer>> {
   return api.serviceOffers.mineWithToken(accessToken, filters);
 }
+
+export async function claimGuestServiceOffersAction(
+  accessToken: string
+): Promise<{ claimedCount: number }> {
+  return api.serviceOffers.claimGuestOffersWithToken(accessToken);
+}
