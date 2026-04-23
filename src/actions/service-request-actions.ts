@@ -27,3 +27,9 @@ export async function getMyServiceRequestsAction(
 ): Promise<PaginatedResponse<ServiceRequest>> {
   return api.serviceRequests.mineWithToken(accessToken, filters);
 }
+
+export async function claimGuestServiceRequestsAction(
+  accessToken: string
+): Promise<{ claimedCount: number }> {
+  return api.serviceRequests.claimGuestRequestsWithToken(accessToken);
+}

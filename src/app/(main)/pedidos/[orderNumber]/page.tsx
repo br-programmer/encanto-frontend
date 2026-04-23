@@ -4,15 +4,16 @@ import { useState, useEffect, useRef, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Package, ChevronLeft, AlertTriangle, Phone, Bike, Car, User, CreditCard, Gift, EyeOff, X } from "lucide-react";
+import { Loader2, Package, ChevronLeft, AlertTriangle, Phone, Bike, Car, User, CreditCard, Gift, EyeOff, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BUSINESS } from "@/lib/constants";
 import { TransferProofUpload } from "@/components/orders/transfer-proof-upload";
 import { PayPalProvider } from "@/components/checkout/paypal-provider";
 import { PayPalCheckoutModal } from "@/components/checkout/paypal-checkout";
 import { getOrderByOrderNumberAction, cancelOrderAction, getOrderPageDataAction } from "@/actions/order-actions";
+import { useAuthStore } from "@/stores/auth-store";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatPrice, cn } from "@/lib/utils";
+import { formatPrice, formatPhone, cn } from "@/lib/utils";
 import type { Order, BankAccount, DeliveryTimeSlot } from "@/lib/api";
 
 const STATUS_COLOR = "bg-primary/10 text-primary";
@@ -68,14 +69,16 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
       }
 
       try {
-        const accessToken = (() => {
-          try {
-            const tokens = localStorage.getItem("encanto-tokens");
-            if (tokens) return JSON.parse(tokens).accessToken;
-          } catch { /* ignore */ }
-          return undefined;
-        })();
-        const guestToken = urlToken || localStorage.getItem("encanto-guest-token") || undefined;
+        const accessToken = await useAuthStore.getState().getValidAccessToken();
+        // Only send a guest token when it was provided explicitly via URL
+        // (email link) or when the user is NOT logged in. A stale localStorage
+        // guest token from a previous guest order makes the BE reject with
+        // 401 "Token de invitado invalido" even if the JWT is valid.
+        const guestToken = urlToken
+          ? urlToken
+          : accessToken
+            ? undefined
+            : localStorage.getItem("encanto-guest-token") || undefined;
 
         const [orderData, pageData] = await Promise.all([
           getOrderByOrderNumberAction(orderNumber, accessToken, guestToken),
@@ -126,14 +129,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
     setIsCancelling(true);
     setCancelError(null);
     try {
-      const accessToken = (() => {
-        try {
-          const tokens = localStorage.getItem("encanto-tokens");
-          if (tokens) return JSON.parse(tokens).accessToken;
-        } catch { /* ignore */ }
-        return undefined;
-      })();
-      const guestToken = localStorage.getItem("encanto-guest-token") || undefined;
+      const accessToken = await useAuthStore.getState().getValidAccessToken();
+      // Avoid sending a stale localStorage guest token when the user is
+      // logged in (same rationale as the initial fetch).
+      const guestToken = accessToken
+        ? undefined
+        : localStorage.getItem("encanto-guest-token") || undefined;
       const updated = await cancelOrderAction(order.id, accessToken, guestToken);
       setOrder(updated);
       setShowCancelModal(false);
@@ -541,7 +542,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                   className="text-sm text-primary hover:underline inline-flex items-center gap-1 mt-1"
                 >
                   <Phone className="h-3.5 w-3.5" />
-                  {order.deliveryPerson.phone}
+                  {formatPhone(order.deliveryPerson.phone)}
                 </a>
 
                 {order.deliveryPerson.vehicle && (
@@ -601,7 +602,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             {order.recipientPhone && (
               <div>
                 <p className="text-foreground-secondary">Teléfono</p>
-                <p className="font-normal">{order.recipientPhone}</p>
+                <p className="font-normal">{formatPhone(order.recipientPhone)}</p>
               </div>
             )}
             {!isPickup && order.deliveryAddress && (
@@ -761,6 +762,58 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               <span className="font-normal">{order.paymentStatus === "paid" ? "Confirmado" : order.paymentStatus === "awaiting_verification" ? "Verificando comprobante" : "Pendiente"}</span>
             </div>
           </div>
+        </div>
+
+        {/* Invoice Info */}
+        <div className="bg-background rounded-xl border border-border p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <FileText className="h-5 w-5 text-primary" />
+            <h2 className="font-medium">Datos de facturación</h2>
+          </div>
+          {order.invoiceDocumentType === "final_consumer" ? (
+            <p className="text-sm text-foreground-secondary">Factura a consumidor final.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-foreground-secondary">Documento</p>
+                <p className="font-normal">
+                  {
+                    {
+                      cedula: "Cédula",
+                      ruc: "RUC",
+                      pasaporte: "Pasaporte",
+                      final_consumer: "Consumidor final",
+                    }[order.invoiceDocumentType]
+                  }
+                  {order.invoiceDocumentNumber ? `: ${order.invoiceDocumentNumber}` : ""}
+                </p>
+              </div>
+              {order.invoiceFullName && (
+                <div>
+                  <p className="text-foreground-secondary">Nombre / Razón social</p>
+                  <p className="font-normal">{order.invoiceFullName}</p>
+                </div>
+              )}
+              {order.invoiceEmail && (
+                <div className="sm:col-span-2">
+                  <p className="text-foreground-secondary">Correo</p>
+                  <p className="font-normal break-all">{order.invoiceEmail}</p>
+                </div>
+              )}
+              {order.invoiceAddress && (
+                <div className="sm:col-span-2">
+                  <p className="text-foreground-secondary">Dirección fiscal</p>
+                  <p className="font-normal">{order.invoiceAddress}</p>
+                </div>
+              )}
+              {order.invoicePhone && (
+                <div>
+                  <p className="text-foreground-secondary">Teléfono</p>
+                  <p className="font-normal">{formatPhone(order.invoicePhone)}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Transfer proof upload */}

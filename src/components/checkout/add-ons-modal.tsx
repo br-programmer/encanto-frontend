@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { SafeImage } from "@/components/ui/safe-image";
 import { X, Minus, Plus, Package, ChevronDown, ChevronUp, Search } from "lucide-react";
@@ -57,23 +57,29 @@ export function AddOnsModal({
     setMounted(true);
   }, []);
 
-  // Reset state when modal opens
+  // Reset state ONLY on the open transition (false → true). Reading the
+  // latest props through a ref prevents re-running this effect every render
+  // when `currentAddOns` defaults to a fresh `[]` for items without add-ons.
+  const latestPropsRef = useRef({ currentAddOns, addOns, addOnCategories });
   useEffect(() => {
-    if (isOpen) {
-      const map = new Map<string, SelectedAddOn>();
-      currentAddOns.forEach((ca) => {
-        const addOn = addOns.find((a) => a.id === ca.addOnId);
-        if (addOn) {
-          map.set(addOn.id, { addOn, quantity: ca.quantity });
-        }
-      });
-      setSelected(map);
-      setSearch("");
-      setExpandedCategories(
-        new Set(addOnCategories.length > 0 ? [addOnCategories[0].id] : [])
-      );
-    }
-  }, [isOpen, currentAddOns, addOns, addOnCategories]);
+    latestPropsRef.current = { currentAddOns, addOns, addOnCategories };
+  });
+  useEffect(() => {
+    if (!isOpen) return;
+    const { currentAddOns: ca, addOns: ao, addOnCategories: aoc } = latestPropsRef.current;
+    const map = new Map<string, SelectedAddOn>();
+    ca.forEach((item) => {
+      const addOn = ao.find((a) => a.id === item.addOnId);
+      if (addOn) {
+        map.set(addOn.id, { addOn, quantity: item.quantity });
+      }
+    });
+    setSelected(map);
+    setSearch("");
+    setExpandedCategories(
+      new Set(aoc.length > 0 ? [aoc[0].id] : [])
+    );
+  }, [isOpen]);
 
   useScrollLock(isOpen);
 

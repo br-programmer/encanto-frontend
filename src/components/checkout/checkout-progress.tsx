@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, User, MapPin, CalendarDays, CreditCard, ClipboardList } from "lucide-react";
+import { Check, User, MapPin, CalendarDays, CreditCard, ClipboardList, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface StepDef {
@@ -12,6 +12,7 @@ const STEPS_GUEST: StepDef[] = [
   { label: "Tus datos", icon: User },
   { label: "Entrega", icon: MapPin },
   { label: "Fecha y detalles", icon: CalendarDays },
+  { label: "Facturación", icon: FileText },
   { label: "Pago", icon: CreditCard },
   { label: "Resumen", icon: ClipboardList },
 ];
@@ -19,6 +20,7 @@ const STEPS_GUEST: StepDef[] = [
 const STEPS_AUTH: StepDef[] = [
   { label: "Entrega", icon: MapPin },
   { label: "Fecha y detalles", icon: CalendarDays },
+  { label: "Facturación", icon: FileText },
   { label: "Pago", icon: CreditCard },
   { label: "Resumen", icon: ClipboardList },
 ];

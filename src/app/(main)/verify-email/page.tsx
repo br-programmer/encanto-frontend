@@ -7,6 +7,7 @@ import { CheckCircle2, XCircle, Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { verifyEmailAction } from "@/actions/auth-actions";
+import { claimAllGuestResources, useAuthStore } from "@/stores/auth-store";
 
 type VerificationStatus = "loading" | "success" | "error";
 
@@ -39,6 +40,15 @@ function VerifyEmailContent() {
       try {
         await verifyEmailAction(token);
         setStatus("success");
+        // If the user is logged in, refresh and claim guest resources
+        // (service-requests claim requires verified email, now satisfied)
+        const accessToken = useAuthStore.getState().tokens?.accessToken;
+        if (accessToken) {
+          try {
+            await claimAllGuestResources(accessToken, { emailVerified: true });
+            await useAuthStore.getState().fetchUser();
+          } catch { /* non-critical */ }
+        }
       } catch (error) {
         setStatus("error");
         if (error instanceof Error && error.message.includes("400")) {

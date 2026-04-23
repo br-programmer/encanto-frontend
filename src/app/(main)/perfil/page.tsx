@@ -7,71 +7,43 @@ import {
   Mail,
   Phone,
   MapPin,
-  Plus,
-  Pencil,
-  Trash2,
   CheckCircle2,
   AlertCircle,
   Loader2,
   LogOut,
-  Home,
-  Briefcase,
-  Star,
   Camera,
   X,
   Package,
-  Lock,
+  FileText,
   ChevronRight,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuthStore } from "@/stores/auth-store";
-import { useAddressesStore, type DeliveryAddress } from "@/stores/addresses-store";
 import { resendVerificationAction, uploadAvatarAction, deleteAvatarAction } from "@/actions/auth-actions";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/components/ui/toast";
+import { formatPhone } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import dynamic from "next/dynamic";
+import { AddressesSection } from "@/components/profile/addresses-section";
+import { InvoiceProfilesSection } from "@/components/profile/invoice-profiles-section";
 
-const MapPicker = dynamic(() => import("@/components/checkout/map-picker").then(m => ({ default: m.MapPicker })), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-[250px] rounded-lg border border-border bg-secondary/30 flex items-center justify-center">
-      <span className="text-sm text-foreground-secondary">Cargando mapa...</span>
-    </div>
-  ),
-});
+type Section = "direcciones" | "facturacion";
 
 export default function PerfilPage() {
   const router = useRouter();
   const { user, tokens, logout, refreshToken, fetchUser, isLoading: authLoading, _hasHydrated } = useAuthStore();
-  const { addresses, addAddress, updateAddress, deleteAddress, setDefaultAddress } = useAddressesStore();
+  const { addToast } = useToast();
 
   const [mounted, setMounted] = useState(false);
   const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const [showAddressForm, setShowAddressForm] = useState(false);
-  const [editingAddress, setEditingAddress] = useState<DeliveryAddress | null>(null);
-  const [addressFormData, setAddressFormData] = useState({
-    label: "Casa",
-    recipientName: "",
-    recipientPhone: "",
-    address: "",
-    city: "Manta",
-    zone: "",
-    latitude: -0.95,
-    longitude: -80.73,
-    notes: "",
-    isDefault: false,
-  });
+  const [section, setSection] = useState<Section>("direcciones");
 
   useEffect(() => {
     setMounted(true);
-    // Fetch fresh user data when profile page loads
     fetchUser();
   }, [fetchUser]);
 
@@ -88,7 +60,6 @@ export default function PerfilPage() {
       await resendVerificationAction(tokens.accessToken);
       setVerificationSent(true);
     } catch (error) {
-      // If 401, try refreshing token and retry
       if (error instanceof Error && error.message.includes("401")) {
         const refreshed = await refreshToken();
         if (refreshed) {
@@ -115,21 +86,25 @@ export default function PerfilPage() {
     router.push("/");
   };
 
-
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     const validTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!validTypes.includes(file.type)) {
-      alert("Formato no válido. Usa JPEG, PNG o WebP.");
+      addToast("Formato no válido. Usa JPEG, PNG o WebP.", "error");
+      e.target.value = "";
       return;
     }
 
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      alert("La imagen es muy grande. Máximo 5MB.");
+    const MAX_MB = 10;
+    if (file.size > MAX_MB * 1024 * 1024) {
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+      addToast(
+        `La imagen pesa ${sizeMb} MB. El tamaño máximo es ${MAX_MB} MB.`,
+        "error"
+      );
+      e.target.value = "";
       return;
     }
 
@@ -141,7 +116,7 @@ export default function PerfilPage() {
       await fetchUser();
     } catch (error) {
       console.error("Error uploading avatar:", error);
-      alert("Error al subir la imagen. Intenta de nuevo.");
+      addToast("Error al subir la imagen. Intenta de nuevo.", "error");
     } finally {
       setIsUploadingAvatar(false);
       e.target.value = "";
@@ -162,131 +137,16 @@ export default function PerfilPage() {
     }
   };
 
-  const resetAddressForm = () => {
-    setAddressFormData({
-      label: "Casa",
-      recipientName: user?.fullName || "",
-      recipientPhone: user?.phone || "",
-      address: "",
-      city: "Manta",
-      zone: "",
-      latitude: -0.95,
-      longitude: -80.73,
-      notes: "",
-      isDefault: addresses.length === 0,
-    });
-    setEditingAddress(null);
-    setShowAddressForm(false);
-  };
-
-  const handleEditAddress = (address: DeliveryAddress) => {
-    setEditingAddress(address);
-    setAddressFormData({
-      label: address.label,
-      recipientName: address.recipientName,
-      recipientPhone: address.recipientPhone,
-      address: address.address,
-      city: address.city,
-      zone: address.zone,
-      latitude: address.latitude ?? -0.95,
-      longitude: address.longitude ?? -80.73,
-      notes: address.notes || "",
-      isDefault: address.isDefault,
-    });
-    setShowAddressForm(true);
-  };
-
-  const handleSaveAddress = () => {
-    if (!addressFormData.recipientName || !addressFormData.address || !addressFormData.zone) {
-      return;
-    }
-
-    if (editingAddress) {
-      updateAddress(editingAddress.id, addressFormData);
-    } else {
-      addAddress(addressFormData);
-    }
-    resetAddressForm();
-  };
-
-  const handleDeleteAddress = (id: string) => {
-    if (confirm("¿Estás seguro de eliminar esta dirección?")) {
-      deleteAddress(id);
-    }
-  };
-
-  const getLabelIcon = (label: string) => {
-    switch (label) {
-      case "Casa":
-        return <Home className="h-4 w-4" />;
-      case "Trabajo":
-        return <Briefcase className="h-4 w-4" />;
-      default:
-        return <MapPin className="h-4 w-4" />;
-    }
-  };
-
   if (!mounted || !_hasHydrated || authLoading) {
     return (
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <Skeleton className="h-9 w-40 mb-6 sm:mb-8" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-          {/* Left column skeleton */}
           <div className="lg:col-span-1">
-            <div className="bg-background rounded-xl border border-border p-4 sm:p-6">
-              <div className="flex flex-col items-center mb-6">
-                <Skeleton className="w-24 h-24 rounded-full mb-4" />
-                <Skeleton className="h-6 w-40 mb-1" />
-                <Skeleton className="h-4 w-16" />
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <Skeleton className="h-5 w-5 rounded-full" />
-                  <div className="flex-1">
-                    <Skeleton className="h-3.5 w-12 mb-1" />
-                    <Skeleton className="h-4 w-48" />
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Skeleton className="h-5 w-5 rounded-full" />
-                  <div>
-                    <Skeleton className="h-3.5 w-16 mb-1" />
-                    <Skeleton className="h-4 w-32" />
-                  </div>
-                </div>
-              </div>
-              <div className="mt-6 pt-6 border-t border-border">
-                <Skeleton className="h-11 w-full rounded-lg" />
-              </div>
-              <div className="mt-4 pt-4 border-t border-border">
-                <Skeleton className="h-10 w-full rounded-lg" />
-              </div>
-            </div>
+            <Skeleton className="h-96 w-full rounded-xl" />
           </div>
-          {/* Right column skeleton */}
           <div className="lg:col-span-2">
-            <div className="bg-background rounded-xl border border-border p-4 sm:p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <Skeleton className="w-10 h-10 rounded-full" />
-                <div>
-                  <Skeleton className="h-5 w-48 mb-1" />
-                  <Skeleton className="h-4 w-32" />
-                </div>
-              </div>
-              <div className="space-y-4">
-                {Array.from({ length: 2 }).map((_, i) => (
-                  <div key={i} className="p-3 sm:p-4 rounded-lg border border-border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Skeleton className="h-4 w-4" />
-                      <Skeleton className="h-4 w-16" />
-                    </div>
-                    <Skeleton className="h-4 w-56 mb-1" />
-                    <Skeleton className="h-4 w-full mb-1" />
-                    <Skeleton className="h-4 w-40" />
-                  </div>
-                ))}
-              </div>
-            </div>
+            <Skeleton className="h-96 w-full rounded-xl" />
           </div>
         </div>
       </div>
@@ -302,9 +162,8 @@ export default function PerfilPage() {
       <h1 className="text-2xl md:text-3xl font-semibold mb-6 sm:mb-8">Mi Perfil</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-        {/* Left Column - User Info */}
+        {/* Left Column - User Info + Menu */}
         <div className="lg:col-span-1 space-y-6">
-          {/* User Card */}
           <div className="bg-background rounded-xl border border-border p-4 sm:p-6">
             <div className="flex flex-col items-center mb-6">
               {/* Avatar */}
@@ -327,7 +186,6 @@ export default function PerfilPage() {
                     </div>
                   )}
                 </div>
-                {/* Upload/Delete buttons */}
                 <div className="absolute -bottom-1 -right-1 flex gap-1">
                   <label className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors shadow-md">
                     <Camera className="h-4 w-4" />
@@ -372,12 +230,11 @@ export default function PerfilPage() {
                 <Phone className="h-5 w-5 text-foreground-muted flex-shrink-0" />
                 <div className="min-w-0">
                   <p className="text-sm text-foreground-secondary">Teléfono</p>
-                  <p className="text-sm sm:text-base">{user.phone}</p>
+                  <p className="text-sm sm:text-base">{formatPhone(user.phone)}</p>
                 </div>
               </div>
             </div>
 
-            {/* Email verification warning */}
             {!user.emailVerified && (
               <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-amber-50 border border-amber-200 rounded-lg">
                 <p className="text-sm text-amber-800 mb-3">
@@ -408,17 +265,66 @@ export default function PerfilPage() {
             )}
 
             {/* Quick Links */}
-            <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border space-y-2">
+            <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border space-y-1">
               <Link
                 href="/pedidos"
-                className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 transition-colors"
+                className="group flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <Package className="h-5 w-5 text-primary" />
                   <span className="text-sm font-normal">Mis pedidos</span>
                 </div>
-                <ChevronRight className="h-4 w-4 text-foreground-secondary" />
+                <ChevronRight className="h-4 w-4 text-foreground-secondary group-hover:translate-x-0.5 transition-transform" />
               </Link>
+
+              <button
+                type="button"
+                onClick={() => setSection("direcciones")}
+                className={cn(
+                  "group w-full flex items-center justify-between p-3 rounded-lg transition-colors",
+                  section === "direcciones"
+                    ? "bg-primary/10 text-primary"
+                    : "hover:bg-secondary/50"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <MapPin
+                    className={cn(
+                      "h-5 w-5",
+                      section === "direcciones" ? "text-primary" : "text-primary"
+                    )}
+                  />
+                  <span className="text-sm font-normal">Mis direcciones</span>
+                </div>
+                <ChevronRight
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    section === "direcciones" ? "text-primary" : "text-foreground-secondary group-hover:translate-x-0.5"
+                  )}
+                />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSection("facturacion")}
+                className={cn(
+                  "group w-full flex items-center justify-between p-3 rounded-lg transition-colors",
+                  section === "facturacion"
+                    ? "bg-primary/10 text-primary"
+                    : "hover:bg-secondary/50"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <span className="text-sm font-normal">Datos de facturación</span>
+                </div>
+                <ChevronRight
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    section === "facturacion" ? "text-primary" : "text-foreground-secondary group-hover:translate-x-0.5"
+                  )}
+                />
+              </button>
             </div>
 
             <div className="mt-4 pt-4 border-t border-border">
@@ -434,274 +340,23 @@ export default function PerfilPage() {
           </div>
         </div>
 
-        {/* Right Column - Addresses */}
+        {/* Right Column - Selected Section */}
         <div className="lg:col-span-2">
-          <div className="bg-background rounded-xl border border-border p-4 sm:p-6">
-            <div className="flex items-start sm:items-center justify-between gap-3 mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center flex-shrink-0">
-                  <MapPin className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-lg sm:text-xl font-medium">Direcciones de entrega</h2>
-                  <p className="text-sm text-foreground-secondary">
-                    {addresses.length} {addresses.length === 1 ? "dirección guardada" : "direcciones guardadas"}
-                  </p>
-                </div>
-              </div>
-              {!showAddressForm && (
-                <Button
-                  size="sm"
-                  className="flex-shrink-0"
-                  onClick={() => {
-                    resetAddressForm();
-                    setAddressFormData(prev => ({
-                      ...prev,
-                      recipientName: user.fullName,
-                      recipientPhone: user.phone,
-                      isDefault: addresses.length === 0,
-                    }));
-                    setShowAddressForm(true);
-                  }}
-                >
-                  <Plus className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Agregar</span>
-                </Button>
-              )}
-            </div>
-
-            {/* Address Form */}
-            {showAddressForm && (
-              <div className="mb-6 p-3 sm:p-4 bg-secondary/30 rounded-lg border border-border">
-                <h3 className="font-normal mb-4">
-                  {editingAddress ? "Editar dirección" : "Nueva dirección"}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Label */}
-                  <div>
-                    <label className="block text-sm font-normal mb-2">Etiqueta</label>
-                    <Select value={addressFormData.label} onValueChange={(value) => setAddressFormData({ ...addressFormData, label: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Casa">Casa</SelectItem>
-                        <SelectItem value="Trabajo">Trabajo</SelectItem>
-                        <SelectItem value="Otro">Otro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Recipient Name */}
-                  <div>
-                    <label className="block text-sm font-normal mb-2">
-                      Nombre del destinatario <span className="text-destructive">*</span>
-                    </label>
-                    <Input
-                      type="text"
-                      value={addressFormData.recipientName}
-                      onChange={(e) => setAddressFormData({ ...addressFormData, recipientName: e.target.value })}
-                      placeholder="Nombre completo"
-                    />
-                  </div>
-
-                  {/* Phone */}
-                  <div>
-                    <label className="block text-sm font-normal mb-2">
-                      Teléfono <span className="text-destructive">*</span>
-                    </label>
-                    <Input
-                      type="tel"
-                      value={addressFormData.recipientPhone}
-                      onChange={(e) => setAddressFormData({ ...addressFormData, recipientPhone: e.target.value })}
-                      placeholder="+593 99 999 9999"
-                    />
-                  </div>
-
-                  {/* City */}
-                  <div>
-                    <label className="block text-sm font-normal mb-2">Ciudad</label>
-                    <Select value={addressFormData.city} onValueChange={(value) => setAddressFormData({ ...addressFormData, city: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Manta">Manta</SelectItem>
-                        <SelectItem value="Portoviejo">Portoviejo</SelectItem>
-                        <SelectItem value="Montecristi">Montecristi</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Address */}
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-normal mb-2">
-                      Dirección <span className="text-destructive">*</span>
-                    </label>
-                    <Input
-                      type="text"
-                      value={addressFormData.address}
-                      onChange={(e) => setAddressFormData({ ...addressFormData, address: e.target.value })}
-                      placeholder="Calle principal, número, referencias"
-                    />
-                  </div>
-
-                  {/* Map */}
-                  <div className="md:col-span-2">
-                    <MapPicker
-                      latitude={addressFormData.latitude}
-                      longitude={addressFormData.longitude}
-                      onLocationChange={(lat, lng, _zone) => {
-                        setAddressFormData((prev) => ({ ...prev, latitude: lat, longitude: lng }));
-                      }}
-                      disableZoneValidation
-                    />
-                  </div>
-
-                  {/* Zone */}
-                  <div>
-                    <label className="block text-sm font-normal mb-2">
-                      Zona/Sector <span className="text-destructive">*</span>
-                    </label>
-                    <Input
-                      type="text"
-                      value={addressFormData.zone}
-                      onChange={(e) => setAddressFormData({ ...addressFormData, zone: e.target.value })}
-                      placeholder="Ej: Barrio Américas"
-                    />
-                  </div>
-
-                  {/* Notes */}
-                  <div>
-                    <label className="block text-sm font-normal mb-2">Notas adicionales</label>
-                    <Input
-                      type="text"
-                      value={addressFormData.notes}
-                      onChange={(e) => setAddressFormData({ ...addressFormData, notes: e.target.value })}
-                      placeholder="Ej: Casa color azul"
-                    />
-                  </div>
-
-                  {/* Default checkbox */}
-                  <div className="md:col-span-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <Checkbox
-                        checked={addressFormData.isDefault}
-                        onCheckedChange={(checked) => setAddressFormData({ ...addressFormData, isDefault: checked === true })}
-                      />
-                      <span className="text-sm">Establecer como dirección predeterminada</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 mt-4">
-                  <Button onClick={handleSaveAddress} className="w-full sm:w-auto">
-                    {editingAddress ? "Guardar cambios" : "Agregar dirección"}
-                  </Button>
-                  <Button variant="outline" onClick={resetAddressForm} className="w-full sm:w-auto">
-                    Cancelar
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Addresses List */}
-            {addresses.length === 0 && !showAddressForm ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MapPin className="h-8 w-8 text-foreground-muted" />
-                </div>
-                <p className="text-foreground-secondary mb-4">
-                  No tienes direcciones guardadas
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setAddressFormData(prev => ({
-                      ...prev,
-                      recipientName: user.fullName,
-                      recipientPhone: user.phone,
-                      isDefault: true,
-                    }));
-                    setShowAddressForm(true);
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Agregar primera dirección
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {addresses.map((address) => (
-                  <div
-                    key={address.id}
-                    className={cn(
-                      "p-3 sm:p-4 rounded-lg border transition-colors",
-                      address.isDefault
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50"
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-2 sm:gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          {getLabelIcon(address.label)}
-                          <span className="font-normal">{address.label}</span>
-                          {address.isDefault && (
-                            <span className="inline-flex items-center gap-1 text-xs bg-primary text-white px-2 py-0.5 rounded-full">
-                              <Star className="h-3 w-3" />
-                              Predeterminada
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-foreground-secondary text-sm mb-1 truncate">
-                          {address.recipientName} - {address.recipientPhone}
-                        </p>
-                        <p className="text-sm truncate">{address.address}</p>
-                        <p className="text-sm text-foreground-secondary">
-                          {address.zone}, {address.city}
-                        </p>
-                        {address.notes && (
-                          <p className="text-sm text-foreground-muted mt-1 truncate">
-                            Nota: {address.notes}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {!address.isDefault && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => setDefaultAddress(address.id)}
-                            title="Establecer como predeterminada"
-                          >
-                            <Star className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleEditAddress(address)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => handleDeleteAddress(address.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {section === "direcciones" && tokens?.accessToken && (
+            <AddressesSection
+              accessToken={tokens.accessToken}
+              userFullName={user.fullName}
+              userPhone={user.phone}
+            />
+          )}
+          {section === "facturacion" && tokens?.accessToken && (
+            <InvoiceProfilesSection
+              accessToken={tokens.accessToken}
+              userEmail={user.email}
+              userPhone={user.phone}
+              userFullName={user.fullName}
+            />
+          )}
         </div>
       </div>
     </div>

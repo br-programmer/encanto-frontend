@@ -35,6 +35,7 @@ interface StepScheduleProps {
   blockingCampaign?: { name: string; slug: string; kind: "blocking" | "out-of-range" } | null;
   invalidCartItemIds?: Set<string>;
   minDeliveryDate: string;
+  maxDeliveryDate?: string;
   formatTimeSlot: (start: string, end: string, label: string | null) => string;
   isPickup: boolean;
   user: { fullName: string } | null;
@@ -59,6 +60,7 @@ export function StepSchedule({
   blockingCampaign,
   invalidCartItemIds,
   minDeliveryDate,
+  maxDeliveryDate,
   formatTimeSlot,
   isPickup,
   user,
@@ -95,6 +97,7 @@ export function StepSchedule({
                 onSelectChange("deliveryDate", dateStr);
               }}
               minDate={new Date(minDeliveryDate + "T00:00:00")}
+              maxDate={maxDeliveryDate ? new Date(maxDeliveryDate + "T00:00:00") : undefined}
               placeholder="Selecciona una fecha"
             />
           </div>

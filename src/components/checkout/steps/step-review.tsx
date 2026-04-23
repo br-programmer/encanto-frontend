@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { SafeImage } from "@/components/ui/safe-image";
 import type { OrderPreview } from "@/lib/api";
 import type { CartItem } from "@/types";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, formatPhone } from "@/lib/utils";
 
 interface StepReviewProps {
   formData: {
@@ -79,7 +79,7 @@ export function StepReview({
           </button>
         </div>
         <div className="text-sm text-foreground-secondary space-y-1">
-          <p>{formData.recipientName} {formData.recipientPhone ? `— ${formData.recipientPhone}` : ""}</p>
+          <p>{formData.recipientName} {formData.recipientPhone ? `— ${formatPhone(formData.recipientPhone)}` : ""}</p>
           {isPickup && branchName && <p>Sucursal: {branchName}</p>}
           {!isPickup && <p>{formData.address}{cityName ? `, ${cityName}` : ""}</p>}
           {!isPickup && zoneName && <p>Zona: {zoneName}</p>}

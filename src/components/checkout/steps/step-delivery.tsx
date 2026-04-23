@@ -8,8 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { PhoneInput } from "@/components/ui/phone-input";
 import dynamic from "next/dynamic";
-import type { City, Branch, DeliveryZone } from "@/lib/api";
-import type { DeliveryAddress } from "@/stores/addresses-store";
+import type { City, Branch, DeliveryZone, DeliveryAddressApi } from "@/lib/api";
 import { cn, formatPrice } from "@/lib/utils";
 
 const MapPicker = dynamic(() => import("../map-picker").then(m => ({ default: m.MapPicker })), {
@@ -41,9 +40,9 @@ interface StepDeliveryProps {
   cities: City[];
   branches: Branch[];
   zones: DeliveryZone[];
-  addresses: DeliveryAddress[];
+  addresses: DeliveryAddressApi[];
   selectedAddressId: string | null;
-  onSelectAddress: (address: DeliveryAddress) => void;
+  onSelectAddress: (address: DeliveryAddressApi) => void;
   onNewAddress: () => void;
   saveAddress: boolean;
   onSaveAddressChange: (save: boolean) => void;
@@ -149,7 +148,7 @@ export function StepDelivery({
                     <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-normal text-sm">{addr.label}</span>
+                        <span className="font-normal text-sm">{addr.nickname || addr.recipientName}</span>
                         {addr.isDefault && (
                           <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">Predeterminada</span>
                         )}
