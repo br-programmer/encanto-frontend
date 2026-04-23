@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { DOCUMENT_TYPE_LABELS } from "@/lib/ecuadorian-document";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, formatPhone } from "@/lib/utils";
 import type { InvoiceDocumentType, UserInvoiceProfile } from "@/lib/api";
 
 export interface BillingFormState {
@@ -247,10 +248,9 @@ export function StepBilling({
 
           <div>
             <label className="block text-sm font-normal mb-2">Teléfono (opcional)</label>
-            <Input
+            <PhoneInput
               value={billing.phone}
-              onChange={(e) => onChange({ phone: e.target.value })}
-              placeholder="+593..."
+              onChange={(val) => onChange({ phone: val })}
             />
           </div>
 
@@ -274,7 +274,7 @@ export function StepBilling({
           <p><span className="text-foreground-secondary">Nombre:</span> {billing.fullName}</p>
           <p><span className="text-foreground-secondary">Correo:</span> {billing.email}</p>
           {billing.address && <p><span className="text-foreground-secondary">Dirección:</span> {billing.address}</p>}
-          {billing.phone && <p><span className="text-foreground-secondary">Teléfono:</span> {billing.phone}</p>}
+          {billing.phone && <p><span className="text-foreground-secondary">Teléfono:</span> {formatPhone(billing.phone)}</p>}
         </div>
       )}
 

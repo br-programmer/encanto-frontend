@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, Package, ChevronLeft, ChevronRight, Truck, Store } from "lucide-react";
+import { Loader2, Package, ChevronLeft, ChevronRight, Truck, Store, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/stores/auth-store";
@@ -133,7 +133,32 @@ export default function MisPedidosPage() {
           <div className="space-y-3 max-w-2xl mx-auto">
             {orders.map((order) => {
               const status = getOrderStatusDisplay(order);
+              const isService = order.orderType === "service";
               const isPickup = order.fulfillmentType === "pickup";
+
+              // Summary line (middle): adapts to service vs product orders and
+              // defends against null recipient/city for service orders.
+              const summary = isService
+                ? "Servicio"
+                : isPickup
+                  ? `Retiro${order.recipientName ? ` — ${order.recipientName}` : ""}`
+                  : [order.recipientName, order.deliveryCity].filter(Boolean).join(" — ") || "—";
+
+              // Date line (bottom): prefer deliveryDate, fall back to createdAt
+              // for orders without a delivery date (services).
+              const dateIso = order.deliveryDate
+                ? `${order.deliveryDate}T00:00:00`
+                : order.createdAt;
+              const parsed = new Date(dateIso);
+              const dateLabel = !isNaN(parsed.getTime())
+                ? parsed.toLocaleDateString("es-EC", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })
+                : "";
+
+              const Icon = isService ? Sparkles : isPickup ? Store : Truck;
 
               return (
                 <Link
@@ -149,29 +174,15 @@ export default function MisPedidosPage() {
                     </span>
                   </div>
 
-                  {/* Middle: recipient + type */}
+                  {/* Middle: summary */}
                   <div className="flex items-center gap-2 text-sm text-foreground-secondary mb-1.5">
-                    {isPickup ? (
-                      <Store className="h-3.5 w-3.5 flex-shrink-0" />
-                    ) : (
-                      <Truck className="h-3.5 w-3.5 flex-shrink-0" />
-                    )}
-                    <p className="truncate">
-                      {isPickup
-                        ? `Retiro — ${order.recipientName}`
-                        : `${order.recipientName} — ${order.deliveryCity}`}
-                    </p>
+                    <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+                    <p className="truncate">{summary}</p>
                   </div>
 
                   {/* Bottom: date + price */}
                   <div className="flex items-center justify-between">
-                    <p className="text-xs text-foreground-muted">
-                      {new Date(order.deliveryDate + "T00:00:00").toLocaleDateString("es-EC", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </p>
+                    <p className="text-xs text-foreground-muted">{dateLabel}</p>
                     <div className="flex items-center gap-1">
                       <p className="font-normal text-base text-primary">
                         {formatPrice(order.totalCents)}

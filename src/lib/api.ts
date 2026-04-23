@@ -817,6 +817,13 @@ export interface Order {
   deliveredAt: string | null;
   cancelledAt: string | null;
   cancelledReason: string | null;
+  // Invoice snapshot (SRI)
+  invoiceDocumentType: InvoiceDocumentType;
+  invoiceDocumentNumber: string | null;
+  invoiceFullName: string | null;
+  invoiceEmail: string | null;
+  invoiceAddress: string | null;
+  invoicePhone: string | null;
   createdAt: string;
   updatedAt: string;
   items: OrderItemResponse[];
@@ -1535,6 +1542,37 @@ export const api = {
         method: "POST",
         body: JSON.stringify(data),
       }).then(r => r.result),
+
+    getDefaultWithToken: (accessToken: string) =>
+      fetchApiWithToken<ResultResponse<DeliveryAddressApi | null>>(
+        "/delivery-addresses/default",
+        accessToken
+      ).then((r) => r.result),
+
+    getByIdWithToken: (id: string, accessToken: string) =>
+      fetchApiWithToken<ResultResponse<DeliveryAddressApi>>(
+        `/delivery-addresses/${id}`,
+        accessToken
+      ).then((r) => r.result),
+
+    updateWithToken: (id: string, data: UpdateDeliveryAddressRequest, accessToken: string) =>
+      fetchApiWithToken<ResultResponse<DeliveryAddressApi>>(
+        `/delivery-addresses/${id}`,
+        accessToken,
+        { method: "PATCH", body: JSON.stringify(data) }
+      ).then((r) => r.result),
+
+    deleteWithToken: (id: string, accessToken: string) =>
+      fetchApiWithToken<void>(`/delivery-addresses/${id}`, accessToken, {
+        method: "DELETE",
+      }),
+
+    setDefaultWithToken: (id: string, accessToken: string) =>
+      fetchApiWithToken<ResultResponse<DeliveryAddressApi>>(
+        `/delivery-addresses/${id}/default`,
+        accessToken,
+        { method: "PATCH" }
+      ).then((r) => r.result),
   },
 
   // User Invoice Profiles (SRI)

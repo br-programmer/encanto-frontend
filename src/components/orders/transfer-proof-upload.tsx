@@ -6,6 +6,10 @@ import { uploadTransferProofAction } from "@/actions/order-actions";
 import { formatPrice } from "@/lib/utils";
 import type { Order, BankAccount } from "@/lib/api";
 
+const MAX_UPLOAD_MB = 10;
+const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+
 interface TransferProofUploadProps {
   orderId: string;
   bankAccounts: BankAccount[];
@@ -27,8 +31,23 @@ export function TransferProofUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
+    // Client-side validations to avoid hitting the Server Action body limit
     setUploadError(null);
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setUploadError("Formato no válido. Sube una imagen (JPG, PNG, WebP) o PDF.");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+      setUploadError(
+        `El archivo pesa ${sizeMb} MB. El tamaño máximo permitido es ${MAX_UPLOAD_MB} MB. Reduce la imagen e intenta de nuevo.`
+      );
+      e.target.value = "";
+      return;
+    }
+
+    setIsUploading(true);
 
     try {
       const accessToken = (() => {

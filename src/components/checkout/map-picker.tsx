@@ -51,6 +51,10 @@ export function MapPicker({ latitude, longitude, onLocationChange, zones = [], s
   const [hasInteracted, setHasInteracted] = useState(false);
   const zoneFromMapRef = useRef(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // Dedup guard: last position we asked the backend to resolve to a zone.
+  // Prevents re-entry when our own onLocationChange round-trips the same coords.
+  const lastLookupKeyRef = useRef<string>("");
+  const findZoneRef = useRef<((lat: number, lng: number) => void) | null>(null);
 
   const drawDetectedZone = useCallback((zone: DeliveryZone) => {
     if (!mapRef.current) return;
@@ -161,7 +165,9 @@ export function MapPicker({ latitude, longitude, onLocationChange, zones = [], s
     mapRef.current = map;
     markerRef.current = marker;
 
-    // Initial zone lookup
+    // Initial zone lookup — record the key so the prop-change effect skips
+    // the same coords on the next render.
+    lastLookupKeyRef.current = `${latitude.toFixed(6)},${longitude.toFixed(6)}`;
     findZone(latitude, longitude);
 
     return () => {
@@ -172,13 +178,29 @@ export function MapPicker({ latitude, longitude, onLocationChange, zones = [], s
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update map position when props change (e.g. selecting a saved address)
+  // Keep a stable reference to findZone so the prop-change effect can call
+  // the latest version without listing it as a dep (which caused re-entry loops).
+  useEffect(() => {
+    findZoneRef.current = findZone;
+  }, [findZone]);
+
+  // Update map position when props change (e.g. selecting a saved address),
+  // and re-resolve the zone — dedup by coord key so the round-trip from our
+  // own onLocationChange doesn't re-trigger a lookup.
   useEffect(() => {
     if (!mapRef.current || !markerRef.current) return;
     const currentPos = markerRef.current.getLatLng();
-    if (Math.abs(currentPos.lat - latitude) > 0.0001 || Math.abs(currentPos.lng - longitude) > 0.0001) {
+    const movedMarker =
+      Math.abs(currentPos.lat - latitude) > 0.0001 ||
+      Math.abs(currentPos.lng - longitude) > 0.0001;
+    if (movedMarker) {
       markerRef.current.setLatLng([latitude, longitude]);
       mapRef.current.setView([latitude, longitude], mapRef.current.getZoom(), { animate: true });
+    }
+    const key = `${latitude.toFixed(6)},${longitude.toFixed(6)}`;
+    if (movedMarker && lastLookupKeyRef.current !== key) {
+      lastLookupKeyRef.current = key;
+      findZoneRef.current?.(latitude, longitude);
     }
   }, [latitude, longitude]);
 

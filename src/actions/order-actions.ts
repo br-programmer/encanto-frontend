@@ -1,6 +1,6 @@
 "use server";
 
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import type {
   Order,
   OrderListItem,
@@ -16,10 +16,29 @@ import type {
   PaymentMethod,
 } from "@/lib/api";
 
+function extractBackendMessage(err: unknown, fallback: string): string {
+  if (err instanceof ApiError) {
+    const data = err.data as { message?: string | string[] } | null;
+    if (data?.message) {
+      return Array.isArray(data.message) ? data.message.join(", ") : data.message;
+    }
+    return `${err.status} ${err.statusText}`;
+  }
+  return err instanceof Error ? err.message : fallback;
+}
+
 export async function previewOrderAction(
   data: PreviewOrderRequest
 ): Promise<OrderPreview> {
-  return api.orders.preview(data);
+  try {
+    return await api.orders.preview(data);
+  } catch (err) {
+    console.error("previewOrderAction failed:", {
+      payload: data,
+      apiError: err instanceof ApiError ? { status: err.status, body: err.data } : err,
+    });
+    throw new Error(extractBackendMessage(err, "Error al calcular el resumen del pedido"));
+  }
 }
 
 export async function estimateTimeAction(data: {
@@ -34,7 +53,15 @@ export async function createOrderAction(
   accessToken?: string,
   guestToken?: string
 ): Promise<Order> {
-  return api.orders.createWithTokens(data, accessToken, guestToken);
+  try {
+    return await api.orders.createWithTokens(data, accessToken, guestToken);
+  } catch (err) {
+    console.error("createOrderAction failed:", {
+      payload: data,
+      apiError: err instanceof ApiError ? { status: err.status, body: err.data } : err,
+    });
+    throw new Error(extractBackendMessage(err, "Error al procesar tu pedido"));
+  }
 }
 
 export async function getMyOrdersAction(
@@ -49,7 +76,17 @@ export async function getOrderByOrderNumberAction(
   accessToken?: string,
   guestToken?: string
 ): Promise<Order> {
-  return api.orders.getByOrderNumberWithTokens(orderNumber, accessToken, guestToken);
+  try {
+    return await api.orders.getByOrderNumberWithTokens(orderNumber, accessToken, guestToken);
+  } catch (err) {
+    console.error("getOrderByOrderNumberAction failed:", {
+      orderNumber,
+      hasAccessToken: !!accessToken,
+      hasGuestToken: !!guestToken,
+      apiError: err instanceof ApiError ? { status: err.status, body: err.data } : err,
+    });
+    throw err;
+  }
 }
 
 export async function cancelOrderAction(

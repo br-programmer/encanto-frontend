@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, Plus, Pencil, Trash2, Star, Loader2, X } from "lucide-react";
+import { FileText, Plus, Pencil, Trash2, Star, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/utils";
 import { validateDocumentByType, DOCUMENT_TYPE_LABELS } from "@/lib/ecuadorian-document";
 import {
@@ -192,12 +194,10 @@ export function InvoiceProfilesSection({
             </p>
           </div>
         </div>
-        {!showForm && (
-          <Button size="sm" onClick={handleAdd} className="flex-shrink-0">
-            <Plus className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Agregar</span>
-          </Button>
-        )}
+        <Button size="sm" onClick={handleAdd} className="flex-shrink-0">
+          <Plus className="h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">Agregar</span>
+        </Button>
       </div>
 
       {loadError && (
@@ -206,12 +206,33 @@ export function InvoiceProfilesSection({
         </div>
       )}
 
-      {showForm && (
-        <div className="mb-6 p-3 sm:p-4 bg-secondary/30 rounded-lg border border-border">
-          <h3 className="font-normal mb-4">
-            {editing ? "Editar perfil de facturación" : "Nuevo perfil de facturación"}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Modal
+        isOpen={showForm}
+        onClose={isSubmitting ? () => { /* block close while saving */ } : resetForm}
+        title={editing ? "Editar perfil de facturación" : "Nuevo perfil de facturación"}
+        size="lg"
+        closeOnOverlayClick={!isSubmitting}
+        footer={
+          <div className="flex flex-col sm:flex-row gap-3 justify-end">
+            <Button variant="outline" onClick={resetForm} disabled={isSubmitting}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Guardando...
+                </>
+              ) : editing ? (
+                "Guardar cambios"
+              ) : (
+                "Agregar perfil"
+              )}
+            </Button>
+          </div>
+        }
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-normal mb-2">Alias (opcional)</label>
               <Input
@@ -291,48 +312,27 @@ export function InvoiceProfilesSection({
 
             <div>
               <label className="block text-sm font-normal mb-2">Teléfono (opcional)</label>
-              <Input
+              <PhoneInput
                 value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="+593..."
+                onChange={(val) => setForm({ ...form, phone: val })}
               />
             </div>
 
-            <div className="md:col-span-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <Checkbox
-                  checked={form.isDefault}
-                  onCheckedChange={(c) => setForm({ ...form, isDefault: c === true })}
-                />
-                <span className="text-sm">Usar como perfil predeterminado</span>
-              </label>
-            </div>
-          </div>
-
-          {formError && (
-            <p className="mt-3 text-sm text-destructive">{formError}</p>
-          )}
-
-          <div className="flex flex-col sm:flex-row gap-3 mt-4">
-            <Button onClick={handleSubmit} disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Guardando...
-                </>
-              ) : editing ? (
-                "Guardar cambios"
-              ) : (
-                "Agregar perfil"
-              )}
-            </Button>
-            <Button variant="outline" onClick={resetForm} disabled={isSubmitting}>
-              <X className="h-4 w-4 mr-1" />
-              Cancelar
-            </Button>
+          <div className="md:col-span-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={form.isDefault}
+                onCheckedChange={(c) => setForm({ ...form, isDefault: c === true })}
+              />
+              <span className="text-sm">Usar como perfil predeterminado</span>
+            </label>
           </div>
         </div>
-      )}
+
+        {formError && (
+          <p className="mt-3 text-sm text-destructive">{formError}</p>
+        )}
+      </Modal>
 
       {isLoading ? (
         <div className="space-y-4">

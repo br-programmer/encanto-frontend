@@ -15,7 +15,6 @@ import { AuthModal } from "@/components/auth-modal";
 import { PhoneInput, normalizePhoneValue } from "@/components/ui/phone-input";
 import { useCartStore } from "@/stores/cart-store";
 import { useAuthStore } from "@/stores/auth-store";
-import { useAddressesStore, type DeliveryAddress } from "@/stores/addresses-store";
 import { useSpecialDatesStore } from "@/stores/special-dates-store";
 import { useCheckoutData } from "@/hooks/use-checkout-data";
 import { StepGuestInfo } from "./steps/step-guest-info";
@@ -30,7 +29,19 @@ import {
   getInvoiceProfilesAction,
   createInvoiceProfileAction,
 } from "@/actions/invoice-profile-actions";
-import type { Order, OrderPreview, BankAccount, DeliveryZone, FulfillmentType, UserInvoiceProfile } from "@/lib/api";
+import {
+  getDeliveryAddressesAction,
+  createDeliveryAddressAction,
+} from "@/actions/address-actions";
+import type {
+  Order,
+  OrderPreview,
+  BankAccount,
+  DeliveryZone,
+  FulfillmentType,
+  UserInvoiceProfile,
+  DeliveryAddressApi,
+} from "@/lib/api";
 import { validateDocumentByType } from "@/lib/ecuadorian-document";
 import { cn, formatPrice } from "@/lib/utils";
 
@@ -167,6 +178,7 @@ export function CheckoutForm() {
   const previewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [addOnsModalProductId, setAddOnsModalProductId] = useState<string | null>(null);
   const [invoiceProfiles, setInvoiceProfiles] = useState<UserInvoiceProfile[]>([]);
+  const [isLoadingInvoiceProfiles, setIsLoadingInvoiceProfiles] = useState(false);
   const [billing, setBilling] = useState<BillingFormState>({
     invoiceProfileId: "",
     documentType: "cedula",
@@ -180,7 +192,8 @@ export function CheckoutForm() {
 
   const { items, totalPrice, clearCart, updateItemCardMessage, updateItemAddOns } = useCartStore();
   const { user, tokens, logout } = useAuthStore();
-  const { addresses, addAddress, getDefaultAddress } = useAddressesStore();
+  const [addresses, setAddresses] = useState<DeliveryAddressApi[]>([]);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
   const fetchSpecialDatesStore = useSpecialDatesStore((s) => s.fetch);
   const getSpecialDateById = useSpecialDatesStore((s) => s.getById);
 
@@ -190,15 +203,18 @@ export function CheckoutForm() {
 
   // Load invoice profiles when logged in; pre-fill billing with default profile
   useEffect(() => {
-    const accessToken = tokens?.accessToken;
-    if (!accessToken) {
+    if (!tokens?.accessToken) {
       setInvoiceProfiles([]);
+      setIsLoadingInvoiceProfiles(false);
       return;
     }
     let cancelled = false;
+    setIsLoadingInvoiceProfiles(true);
     (async () => {
       try {
-        const res = await getInvoiceProfilesAction(accessToken, { limit: 50 });
+        const validToken = await useAuthStore.getState().getValidAccessToken();
+        if (cancelled || !validToken) return;
+        const res = await getInvoiceProfilesAction(validToken, { limit: 50 });
         if (cancelled) return;
         setInvoiceProfiles(res.result);
         const def = res.result.find((p) => p.isDefault) || res.result[0];
@@ -215,6 +231,9 @@ export function CheckoutForm() {
           }));
         }
       } catch { /* ignore */ }
+      finally {
+        if (!cancelled) setIsLoadingInvoiceProfiles(false);
+      }
     })();
     return () => { cancelled = true; };
   }, [tokens?.accessToken]);
@@ -259,7 +278,16 @@ export function CheckoutForm() {
     return null;
   })();
 
-  // Mount + restore
+  // Cart-campaign restriction: if all items belong to one campaign (no regulars),
+  // lock the date picker to that campaign's range.
+  const cartCampaign = (() => {
+    if (items.length === 0) return null;
+    const ids = Array.from(new Set(items.map((it) => it.product.specialDateId)));
+    if (ids.length !== 1) return null;
+    const onlyId = ids[0];
+    if (!onlyId) return null;
+    return getSpecialDateById(onlyId);
+  })();
   useEffect(() => {
     setMounted(true);
     const saved = getSavedFormData();
@@ -293,19 +321,54 @@ export function CheckoutForm() {
         senderEmail: p.senderEmail || user.email,
         senderPhone: p.senderPhone || user.phone,
       }));
-      const defaultAddress = getDefaultAddress();
-      if (defaultAddress) {
-        setFormData((p) => ({
-          ...p,
-          recipientName: defaultAddress.recipientName,
-          recipientPhone: defaultAddress.recipientPhone,
-          address: defaultAddress.address,
-          deliveryReference: defaultAddress.notes || "",
-        }));
-        setSelectedAddressId(defaultAddress.id);
-      }
     }
-  }, [mounted, user, getDefaultAddress]);
+  }, [mounted, user]);
+
+  // Load saved addresses from BE for logged-in users, pre-fill with default
+  useEffect(() => {
+    if (!mounted || !tokens?.accessToken) {
+      setAddresses([]);
+      setIsLoadingAddresses(false);
+      return;
+    }
+    let cancelled = false;
+    setIsLoadingAddresses(true);
+    (async () => {
+      try {
+        const validToken = await useAuthStore.getState().getValidAccessToken();
+        if (cancelled || !validToken) return;
+        const res = await getDeliveryAddressesAction(validToken, { limit: 50 });
+        if (cancelled) return;
+        setAddresses(res.result);
+        const def = res.result.find((a) => a.isDefault) || res.result[0];
+        if (def) {
+          // Only pre-fill when the form is pristine (no in-progress data from
+          // sessionStorage restore or manual input). recipientName is the
+          // flag: empty = fresh form; filled = user or session already has data.
+          setFormData((p) => {
+            if (p.recipientName) return p;
+            return {
+              ...p,
+              recipientName: def.recipientName,
+              recipientPhone: def.recipientPhone,
+              address: def.address,
+              deliveryReference: def.reference || "",
+              latitude: parseFloat(def.latitude),
+              longitude: parseFloat(def.longitude),
+              // Pre-seed zoneId if available on the saved address so the map
+              // can draw the polygon without an extra lookup round-trip.
+              ...(def.zoneId ? { deliveryZoneId: def.zoneId } : {}),
+            };
+          });
+          setSelectedAddressId((prev) => prev ?? def.id);
+        }
+      } catch { /* ignore */ }
+      finally {
+        if (!cancelled) setIsLoadingAddresses(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [mounted, tokens?.accessToken]);
 
   // Redirect if cart empty
   useEffect(() => {
@@ -430,9 +493,17 @@ export function CheckoutForm() {
 
   const handlePhoneChange = (name: string, value: string) => setFormData((p) => ({ ...p, [name]: value }));
 
-  const handleSelectAddress = (address: DeliveryAddress) => {
+  const handleSelectAddress = (address: DeliveryAddressApi) => {
     setSelectedAddressId(address.id);
-    setFormData((p) => ({ ...p, recipientName: address.recipientName, recipientPhone: address.recipientPhone, address: address.address, deliveryReference: address.notes || "", ...(address.latitude != null ? { latitude: address.latitude } : {}), ...(address.longitude != null ? { longitude: address.longitude } : {}) }));
+    setFormData((p) => ({
+      ...p,
+      recipientName: address.recipientName,
+      recipientPhone: address.recipientPhone,
+      address: address.address,
+      deliveryReference: address.reference || "",
+      latitude: parseFloat(address.latitude),
+      longitude: parseFloat(address.longitude),
+    }));
   };
 
   const handleNewAddress = () => {
@@ -443,11 +514,17 @@ export function CheckoutForm() {
 
   const getMinDeliveryDate = (): string => {
     const allQuickDelivery = items.length > 0 && items.every((item) => item.product.isQuickDelivery);
-    const minDays = allQuickDelivery ? 1 : (orderSettings?.minAdvanceDays ?? 2);
+    const campaignAdvance = cartCampaign?.requiresAdvanceDays ?? 0;
+    const baseMin = allQuickDelivery ? 1 : (orderSettings?.minAdvanceDays ?? 2);
+    const minDays = Math.max(baseMin, campaignAdvance);
     const date = new Date();
     date.setDate(date.getDate() + minDays);
-    return date.toISOString().split("T")[0];
+    const iso = date.toISOString().split("T")[0];
+    if (cartCampaign && iso < cartCampaign.startDate) return cartCampaign.startDate;
+    return iso;
   };
+
+  const getMaxDeliveryDate = (): string | undefined => cartCampaign?.endDate;
 
   const formatTimeSlot = (startTime: string, endTime: string, label: string | null): string => {
     const fmt = (t: string) => { const [h, m] = t.split(":"); const hour = parseInt(h); return `${hour > 12 ? hour - 12 : hour === 0 ? 12 : hour}:${m} ${hour >= 12 ? "PM" : "AM"}`; };
@@ -578,17 +655,22 @@ export function CheckoutForm() {
         ...(discountCode ? { discountCode } : {}),
         // Invoice (SRI)
         invoiceDocumentType: billing.documentType,
-        ...(billing.invoiceProfileId && billing.invoiceProfileId !== "new" && billing.invoiceProfileId !== "final_consumer"
+        ...(billing.documentType === "final_consumer"
+          ? {}
+          : {
+              invoiceDocumentNumber: billing.documentNumber.trim(),
+              invoiceFullName: billing.fullName.trim(),
+              invoiceEmail: billing.email.trim(),
+              ...(billing.address.trim() ? { invoiceAddress: billing.address.trim() } : {}),
+              ...(billing.phone.trim() ? { invoicePhone: billing.phone.trim() } : {}),
+            }),
+        // When using a saved profile, also send the ID so BE snapshots it.
+        // Fields above are still required by the BE DTO validator regardless.
+        ...(billing.invoiceProfileId &&
+        billing.invoiceProfileId !== "new" &&
+        billing.invoiceProfileId !== "final_consumer"
           ? { invoiceProfileId: billing.invoiceProfileId }
-          : billing.documentType === "final_consumer"
-            ? {}
-            : {
-                invoiceDocumentNumber: billing.documentNumber.trim(),
-                invoiceFullName: billing.fullName.trim(),
-                invoiceEmail: billing.email.trim(),
-                ...(billing.address.trim() ? { invoiceAddress: billing.address.trim() } : {}),
-                ...(billing.phone.trim() ? { invoicePhone: billing.phone.trim() } : {}),
-              }),
+          : {}),
       };
 
       let validAccessToken: string | undefined;
@@ -604,8 +686,22 @@ export function CheckoutForm() {
       const order = await createOrderAction(orderData, validAccessToken, guestToken);
       if (order.guestToken) localStorage.setItem("encanto-guest-token", order.guestToken);
 
-      if (saveAddress && !selectedAddressId && user) {
-        addAddress({ label: addressLabel, recipientName: formData.recipientName, recipientPhone: formData.recipientPhone, address: formData.address, city: selectedCity?.name || "", zone: zones.find((z) => z.id === formData.deliveryZoneId)?.zoneName || "", latitude: formData.latitude, longitude: formData.longitude, notes: formData.deliveryReference || undefined, isDefault: addresses.length === 0 });
+      if (saveAddress && !selectedAddressId && user && validAccessToken) {
+        createDeliveryAddressAction(
+          {
+            nickname: addressLabel,
+            recipientName: formData.recipientName,
+            recipientPhone: formData.recipientPhone,
+            address: formData.address,
+            city: selectedCity?.name || "",
+            ...(formData.deliveryZoneId ? { zoneId: formData.deliveryZoneId } : {}),
+            ...(formData.deliveryReference ? { reference: formData.deliveryReference } : {}),
+            latitude: formData.latitude,
+            longitude: formData.longitude,
+            isDefault: addresses.length === 0,
+          },
+          validAccessToken
+        ).catch(() => { /* non-critical */ });
       }
 
       setCreatedOrder(order); clearCart(); clearSavedFormData();
@@ -663,7 +759,7 @@ export function CheckoutForm() {
   const handleNewOrder = () => { setIsSubmitted(false); setCreatedOrder(null); setFormData(initialFormData); clearSavedFormData(); setCurrentStep(1); setCompletedSteps([]); router.push("/productos"); };
 
   // Loading
-  if (!mounted || isLoadingCheckoutData) {
+  if (!mounted || isLoadingCheckoutData || isLoadingAddresses || isLoadingInvoiceProfiles) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
@@ -815,7 +911,7 @@ export function CheckoutForm() {
                       : null
                 }
                 invalidCartItemIds={invalidCartItemIds}
-                minDeliveryDate={getMinDeliveryDate()} formatTimeSlot={formatTimeSlot} isPickup={isPickup} user={user}
+                minDeliveryDate={getMinDeliveryDate()} maxDeliveryDate={getMaxDeliveryDate()} formatTimeSlot={formatTimeSlot} isPickup={isPickup} user={user}
                 items={items} onUpdateCardMessage={updateItemCardMessage} onOpenAddOns={setAddOnsModalProductId} availableAddOns={availableAddOns}
                 error={error} onNext={handleNext} onBack={handleBack}
               />

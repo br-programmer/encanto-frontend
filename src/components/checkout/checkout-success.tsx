@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Check, Package, ArrowRight, Upload, Loader2, Building2, Copy, CheckCircle2, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, formatPhone } from "@/lib/utils";
 import { BUSINESS } from "@/lib/constants";
 import { uploadTransferProofAction } from "@/actions/order-actions";
 import type { Order, BankAccount, OrderSettings, DeliveryTimeSlot } from "@/lib/api";
@@ -144,7 +144,7 @@ export function CheckoutSuccess({
               {order.recipientPhone && (
                 <div>
                   <p className="text-foreground-secondary">Teléfono</p>
-                  <p className="font-normal">{order.recipientPhone}</p>
+                  <p className="font-normal">{formatPhone(order.recipientPhone)}</p>
                 </div>
               )}
               {order.fulfillmentType !== "pickup" && order.deliveryAddress && (
