@@ -1,12 +1,23 @@
 "use server";
 
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import type {
   ServiceOffer,
   AcceptServiceOffer,
   AcceptOfferResponse,
   PaginatedResponse,
 } from "@/lib/api";
+
+function extractBackendMessage(err: unknown, fallback: string): string {
+  if (err instanceof ApiError) {
+    const data = err.data as { message?: string | string[] } | null;
+    if (data?.message) {
+      return Array.isArray(data.message) ? data.message.join(", ") : data.message;
+    }
+    return `${err.status} ${err.statusText}`;
+  }
+  return err instanceof Error ? err.message : fallback;
+}
 
 export async function getServiceOfferAction(
   offerNumber: string,
@@ -22,7 +33,18 @@ export async function acceptServiceOfferAction(
   accessToken?: string,
   guestToken?: string
 ): Promise<AcceptOfferResponse> {
-  return api.serviceOffers.acceptWithToken(id, data, accessToken, guestToken);
+  try {
+    return await api.serviceOffers.acceptWithToken(id, data, accessToken, guestToken);
+  } catch (err) {
+    console.error("acceptServiceOfferAction failed:", {
+      id,
+      payload: data,
+      hasAccessToken: !!accessToken,
+      hasGuestToken: !!guestToken,
+      apiError: err instanceof ApiError ? { status: err.status, body: err.data } : err,
+    });
+    throw new Error(extractBackendMessage(err, "Error al aceptar la propuesta"));
+  }
 }
 
 export async function rejectServiceOfferAction(
@@ -30,7 +52,17 @@ export async function rejectServiceOfferAction(
   accessToken?: string,
   guestToken?: string
 ): Promise<{ rejected: boolean; offerNumber: string }> {
-  return api.serviceOffers.rejectWithToken(id, accessToken, guestToken);
+  try {
+    return await api.serviceOffers.rejectWithToken(id, accessToken, guestToken);
+  } catch (err) {
+    console.error("rejectServiceOfferAction failed:", {
+      id,
+      hasAccessToken: !!accessToken,
+      hasGuestToken: !!guestToken,
+      apiError: err instanceof ApiError ? { status: err.status, body: err.data } : err,
+    });
+    throw new Error(extractBackendMessage(err, "Error al rechazar la propuesta"));
+  }
 }
 
 export async function getMyServiceOffersAction(

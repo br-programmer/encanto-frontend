@@ -57,6 +57,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   const [paypalModalOpen, setPaypalModalOpen] = useState(false);
   const actionRef = useRef<HTMLDivElement>(null);
 
+  const isLoggedIn = useAuthStore((s) => !!s.user);
   const urlToken = searchParams.get("token");
 
   useEffect(() => {
@@ -391,16 +392,18 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
 
   return (
     <div className="py-8">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/pedidos">
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Mis pedidos
-            </Link>
-          </Button>
+      {isLoggedIn && (
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-4 mb-8">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/pedidos">
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Mis pedidos
+              </Link>
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
         {/* Header */}

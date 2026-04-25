@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Loader2, FileText, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Loader2, FileText, CheckCircle2, XCircle, Clock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
@@ -36,7 +36,6 @@ const PAYMENT_LABELS: Record<string, string> = {
 export default function OfferDetailPage({ params }: { params: Promise<{ offerNumber: string }> }) {
   const { offerNumber } = use(params);
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { addToast } = useToast();
 
   const [offer, setOffer] = useState<ServiceOffer | null>(null);
@@ -45,6 +44,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bank_transfer");
   const [isAccepting, setIsAccepting] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
+  const [acceptance, setAcceptance] = useState<{ orderNumber: string; email: string } | null>(null);
   const tokens = useAuthStore((s) => s.tokens);
   const accessToken = tokens?.accessToken;
 
@@ -85,14 +85,12 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
     try {
       const guestToken = getGuestToken();
       const result = await acceptServiceOfferAction(offer.id, { paymentMethod }, accessToken ?? undefined, guestToken);
-      addToast("Propuesta aceptada. Redirigiendo al pedido...", "success");
-      // For guests, pass the offer token to the order page
-      if (!accessToken && guestToken) {
+      if (guestToken) {
         localStorage.setItem("encanto-guest-token", guestToken);
-        router.push(`/pedidos/${result.orderNumber}?token=${guestToken}`);
-      } else {
-        router.push(`/pedidos/${result.orderNumber}`);
       }
+      setAcceptance({ orderNumber: result.orderNumber, email: offer.clientEmail });
+      setOffer((prev) => (prev ? { ...prev, status: "order_created", orderId: result.orderId } : prev));
+      addToast("Propuesta aceptada", "success");
     } catch (err) {
       addToast(err instanceof Error ? err.message : "Error al aceptar la propuesta", "error");
     } finally {
@@ -152,6 +150,57 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
           <Button variant="ghost" asChild>
             <Link href="/">Volver al inicio</Link>
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (acceptance) {
+    const paymentLabel = PAYMENT_LABELS[paymentMethod] || paymentMethod;
+    return (
+      <div className="mx-auto max-w-xl px-4 sm:px-6 py-12 sm:py-16">
+        <div className="bg-background rounded-xl border border-border p-8 text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="h-8 w-8 text-green-600" />
+          </div>
+          <h1 className="text-2xl font-semibold mb-2">Propuesta aceptada</h1>
+          <p className="text-foreground-secondary mb-6">
+            Hemos creado la orden{" "}
+            <span className="font-medium text-foreground">{acceptance.orderNumber}</span>.
+          </p>
+
+          <div className="bg-secondary/30 border border-border rounded-lg p-4 text-left mb-6">
+            <div className="flex items-start gap-3">
+              <Mail className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-normal mb-1">Revisa tu correo</p>
+                <p className="text-foreground-secondary">
+                  Enviaremos los detalles de la orden y las instrucciones de pago por{" "}
+                  <span className="font-medium">{paymentLabel.toLowerCase()}</span> a{" "}
+                  <span className="font-medium break-all">{acceptance.email}</span>.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-sm text-foreground-secondary mb-6">
+            Si tienes alguna consulta, contáctanos por WhatsApp.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button asChild>
+              <Link href="/">Volver al inicio</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <a
+                href={BUSINESS.whatsapp.url(`Hola! Acabo de aceptar la propuesta ${offer.offerNumber}`)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Contactar por WhatsApp
+              </a>
+            </Button>
+          </div>
         </div>
       </div>
     );
