@@ -117,9 +117,25 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
       } catch (err) {
         if (cancelled) return;
         if (err instanceof Error) {
-          if (err.message.includes("404")) setError("not_found");
-          else if (err.message.includes("403") || err.message.includes("401")) setError("no_access");
-          else setError("generic");
+          const msg = err.message.toLowerCase();
+          const tokenIssue =
+            err.message.startsWith("[401]") ||
+            msg.includes("invalidguesttoken") ||
+            msg.includes("token de acceso") ||
+            msg.includes("token de invitado") ||
+            msg.includes("expirado");
+          if (tokenIssue) {
+            try {
+              localStorage.removeItem("encanto-service-offer-token");
+            } catch { /* ignore */ }
+            setError("expired_token");
+          } else if (err.message.includes("404")) {
+            setError("not_found");
+          } else if (err.message.includes("403") || err.message.includes("401")) {
+            setError("no_access");
+          } else {
+            setError("generic");
+          }
         } else {
           setError("generic");
         }
@@ -261,21 +277,39 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
               ...(billing.phone.trim() ? { invoicePhone: billing.phone.trim() } : {}),
             };
 
+      // invoiceProfileId only works when the offer is tied to the logged-in
+      // user (offer.userId !== null AND matches the JWT). For guest-owned
+      // offers, fall back to sending the snapshot fields explicitly — the
+      // billing state already has them filled from the selected profile, so
+      // the resulting order has the same data either way.
+      const offerOwnedByUser = !!offer.userId;
+      const useProfileId = isUsingSavedProfile && offerOwnedByUser;
+      // For an authenticated request with profileId we drop the guest token
+      // so the BE doesn't downgrade to guest mode. For guest offers we keep
+      // the guest token (it is the only valid identity).
+      const effectiveGuestToken = useProfileId ? undefined : guestToken;
+
       const result = await acceptServiceOfferAction(
         offer.id,
         {
           paymentMethod,
           ...invoicePayload,
-          ...(isUsingSavedProfile ? { invoiceProfileId: billing.invoiceProfileId } : {}),
+          ...(useProfileId ? { invoiceProfileId: billing.invoiceProfileId } : {}),
         },
         accessToken ?? undefined,
-        guestToken
+        effectiveGuestToken
       );
-      if (guestToken) {
-        localStorage.setItem("encanto-guest-token", guestToken);
+      // BE always returns a fresh order-scoped guest token. Persist it so
+      // email links and the order detail page can authenticate as guest
+      // (parallel to the JWT for logged-in users).
+      const orderGuestToken = result.guestToken;
+      const newOrderNumber = result.order?.orderNumber ?? result.orderNumber ?? "";
+      const newOrderId = result.order?.id ?? result.orderId;
+      if (orderGuestToken) {
+        localStorage.setItem("encanto-guest-token", orderGuestToken);
       }
-      setAcceptance({ orderNumber: result.orderNumber, email: offer.clientEmail });
-      setOffer((prev) => (prev ? { ...prev, status: "order_created", orderId: result.orderId } : prev));
+      setAcceptance({ orderNumber: newOrderNumber, email: offer.clientEmail });
+      setOffer((prev) => (prev ? { ...prev, status: "order_created", orderId: newOrderId ?? null } : prev));
       addToast("Propuesta aceptada", "success");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error al aceptar la propuesta";
@@ -319,23 +353,40 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
   }
 
   if (error || !offer) {
+    const isExpired = error === "expired_token";
+    const title =
+      error === "not_found"
+        ? "Propuesta no encontrada"
+        : isExpired
+          ? "El enlace expiró"
+          : error === "no_access"
+            ? "Enlace no válido"
+            : "Algo salió mal";
+    const message =
+      error === "not_found"
+        ? "No pudimos encontrar esta propuesta. Verifica el enlace o contacta con nosotros."
+        : isExpired
+          ? "Este enlace solo es válido por unos días. Pídenos uno nuevo por WhatsApp y con gusto te lo enviamos."
+          : error === "no_access"
+            ? "El enlace para ver esta propuesta no es válido. Revisa tu correo para obtener el enlace original o contáctanos por WhatsApp."
+            : "No pudimos cargar la propuesta en este momento. Intenta de nuevo más tarde.";
+    const whatsappMsg = isExpired
+      ? `Hola! El enlace para ver la propuesta ${offerNumber} expiró, ¿pueden enviarme uno nuevo?`
+      : `Hola! No puedo acceder a la propuesta ${offerNumber}`;
+
     return (
       <div className="mx-auto max-w-3xl px-4 sm:px-6 py-16 text-center">
-        <FileText className="h-12 w-12 text-foreground-muted mx-auto mb-4" />
-        <h1 className="text-2xl font-semibold mb-2">
-          {error === "not_found" ? "Propuesta no encontrada" : error === "no_access" ? "Enlace expirado o no válido" : "Algo salió mal"}
-        </h1>
-        <p className="text-foreground-secondary mb-6">
-          {error === "not_found"
-            ? "No pudimos encontrar esta propuesta. Verifica el enlace o contacta con nosotros."
-            : error === "no_access"
-            ? "El enlace para ver esta propuesta ha expirado o no es válido. Revisa tu correo para obtener el enlace original o contáctanos por WhatsApp."
-            : "No pudimos cargar la propuesta en este momento. Intenta de nuevo más tarde."}
-        </p>
+        {isExpired ? (
+          <Clock className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+        ) : (
+          <FileText className="h-12 w-12 text-foreground-muted mx-auto mb-4" />
+        )}
+        <h1 className="text-2xl font-semibold mb-2">{title}</h1>
+        <p className="text-foreground-secondary mb-6">{message}</p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Button variant="outline" asChild>
             <a
-              href={BUSINESS.whatsapp.url(`Hola! No puedo acceder a la propuesta ${offerNumber}`)}
+              href={BUSINESS.whatsapp.url(whatsappMsg)}
               target="_blank"
               rel="noopener noreferrer"
             >

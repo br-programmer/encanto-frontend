@@ -61,14 +61,17 @@ export function CheckoutSuccess({
     setUploadError(null);
 
     try {
-      const accessToken = (() => {
+      const guestToken = localStorage.getItem("encanto-guest-token") || undefined;
+      const rawAccessToken = (() => {
         try {
           const tokens = localStorage.getItem("encanto-tokens");
-          if (tokens) return JSON.parse(tokens).accessToken;
+          if (tokens) return JSON.parse(tokens).accessToken as string | undefined;
         } catch { /* ignore */ }
         return undefined;
       })();
-      const guestToken = localStorage.getItem("encanto-guest-token") || undefined;
+      // Guest-owned orders (order.userId === null) MUST authenticate via the
+      // guest token only (see TransferProofUpload component).
+      const accessToken = order.userId === null ? undefined : rawAccessToken;
 
       const formData = new FormData();
       formData.append("file", file);
