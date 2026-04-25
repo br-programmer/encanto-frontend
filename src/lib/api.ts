@@ -403,7 +403,12 @@ export interface OrderSettings {
 }
 
 // Invoice / SRI
-export type InvoiceDocumentType = "cedula" | "ruc" | "pasaporte" | "final_consumer";
+export type InvoiceDocumentType =
+  | "cedula"
+  | "ruc"
+  | "pasaporte"
+  | "identificacion_exterior"
+  | "final_consumer";
 
 export interface UserInvoiceProfile {
   id: string;
@@ -586,6 +591,16 @@ export interface ServiceOffer {
 
 export interface AcceptServiceOffer {
   paymentMethod: PaymentMethod;
+  // Invoice (SRI). Same shape as CreateOrderRequest. All fields optional;
+  // backend defaults to final_consumer when omitted (only valid below the
+  // finalConsumerLimitCents threshold).
+  invoiceProfileId?: string;
+  invoiceDocumentType?: InvoiceDocumentType;
+  invoiceDocumentNumber?: string;
+  invoiceFullName?: string;
+  invoiceEmail?: string;
+  invoiceAddress?: string;
+  invoicePhone?: string;
 }
 
 export interface AcceptOfferResponse {

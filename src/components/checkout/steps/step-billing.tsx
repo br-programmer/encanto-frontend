@@ -5,9 +5,9 @@ import { FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { DOCUMENT_TYPE_LABELS } from "@/lib/ecuadorian-document";
+import { DOCUMENT_TYPE_LABELS, EC_DOC_TYPES, FOREIGN_DOC_TYPES } from "@/lib/ecuadorian-document";
 import { formatPrice, formatPhone } from "@/lib/utils";
 import type { InvoiceDocumentType, UserInvoiceProfile } from "@/lib/api";
 
@@ -34,7 +34,7 @@ interface StepBillingProps {
   onBack: () => void;
 }
 
-type DocType = "cedula" | "ruc" | "pasaporte";
+type DocType = "cedula" | "ruc" | "pasaporte" | "identificacion_exterior";
 
 export function StepBilling({
   billing,
@@ -190,11 +190,26 @@ export function StepBilling({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(["cedula", "ruc", "pasaporte"] as DocType[]).map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {DOCUMENT_TYPE_LABELS[t]}
-                  </SelectItem>
-                ))}
+                <SelectGroup>
+                  <SelectLabel className="text-xs text-foreground-muted uppercase tracking-wide pl-2">
+                    Ecuador
+                  </SelectLabel>
+                  {EC_DOC_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {DOCUMENT_TYPE_LABELS[t]}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel className="text-xs text-foreground-muted uppercase tracking-wide pl-2">
+                    Otros
+                  </SelectLabel>
+                  {FOREIGN_DOC_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {DOCUMENT_TYPE_LABELS[t]}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
@@ -211,9 +226,16 @@ export function StepBilling({
                   ? "1712345678"
                   : billing.documentType === "ruc"
                     ? "1712345678001"
-                    : "A1234567"
+                    : billing.documentType === "identificacion_exterior"
+                      ? "DNI / NIE / driver's license"
+                      : "A1234567"
               }
             />
+            {billing.documentType === "identificacion_exterior" && (
+              <p className="text-xs text-foreground-muted mt-1">
+                5–20 caracteres alfanuméricos, espacios y guiones.
+              </p>
+            )}
           </div>
 
           <div className="sm:col-span-2">

@@ -785,6 +785,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                       cedula: "Cédula",
                       ruc: "RUC",
                       pasaporte: "Pasaporte",
+                      identificacion_exterior: "Documento del exterior",
                       final_consumer: "Consumidor final",
                     }[order.invoiceDocumentType]
                   }
