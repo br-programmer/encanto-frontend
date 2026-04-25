@@ -19,19 +19,21 @@ export default function NosotrosPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
+              <p className="text-sm uppercase tracking-wider text-primary mb-3">
+                Nuestra historia
+              </p>
               <h1 className="text-4xl lg:text-5xl font-serif mb-6">
-                Nuestra Historia
+                Una historia que empezó con una idea diferente
               </h1>
               <p className="text-lg text-foreground-secondary mb-6 leading-relaxed">
-                Encanto Floristería nació de una pasión profunda por las flores y el deseo
-                de llevar alegría a cada hogar en Manta. Desde nuestros inicios, nos hemos
-                dedicado a crear arreglos florales únicos que transmiten emociones y
-                celebran los momentos más especiales de la vida.
+                Hace casi tres años empezamos buscando hacer algo distinto al resto.
+                Sin técnicas, sin experiencia y con mucha curiosidad — solo videos
+                de internet, inspiración de Pinterest y unas ganas enormes de crear.
               </p>
               <p className="text-lg text-foreground-secondary mb-8 leading-relaxed">
-                Cada ramo que creamos cuenta una historia. Seleccionamos cuidadosamente
-                las flores más frescas y combinamos colores, texturas y aromas para
-                crear obras de arte naturales que encantan a quienes las reciben.
+                Hoy, cada arreglo que sale de nuestro taller lleva años de práctica,
+                aprendizaje y mucha confianza ganada con cada cliente que decidió
+                creer en nosotros desde el principio.
               </p>
               <Button size="lg" asChild>
                 <Link href="/productos">Ver nuestros productos</Link>
@@ -46,6 +48,74 @@ export default function NosotrosPage() {
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Story timeline */}
+      <section className="py-16 bg-warm-white">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 space-y-12">
+          <div>
+            <h2 className="text-2xl font-serif mb-4">Los primeros intentos</h2>
+            <p className="text-foreground-secondary leading-relaxed">
+              Todo empezó queriendo hacer ramos con frutas, porque era algo que
+              nadie hacía. La realidad fue que era muy complicado, había mucha
+              pérdida y todavía no teníamos la técnica. Pero a pesar de las
+              críticas, seguimos.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-serif mb-4">Encontrando el camino</h2>
+            <p className="text-foreground-secondary leading-relaxed">
+              Un día fuimos al centro a buscar rosas y, casi por casualidad, una
+              señora nos contó cuándo llegaba el distribuidor. Volvimos al día
+              siguiente, compramos nuestras primeras rosas y nos pusimos a
+              armar un ramo enorme con la guía de una tía. Ese ramo aún le
+              faltaba técnica, pero para nosotros era el comienzo.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-serif mb-4">El detalle innovador</h2>
+            <p className="text-foreground-secondary leading-relaxed">
+              Quisimos sumar flores dentro de globo, un detalle que nos parecía
+              precioso pero que nadie nos podía enseñar. Mi mamá se tomó meses
+              en perfeccionar la técnica. El día que se fue de Manta me enseñó
+              todo lo que sabía, y de los primeros prototipos —algunos
+              dañados— salió finalmente nuestro primer globo perfecto.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-serif mb-4">Llegando a Manta</h2>
+            <p className="text-foreground-secondary leading-relaxed">
+              Las primeras semanas fueron lentas, con pocas ventas y deudas
+              que pagar. Hasta que llegó el primer pedido grande: 50 rosas en
+              forma de corazón, más grandes de lo que habíamos hecho nunca.
+              Pasamos toda la noche armándolo, rosa por rosa, y el resultado
+              fue justo lo que el cliente buscaba.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-serif mb-4">Creciendo con cada cliente</h2>
+            <p className="text-foreground-secondary leading-relaxed">
+              Cada pedido nuevo nos llevó a probar diseños que nunca habíamos
+              hecho. Confiar en nosotros cuando solo teníamos una foto de
+              referencia nos enseñó que con dedicación y mucho trabajo, sí se
+              podía. Hoy seguimos creando con esa misma energía: detalles
+              pensados con cariño, hechos a tiempo y siempre con flores frescas.
+            </p>
+          </div>
+
+          <div className="border-t border-border pt-8">
+            <p className="text-foreground-secondary leading-relaxed italic">
+              Gracias a cada persona que nos ha apoyado, motivado y confiado en
+              nosotros estos años: a nuestra familia, amigos, clientes y a ti
+              que nos conoces a través de redes. Sin ustedes, Encanto no
+              existiría.
+            </p>
           </div>
         </div>
       </section>
