@@ -94,16 +94,25 @@ export function ServiceRequestForm({ services }: ServiceRequestFormProps) {
     }
 
     try {
-      const result = await submitServiceRequestAction({
-        fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone || undefined,
-        serviceId: formData.serviceId || undefined,
-        eventDate: formData.eventDate || undefined,
-        isFlexibleDate: formData.isFlexibleDate || undefined,
-        estimatedGuests: formData.estimatedGuests ? parseInt(formData.estimatedGuests) : undefined,
-        message: formData.message,
-      });
+      // Send the JWT when the user is logged in so the BE links the request
+      // to their userId. Without this, the request is created as guest
+      // (userId=null) and never appears in "Mis Solicitudes".
+      const accessToken = user
+        ? await useAuthStore.getState().getValidAccessToken()
+        : undefined;
+      const result = await submitServiceRequestAction(
+        {
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone || undefined,
+          serviceId: formData.serviceId || undefined,
+          eventDate: formData.eventDate || undefined,
+          isFlexibleDate: formData.isFlexibleDate || undefined,
+          estimatedGuests: formData.estimatedGuests ? parseInt(formData.estimatedGuests) : undefined,
+          message: formData.message,
+        },
+        accessToken,
+      );
 
       if (!result.success) {
         setError(result.error);

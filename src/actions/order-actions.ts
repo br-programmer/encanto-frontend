@@ -85,6 +85,12 @@ export async function getOrderByOrderNumberAction(
       hasGuestToken: !!guestToken,
       apiError: err instanceof ApiError ? { status: err.status, body: err.data } : err,
     });
+    if (err instanceof ApiError) {
+      // Encode status into the message so the client page can distinguish
+      // 401 (invalid/expired token) from 403 (forbidden) from 404 (not found).
+      const beMsg = extractBackendMessage(err, "Error al cargar el pedido");
+      throw new Error(`[${err.status}] ${beMsg}`);
+    }
     throw err;
   }
 }

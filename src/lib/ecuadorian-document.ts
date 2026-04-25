@@ -5,6 +5,9 @@ const CEDULA_LENGTH = 10;
 const RUC_LENGTH = 13;
 const PASSPORT_MIN = 6;
 const PASSPORT_MAX = 20;
+const FOREIGN_MIN = 5;
+const FOREIGN_MAX = 20;
+const FOREIGN_REGEX = /^[A-Za-z0-9\- ]+$/;
 
 export function isValidCedula(value: string): boolean {
   if (!/^\d{10}$/.test(value)) return false;
@@ -48,7 +51,14 @@ export function isValidPassport(value: string): boolean {
   return /^[A-Za-z0-9]+$/.test(trimmed);
 }
 
-export type DocType = "cedula" | "ruc" | "pasaporte";
+export function isValidForeignDocument(value: string): boolean {
+  if (!value) return false;
+  const trimmed = value.trim();
+  if (trimmed.length < FOREIGN_MIN || trimmed.length > FOREIGN_MAX) return false;
+  return FOREIGN_REGEX.test(trimmed);
+}
+
+export type DocType = "cedula" | "ruc" | "pasaporte" | "identificacion_exterior";
 
 export function validateDocumentByType(
   type: DocType,
@@ -71,6 +81,14 @@ export function validateDocumentByType(
       ? { valid: true }
       : { valid: false, error: "RUC inválido" };
   }
+  if (type === "identificacion_exterior") {
+    return isValidForeignDocument(value)
+      ? { valid: true }
+      : {
+          valid: false,
+          error: `El documento debe tener entre ${FOREIGN_MIN} y ${FOREIGN_MAX} caracteres alfanuméricos`,
+        };
+  }
   // pasaporte
   return isValidPassport(value)
     ? { valid: true }
@@ -81,4 +99,11 @@ export const DOCUMENT_TYPE_LABELS: Record<DocType, string> = {
   cedula: "Cédula",
   ruc: "RUC",
   pasaporte: "Pasaporte",
+  identificacion_exterior: "Documento del exterior",
 };
+
+/** Document types that go in the "Ecuador" group of the type selector */
+export const EC_DOC_TYPES: DocType[] = ["cedula", "ruc", "pasaporte"];
+
+/** Document types that go in the "Otros" group */
+export const FOREIGN_DOC_TYPES: DocType[] = ["identificacion_exterior"];

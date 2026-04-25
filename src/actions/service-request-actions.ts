@@ -4,10 +4,11 @@ import { api } from "@/lib/api";
 import type { CreateServiceRequest, ServiceRequest, PaginatedResponse } from "@/lib/api";
 
 export async function submitServiceRequestAction(
-  data: CreateServiceRequest
+  data: CreateServiceRequest,
+  accessToken?: string,
 ): Promise<{ success: true; guestToken?: string } | { success: false; error: string }> {
   try {
-    const response = await api.serviceRequests.create(data);
+    const response = await api.serviceRequests.create(data, accessToken);
     return { success: true, guestToken: response.guestToken };
   } catch (err: unknown) {
     const apiErr = err as { status?: number; data?: { message?: string } };

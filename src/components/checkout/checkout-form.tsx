@@ -592,7 +592,7 @@ export function CheckoutForm() {
         if (!billing.email.trim()) { setError("Ingresa el correo para la factura"); return false; }
         if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(billing.email.trim())) { setError("Correo de facturación inválido"); return false; }
         const docCheck = validateDocumentByType(
-          billing.documentType as "cedula" | "ruc" | "pasaporte",
+          billing.documentType as "cedula" | "ruc" | "pasaporte" | "identificacion_exterior",
           billing.documentNumber.trim()
         );
         if (!docCheck.valid) { setError(docCheck.error || "Documento inválido"); return false; }
@@ -716,7 +716,7 @@ export function CheckoutForm() {
       ) {
         createInvoiceProfileAction(
           {
-            documentType: billing.documentType as "cedula" | "ruc" | "pasaporte",
+            documentType: billing.documentType as "cedula" | "ruc" | "pasaporte" | "identificacion_exterior",
             documentNumber: billing.documentNumber.trim(),
             fullName: billing.fullName.trim(),
             email: billing.email.trim(),

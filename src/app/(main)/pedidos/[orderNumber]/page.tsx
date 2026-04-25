@@ -10,7 +10,7 @@ import { BUSINESS } from "@/lib/constants";
 import { TransferProofUpload } from "@/components/orders/transfer-proof-upload";
 import { PayPalProvider } from "@/components/checkout/paypal-provider";
 import { PayPalCheckoutModal } from "@/components/checkout/paypal-checkout";
-import { getOrderByOrderNumberAction, cancelOrderAction, getOrderPageDataAction } from "@/actions/order-actions";
+import { getOrderByOrderNumberAction, cancelOrderAction, getOrderPageDataAction, claimGuestOrdersAction } from "@/actions/order-actions";
 import { useAuthStore } from "@/stores/auth-store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice, formatPhone, cn } from "@/lib/utils";
@@ -91,7 +91,21 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
       } catch (err) {
         console.error("Error fetching order:", err);
         if (err instanceof Error) {
-          if (err.message.includes("404")) {
+          const msg = err.message.toLowerCase();
+          // Token-related 401 → guest link expired/invalid. Clean stale token
+          // so we don't retry with it on next visit.
+          const tokenIssue =
+            err.message.startsWith("[401]") ||
+            msg.includes("invalidguesttoken") ||
+            msg.includes("token de invitado") ||
+            msg.includes("token de acceso") ||
+            msg.includes("expirado");
+          if (tokenIssue) {
+            try {
+              localStorage.removeItem("encanto-guest-token");
+            } catch { /* ignore */ }
+            setError("expired_token");
+          } else if (err.message.includes("404")) {
             setError("not_found");
           } else if (err.message.includes("403")) {
             setError("no_access");
@@ -108,6 +122,42 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
 
     fetchData();
   }, [orderNumber, urlToken]);
+
+  // Auto-link guest orders to the logged-in user. The BE only lists orders
+  // in /orders/my when order.userId matches the JWT user, so a guest order
+  // (userId=null) never shows up in history even if the user later logs in.
+  // Call claim-guest-orders once when we detect this condition, then refetch
+  // so the order is shown as user-owned and future actions use the JWT path.
+  const claimedRef = useRef(false);
+  useEffect(() => {
+    if (claimedRef.current) return;
+    if (!order || order.userId !== null) return;
+    const user = useAuthStore.getState().user;
+    if (!user || !user.emailVerified) return;
+    if (
+      order.senderEmail &&
+      user.email &&
+      order.senderEmail.toLowerCase() !== user.email.toLowerCase()
+    ) {
+      return;
+    }
+    claimedRef.current = true;
+    (async () => {
+      try {
+        const accessToken = await useAuthStore.getState().getValidAccessToken();
+        if (!accessToken) return;
+        await claimGuestOrdersAction(accessToken);
+        // Refetch order so we pick up the new userId; future actions (cancel,
+        // upload proof, paypal) will then send only the JWT.
+        const refreshed = await getOrderByOrderNumberAction(
+          orderNumber,
+          accessToken,
+          undefined
+        );
+        setOrder(refreshed);
+      } catch { /* non-critical, silent */ }
+    })();
+  }, [order, orderNumber]);
 
   // Auto-scroll to action section when order has pending action
   useEffect(() => {
@@ -301,11 +351,36 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
   if (error || !order) {
     const isNoAccess = error === "no_access";
     const isNotFound = error === "not_found";
+    const isExpired = error === "expired_token";
 
     return (
       <div className="mx-auto max-w-3xl px-4 sm:px-6 py-16">
         <div className="max-w-md mx-auto text-center">
-          {isNoAccess ? (
+          {isExpired ? (
+            <>
+              <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+              <h1 className="text-2xl font-semibold mb-2">El enlace expiró</h1>
+              <p className="text-foreground-secondary mb-6">
+                Este enlace solo es válido por unos días. Si necesitas ver tu pedido,
+                inicia sesión con la cuenta que usaste para comprarlo o contáctanos
+                por WhatsApp para enviarte un nuevo enlace.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button asChild>
+                  <Link href="/">Iniciar sesión</Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <a
+                    href={BUSINESS.whatsapp.url(`Hola! El enlace para ver mi pedido ${orderNumber} expiró, ¿pueden enviarme uno nuevo?`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Contactar por WhatsApp
+                  </a>
+                </Button>
+              </div>
+            </>
+          ) : isNoAccess ? (
             <>
               <Package className="h-12 w-12 text-foreground-muted mx-auto mb-4" />
               <h1 className="text-2xl font-semibold mb-2">Pedido no disponible</h1>
@@ -785,6 +860,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                       cedula: "Cédula",
                       ruc: "RUC",
                       pasaporte: "Pasaporte",
+                      identificacion_exterior: "Documento del exterior",
                       final_consumer: "Consumidor final",
                     }[order.invoiceDocumentType]
                   }
@@ -824,6 +900,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
           <div ref={actionRef} className="mb-6">
             <TransferProofUpload
               orderId={order.id}
+              orderUserId={order.userId}
               bankAccounts={bankAccounts}
               totalCents={order.totalCents}
               onUploadSuccess={handleUploadSuccess}

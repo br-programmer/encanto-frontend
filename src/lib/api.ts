@@ -403,7 +403,12 @@ export interface OrderSettings {
 }
 
 // Invoice / SRI
-export type InvoiceDocumentType = "cedula" | "ruc" | "pasaporte" | "final_consumer";
+export type InvoiceDocumentType =
+  | "cedula"
+  | "ruc"
+  | "pasaporte"
+  | "identificacion_exterior"
+  | "final_consumer";
 
 export interface UserInvoiceProfile {
   id: string;
@@ -565,6 +570,7 @@ export interface ServiceOffer {
   id: string;
   offerNumber: string;
   serviceId: string | null;
+  userId: string | null;
   clientName: string;
   clientEmail: string;
   clientPhone: string | null;
@@ -586,15 +592,31 @@ export interface ServiceOffer {
 
 export interface AcceptServiceOffer {
   paymentMethod: PaymentMethod;
+  // Invoice (SRI). Same shape as CreateOrderRequest. All fields optional;
+  // backend defaults to final_consumer when omitted (only valid below the
+  // finalConsumerLimitCents threshold).
+  invoiceProfileId?: string;
+  invoiceDocumentType?: InvoiceDocumentType;
+  invoiceDocumentNumber?: string;
+  invoiceFullName?: string;
+  invoiceEmail?: string;
+  invoiceAddress?: string;
+  invoicePhone?: string;
 }
 
 export interface AcceptOfferResponse {
   accepted: boolean;
   offerNumber: string;
-  orderId: string;
-  orderNumber: string;
-  totalCents: number;
-  paymentMethod: PaymentMethod;
+  // The newly created order. The BE always returns a fresh order-scoped
+  // guest token so email links work without requiring login, even for
+  // logged-in users (parallel access path).
+  order: Order;
+  guestToken?: string;
+  // Legacy convenience fields kept for backward compatibility with FE callers
+  orderId?: string;
+  orderNumber?: string;
+  totalCents?: number;
+  paymentMethod?: PaymentMethod;
 }
 
 // Order Types
@@ -1635,10 +1657,11 @@ export const api = {
 
   // Service Requests
   serviceRequests: {
-    create: (data: CreateServiceRequest) =>
+    create: (data: CreateServiceRequest, accessToken?: string) =>
       fetchApi<{ result: ServiceRequest; guestToken?: string }>("/service-requests", {
         method: "POST",
         body: JSON.stringify(data),
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
       }),
 
     mine: (filters?: { page?: number; limit?: number }) =>

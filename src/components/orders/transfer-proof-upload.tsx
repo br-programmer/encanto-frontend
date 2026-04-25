@@ -12,6 +12,13 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf
 
 interface TransferProofUploadProps {
   orderId: string;
+  /**
+   * The order's `userId` snapshot. When `null` the order belongs to a guest
+   * (no registered user) and we MUST authenticate via the guest token only.
+   * Sending the JWT alongside makes the BE pick the JWT path and reject
+   * because the order's userId doesn't match the logged-in user.
+   */
+  orderUserId: string | null;
   bankAccounts: BankAccount[];
   totalCents: number;
   onUploadSuccess: (order: Order) => void;
@@ -19,6 +26,7 @@ interface TransferProofUploadProps {
 
 export function TransferProofUpload({
   orderId,
+  orderUserId,
   bankAccounts,
   totalCents,
   onUploadSuccess,
@@ -50,14 +58,19 @@ export function TransferProofUpload({
     setIsUploading(true);
 
     try {
-      const accessToken = (() => {
+      const guestToken = localStorage.getItem("encanto-guest-token") || undefined;
+      const rawAccessToken = (() => {
         try {
           const tokens = localStorage.getItem("encanto-tokens");
-          if (tokens) return JSON.parse(tokens).accessToken;
+          if (tokens) return JSON.parse(tokens).accessToken as string | undefined;
         } catch { /* ignore */ }
         return undefined;
       })();
-      const guestToken = localStorage.getItem("encanto-guest-token") || undefined;
+      // Guest-owned orders (orderUserId === null) MUST authenticate via the
+      // guest token only — the BE's atomic ownership check requires
+      // order.userId IS NULL when no userId is provided. Sending the JWT
+      // would make it use the JWT branch and reject.
+      const accessToken = orderUserId === null ? undefined : rawAccessToken;
 
       const formData = new FormData();
       formData.append("file", file);

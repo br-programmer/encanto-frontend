@@ -24,7 +24,15 @@ export async function getServiceOfferAction(
   accessToken?: string,
   guestToken?: string
 ): Promise<ServiceOffer> {
-  return api.serviceOffers.getByNumberWithToken(offerNumber, accessToken, guestToken);
+  try {
+    return await api.serviceOffers.getByNumberWithToken(offerNumber, accessToken, guestToken);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      const beMsg = extractBackendMessage(err, "Error al cargar la propuesta");
+      throw new Error(`[${err.status}] ${beMsg}`);
+    }
+    throw err;
+  }
 }
 
 export async function acceptServiceOfferAction(
