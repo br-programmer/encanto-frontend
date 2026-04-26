@@ -5,14 +5,13 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Loader2, AlertTriangle, User, LogIn, UserPlus, Check, LogOut, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { CheckoutProgress, getTotalSteps } from "./checkout-progress";
+import { CheckoutProgress } from "./checkout-progress";
 import { OrderSummary } from "./order-summary";
 import { CheckoutSuccess } from "./checkout-success";
 import { PayPalCheckoutModal } from "./paypal-checkout";
 import { AddOnsModal } from "./add-ons-modal";
 import { AuthModal } from "@/components/auth-modal";
-import { PhoneInput, normalizePhoneValue } from "@/components/ui/phone-input";
+import { normalizePhoneValue } from "@/components/ui/phone-input";
 import { useCartStore } from "@/stores/cart-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { useSpecialDatesStore } from "@/stores/special-dates-store";
@@ -36,14 +35,13 @@ import {
 import type {
   Order,
   OrderPreview,
-  BankAccount,
   DeliveryZone,
   FulfillmentType,
   UserInvoiceProfile,
   DeliveryAddressApi,
 } from "@/lib/api";
 import { validateDocumentByType } from "@/lib/ecuadorian-document";
-import { cn, formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 
 interface FormData {
   fulfillmentType: FulfillmentType;
@@ -132,15 +130,6 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
 
 // Step mapping: guest has extra step 1 (guest info)
 type StepName = "guest_info" | "delivery" | "schedule" | "billing" | "payment" | "review";
-
-function getStepNumber(name: StepName, isGuest: boolean): number {
-  if (isGuest) {
-    const map: Record<StepName, number> = { guest_info: 1, delivery: 2, schedule: 3, billing: 4, payment: 5, review: 6 };
-    return map[name];
-  }
-  const map: Record<StepName, number> = { guest_info: 0, delivery: 1, schedule: 2, billing: 3, payment: 4, review: 5 };
-  return map[name];
-}
 
 function getStepName(step: number, isGuest: boolean): StepName {
   if (isGuest) {
@@ -465,8 +454,6 @@ export function CheckoutForm() {
   const showAuthSection = mounted && !user && !isGuestCheckout;
   const isGuest = isGuestCheckout && !user;
   const currentStepName = getStepName(currentStep, isGuest);
-  const totalSteps = getTotalSteps(isGuest);
-  const reviewStep = getStepNumber("review", isGuest);
   const shippingCost = isPickup ? 0 : (orderPreview?.deliveryFeeCents ?? (formData.deliveryZoneId ? (getZoneById(formData.deliveryZoneId)?.deliveryFeeCents ?? 0) : 0));
   const transferDiscount = orderPreview?.transferDiscountCents ?? 0;
 
@@ -756,8 +743,6 @@ export function CheckoutForm() {
     } finally { setIsSubmitting(false); }
   };
 
-  const handleNewOrder = () => { setIsSubmitted(false); setCreatedOrder(null); setFormData(initialFormData); clearSavedFormData(); setCurrentStep(1); setCompletedSteps([]); router.push("/productos"); };
-
   // Loading
   if (!mounted || isLoadingCheckoutData || isLoadingAddresses || isLoadingInvoiceProfiles) {
     return (
@@ -787,7 +772,7 @@ export function CheckoutForm() {
     const canReopenPayPal = createdOrder.paymentMethod === "paypal" && createdOrder.paymentStatus !== "paid";
     return (
       <>
-        <CheckoutSuccess order={createdOrder} bankAccounts={bankAccounts} orderSettings={orderSettings} timeSlots={timeSlots} onNewOrder={handleNewOrder} onPayPal={canReopenPayPal ? () => setPendingPayPal(true) : undefined} />
+        <CheckoutSuccess order={createdOrder} bankAccounts={bankAccounts} timeSlots={timeSlots} onPayPal={canReopenPayPal ? () => setPendingPayPal(true) : undefined} />
         {canReopenPayPal && (
           <PayPalCheckoutModal isOpen={pendingPayPal} onClose={() => setPendingPayPal(false)} orderId={createdOrder.id} orderNumber={createdOrder.orderNumber} totalCents={createdOrder.totalCents} accessToken={paypalTokens.accessToken} guestToken={paypalTokens.guestToken} onSuccess={(o) => { setCreatedOrder(o); setPendingPayPal(false); }} onError={(msg) => setError(msg)} />
         )}
@@ -798,7 +783,7 @@ export function CheckoutForm() {
   if (pendingPayPal && createdOrder) {
     return (
       <>
-        <CheckoutSuccess order={createdOrder} bankAccounts={bankAccounts} orderSettings={orderSettings} timeSlots={timeSlots} onNewOrder={handleNewOrder} onPayPal={() => setPendingPayPal(true)} />
+        <CheckoutSuccess order={createdOrder} bankAccounts={bankAccounts} timeSlots={timeSlots} onPayPal={() => setPendingPayPal(true)} />
         <PayPalCheckoutModal isOpen={pendingPayPal} onClose={() => { setPendingPayPal(false); setIsSubmitted(true); }} orderId={createdOrder.id} orderNumber={createdOrder.orderNumber} totalCents={createdOrder.totalCents} accessToken={paypalTokens.accessToken} guestToken={paypalTokens.guestToken} onSuccess={(o) => { setCreatedOrder(o); setPendingPayPal(false); setIsSubmitted(true); }} onError={(msg) => setError(msg)} />
       </>
     );

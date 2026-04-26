@@ -58,7 +58,6 @@ interface ScrollRevealSectionProps {
 
 export function ScrollRevealSection({ services = [], banners = [] }: ScrollRevealSectionProps) {
   const hasContent = services.length > 0 || banners.length > 0;
-  const hasServices = services.length > 0;
   const service1 = services[0] ?? null;
   const service2 = services[1] ?? null;
   const banner1 = banners[0] ?? null;

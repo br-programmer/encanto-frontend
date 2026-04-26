@@ -36,18 +36,6 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
   const inStock = product.inStock;
   const primaryImage = getPrimaryImage(product.images);
 
-  // Group add-ons by category
-  const addOnsByCategory = useMemo(() => {
-    if (addOnCategories.length === 0 || addOns.length === 0) return [];
-
-    return addOnCategories
-      .map((cat) => ({
-        category: cat,
-        items: addOns.filter((a) => a.categoryId === cat.id),
-      }))
-      .filter((group) => group.items.length > 0);
-  }, [addOnCategories, addOns]);
-
   // First N add-ons to show inline
   const MAX_VISIBLE_ADDONS = 5;
   const allAddOnsFlat = useMemo(() => addOns, [addOns]);

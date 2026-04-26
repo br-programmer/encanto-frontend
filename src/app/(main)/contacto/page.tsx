@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { MapPin, Phone, Clock, MessageCircle, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ContactForm } from "@/components/contact-form";

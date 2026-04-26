@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, Ban, MessageSquare, Package, Plus, Gift, EyeOff, Sparkles, User, ChevronLeft, ChevronRight } from "lucide-react";
+import { AlertTriangle, Ban, MessageSquare, Plus, Gift, EyeOff, Sparkles, User, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { PhoneInput } from "@/components/ui/phone-input";
 import type { DeliveryTimeSlot, Occasion } from "@/lib/api";
 import type { CartItem } from "@/types";
-import type { AddOn, AddOnCategory } from "@/lib/api";
+import type { AddOn } from "@/lib/api";
 import { useSpecialDatesStore } from "@/stores/special-dates-store";
 import { formatPrice } from "@/lib/utils";
 

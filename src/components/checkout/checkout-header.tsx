@@ -6,7 +6,6 @@ import { createPortal } from "react-dom";
 import { ArrowLeft, Lock, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const CHECKOUT_STORAGE_KEY = "encanto-checkout-form";
 const ORDER_CREATED_KEY = "encanto-order-created";
 
 export function CheckoutHeader() {

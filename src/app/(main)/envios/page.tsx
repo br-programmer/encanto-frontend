@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Truck, Clock, MapPin, AlertCircle, Store } from "lucide-react";
+import { Truck, Clock, AlertCircle, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { BUSINESS } from "@/lib/constants";

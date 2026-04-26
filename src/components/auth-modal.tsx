@@ -20,7 +20,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
   const [mounted, setMounted] = useState(false);
   const [showVerificationReminder, setShowVerificationReminder] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
-  const { login, register, isLoading, user } = useAuthStore();
+  const { login, register, isLoading } = useAuthStore();
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");

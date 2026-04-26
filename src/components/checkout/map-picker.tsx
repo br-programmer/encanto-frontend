@@ -33,11 +33,6 @@ interface MapPickerProps {
   disableZoneValidation?: boolean;
 }
 
-// City centers for quick navigation
-const CITY_CENTERS: Record<string, [number, number]> = {
-  Manta: [-0.95, -80.73],
-};
-
 export function MapPicker({ latitude, longitude, onLocationChange, zones = [], selectedZoneId, className, disableZoneValidation = false }: MapPickerProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);

@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, ChevronLeft, Pencil, MapPin, CalendarDays, CreditCard, Truck, Store } from "lucide-react";
+import { Loader2, ChevronLeft, Pencil, MapPin, CalendarDays, CreditCard, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SafeImage } from "@/components/ui/safe-image";
 import type { OrderPreview } from "@/lib/api";

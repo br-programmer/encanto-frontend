@@ -5,7 +5,6 @@ import { createPortal } from "react-dom";
 import { X, Star, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
-import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 import type { PendingReviewOrder, CreateReviewRequest } from "@/lib/api";
 
