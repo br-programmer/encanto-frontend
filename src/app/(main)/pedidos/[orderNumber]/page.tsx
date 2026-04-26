@@ -256,7 +256,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             <div className="flex flex-col gap-4 sm:hidden">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <Skeleton className="w-8 h-8 rounded-full flex-shrink-0" />
+                  <Skeleton className="w-8 h-8 rounded-full shrink-0" />
                   <Skeleton className="h-4 w-28" />
                 </div>
               ))}
@@ -296,7 +296,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             <div className="space-y-4">
               {Array.from({ length: 2 }).map((_, i) => (
                 <div key={i} className="flex items-start gap-4">
-                  <Skeleton className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg flex-shrink-0" />
+                  <Skeleton className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg shrink-0" />
                   <div className="flex-1">
                     <div className="flex justify-between gap-2">
                       <Skeleton className="h-4 w-40" />
@@ -507,7 +507,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         {showTransferRejection && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-normal text-amber-800">Transferencia rechazada</p>
                 <p className="text-sm text-amber-700 mt-1">{order.transferRejectionReason}</p>
@@ -528,7 +528,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                   <div className="flex flex-col items-center">
                     <div
                       className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-normal flex-shrink-0",
+                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-normal shrink-0",
                         step.active
                           ? "bg-primary text-white"
                           : "bg-secondary text-foreground-muted"
@@ -561,7 +561,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
             <div className="hidden sm:flex items-start w-full">
               {timelineSteps.map((step, index) => (
                 <div key={step.key} className={cn("flex items-start", index < timelineSteps.length - 1 ? "flex-1" : "")}>
-                  <div className="flex flex-col items-center flex-shrink-0">
+                  <div className="flex flex-col items-center shrink-0">
                     <div
                       className={cn(
                         "w-9 h-9 rounded-full flex items-center justify-center text-xs font-normal",
@@ -598,7 +598,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
           <div className="bg-background rounded-xl border border-border p-6 mb-6">
             <h2 className="font-medium mb-4">Tu repartidor</h2>
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-full overflow-hidden bg-secondary/30 flex-shrink-0">
+              <div className="w-14 h-14 rounded-full overflow-hidden bg-secondary/30 shrink-0">
                 {order.deliveryPerson.avatarUrl ? (
                   <Image
                     src={order.deliveryPerson.avatarUrl}
@@ -745,7 +745,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
           <div className="space-y-4">
             {order.items.map((item) => (
               <div key={item.id} className="flex items-start gap-4">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-secondary/30 flex-shrink-0">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-secondary/30 shrink-0">
                   {item.primaryImageUrl ? (
                     <Image
                       src={item.primaryImageUrl}
@@ -763,7 +763,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between gap-2">
                     <p className="font-normal text-sm">{item.productNameSnapshot}</p>
-                    <p className="font-normal text-sm flex-shrink-0">{formatPrice(item.lineTotalCents)}</p>
+                    <p className="font-normal text-sm shrink-0">{formatPrice(item.lineTotalCents)}</p>
                   </div>
                   <p className="text-xs text-foreground-secondary">Cantidad: {item.quantity}</p>
                   {item.addOns.length > 0 && (
@@ -993,7 +993,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
         )}
         {/* Cancel confirmation modal */}
         {showCancelModal && (
-          <div className="fixed inset-0 z-[100]">
+          <div className="fixed inset-0 z-100">
             <div className="absolute inset-0 bg-black/50" />
             <div className="absolute inset-0 flex items-center justify-center p-4">
               <div className="relative w-full max-w-sm bg-background rounded-xl shadow-xl p-6" onClick={(e) => e.stopPropagation()}>

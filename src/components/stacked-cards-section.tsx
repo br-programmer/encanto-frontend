@@ -63,7 +63,7 @@ export function StackedCardsSection() {
   return (
     <section className="bg-black">
       {/* Intro - NOT sticky, just a regular section */}
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-black">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-background to-black">
         <div className="text-center px-4">
           <p className="text-primary font-normal text-sm sm:text-base uppercase tracking-[0.3em] mb-6">
             Colección por ocasión
@@ -114,8 +114,8 @@ export function StackedCardsSection() {
                   priority={index < 2}
                 />
                 {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/30" />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/50 to-black/30" />
+                <div className="absolute inset-0 bg-linear-to-r from-black/70 via-black/30 to-transparent" />
               </div>
 
               {/* Content */}
@@ -158,7 +158,7 @@ export function StackedCardsSection() {
                   </div>
 
                   {/* Card Number - positioned absolutely */}
-                  <span className="absolute bottom-20 sm:bottom-24 md:bottom-32 right-4 sm:right-8 lg:right-16 text-[5rem] sm:text-[8rem] md:text-[10rem] lg:text-[14rem] font-semibold font-serif text-white/[0.05] leading-none pointer-events-none">
+                  <span className="absolute bottom-20 sm:bottom-24 md:bottom-32 right-4 sm:right-8 lg:right-16 text-[5rem] sm:text-[8rem] md:text-[10rem] lg:text-[14rem] font-semibold font-serif text-white/5 leading-none pointer-events-none">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                 </div>

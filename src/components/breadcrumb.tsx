@@ -31,7 +31,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
               href={parentItem.href}
               className="flex items-center gap-1 text-foreground-secondary hover:text-primary transition-colors min-w-0"
             >
-              <ChevronLeft className="h-4 w-4 flex-shrink-0" />
+              <ChevronLeft className="h-4 w-4 shrink-0" />
               <span className="text-sm truncate">{parentItem.label}</span>
             </Link>
           ) : (
@@ -39,7 +39,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
               href="/"
               className="flex items-center gap-1 text-foreground-secondary hover:text-primary transition-colors"
             >
-              <ChevronLeft className="h-4 w-4 flex-shrink-0" />
+              <ChevronLeft className="h-4 w-4 shrink-0" />
               <span className="text-sm">Inicio</span>
             </Link>
           )}
@@ -56,7 +56,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
         >
           <Link
             href="/"
-            className="flex items-center gap-1 text-foreground-secondary hover:text-primary transition-colors flex-shrink-0"
+            className="flex items-center gap-1 text-foreground-secondary hover:text-primary transition-colors shrink-0"
           >
             <Home className="h-4 w-4" />
             <span>Inicio</span>
@@ -64,7 +64,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
 
           {items.map((item, index) => (
             <div key={index} className="flex items-center gap-1.5 min-w-0">
-              <ChevronRight className="h-4 w-4 text-foreground-muted flex-shrink-0" />
+              <ChevronRight className="h-4 w-4 text-foreground-muted shrink-0" />
               {item.href && index < items.length - 1 ? (
                 <Link
                   href={item.href}

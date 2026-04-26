@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Truck, Clock, MapPin, AlertCircle, Store } from "lucide-react";
+import { Truck, Clock, AlertCircle, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { BUSINESS } from "@/lib/constants";
@@ -115,7 +115,7 @@ export default function EnviosPage() {
             <h2 className="text-2xl font-serif mb-4">Entregas en fechas importantes</h2>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
               <div className="flex gap-3">
-                <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                 <p className="text-amber-800 text-sm">
                   Para fechas importantes como San Valentín, Día de la Mujer, Día de la Madre y Día del Padre,
                   las entregas serán realizadas en el transcurso del día desde las <strong>8:00 a 12:00</strong> y
@@ -134,7 +134,7 @@ export default function EnviosPage() {
             </p>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
               <div className="flex gap-3">
-                <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                 <p className="text-amber-800 text-sm">
                   Si el cliente pasa por alto nuestros Términos y Condiciones y realiza la compra en los días
                   mencionados, la entrega del arreglo floral se la realizará el día laborable más próximo en el

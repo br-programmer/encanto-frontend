@@ -21,7 +21,7 @@ export default function ProductosLoading() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Skeleton */}
-          <aside className="w-full lg:w-64 flex-shrink-0">
+          <aside className="w-full lg:w-64 shrink-0">
             <div className="space-y-6">
               <div>
                 <Skeleton className="h-5 w-20 mb-3" />
@@ -47,7 +47,7 @@ export default function ProductosLoading() {
                   className="bg-white dark:bg-stone-900 shadow-md"
                 >
                   <div className="p-2.5 pb-0 sm:p-3 sm:pb-0">
-                    <Skeleton className="aspect-[4/5] w-full" />
+                    <Skeleton className="aspect-4/5 w-full" />
                   </div>
                   <div className="p-3 sm:p-4 pt-2.5 sm:pt-3 text-center space-y-2">
                     <Skeleton className="h-4 w-3/4 mx-auto" />

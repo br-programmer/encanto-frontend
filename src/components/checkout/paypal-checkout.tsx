@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
 import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import { Loader2, X, ShieldCheck } from "lucide-react";
 import { paypalCreateOrderAction, paypalCaptureAction } from "@/actions/order-actions";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { useIsMounted } from "@/hooks/use-is-mounted";
 import { formatPrice } from "@/lib/utils";
 import type { Order } from "@/lib/api";
 
@@ -32,19 +33,17 @@ export function PayPalCheckoutModal({
   onSuccess,
   onError,
 }: PayPalCheckoutModalProps) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
-      setError(null);
-    }
-  }, [isOpen]);
+  // Reset error when modal opens. Adjusting state during render avoids the
+  // cascading-render lint.
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
+    if (isOpen) setError(null);
+  }
 
   useScrollLock(isOpen);
 
@@ -53,7 +52,7 @@ export function PayPalCheckoutModal({
   if (!mounted || !isOpen) return null;
 
   const modalContent = (
-    <div className="fixed inset-0 z-[100]">
+    <div className="fixed inset-0 z-100">
       <div className="absolute inset-0 bg-black/50" />
 
       <div className="absolute inset-0 flex items-center justify-center p-4 overflow-y-auto">

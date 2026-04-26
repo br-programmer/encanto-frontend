@@ -39,7 +39,7 @@ export default function NosotrosPage() {
                 <Link href="/productos">Ver nuestros productos</Link>
               </Button>
             </div>
-            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden">
+            <div className="relative aspect-4/3 rounded-2xl overflow-hidden">
               <Image
                 src="https://picsum.photos/seed/floreria/800/600"
                 alt="Nuestra florería"

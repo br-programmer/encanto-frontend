@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CalendarHeart, ArrowRight } from "lucide-react";
@@ -57,17 +57,12 @@ interface NextSpecialDateProps {
 }
 
 export function NextSpecialDate({ specialDates }: NextSpecialDateProps) {
-  const [specialDate, setSpecialDate] = useState<SpecialDateDisplay | null>(null);
-
-  useEffect(() => {
-    if (!specialDates || specialDates.length === 0) {
-      setSpecialDate(null);
-      return;
-    }
+  const specialDate = useMemo<SpecialDateDisplay | null>(() => {
+    if (!specialDates || specialDates.length === 0) return null;
     const displayDates = specialDates
       .filter((sd) => sd.isActive && sd.bannerUrl)
       .map(apiToDisplay);
-    setSpecialDate(getUpcomingOrCurrent(displayDates));
+    return getUpcomingOrCurrent(displayDates);
   }, [specialDates]);
 
   if (!specialDate) return null;
@@ -78,7 +73,7 @@ export function NextSpecialDate({ specialDates }: NextSpecialDateProps) {
   return (
     <section className="relative">
       {/* Top Curve - color of section above (Featured Products = bg-background-alt) */}
-      <div className="absolute top-0 left-0 right-0 z-10 overflow-hidden leading-[0]">
+      <div className="absolute top-0 left-0 right-0 z-10 overflow-hidden leading-0">
         <svg
           viewBox="0 0 1200 120"
           preserveAspectRatio="none"
@@ -100,7 +95,7 @@ export function NextSpecialDate({ specialDates }: NextSpecialDateProps) {
         }}
       >
         {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/50" />
+        <div className="absolute inset-0 bg-linear-to-r from-black/80 via-black/60 to-black/50" />
 
         {/* Content */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24">
@@ -158,7 +153,7 @@ export function NextSpecialDate({ specialDates }: NextSpecialDateProps) {
       </div>
 
       {/* Bottom Curve */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 overflow-hidden leading-[0] rotate-180">
+      <div className="absolute bottom-0 left-0 right-0 z-10 overflow-hidden leading-0 rotate-180">
         <svg
           viewBox="0 0 1200 120"
           preserveAspectRatio="none"

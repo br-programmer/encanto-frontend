@@ -7,23 +7,19 @@ import { Button } from "@/components/ui/button";
 import { formatPrice, formatPhone } from "@/lib/utils";
 import { BUSINESS } from "@/lib/constants";
 import { uploadTransferProofAction } from "@/actions/order-actions";
-import type { Order, BankAccount, OrderSettings, DeliveryTimeSlot } from "@/lib/api";
+import type { Order, BankAccount, DeliveryTimeSlot } from "@/lib/api";
 
 interface CheckoutSuccessProps {
   order: Order;
   bankAccounts: BankAccount[];
-  orderSettings: OrderSettings | null;
   timeSlots: DeliveryTimeSlot[];
-  onNewOrder: () => void;
   onPayPal?: () => void;
 }
 
 export function CheckoutSuccess({
   order,
   bankAccounts,
-  orderSettings,
   timeSlots,
-  onNewOrder,
   onPayPal,
 }: CheckoutSuccessProps) {
   const [isUploading, setIsUploading] = useState(false);

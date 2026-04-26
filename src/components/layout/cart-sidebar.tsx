@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { X, Plus, Minus, ShoppingBag, Trash2, Sparkles, AlertTriangle } from "lucide-react";
 import { SafeImage } from "@/components/ui/safe-image";
 import Link from "next/link";
@@ -10,18 +10,18 @@ import { Separator } from "@/components/ui/separator";
 import { useCartStore } from "@/stores/cart-store";
 import { useSpecialDatesStore } from "@/stores/special-dates-store";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { useIsMounted } from "@/hooks/use-is-mounted";
 import { formatPrice } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 export function CartSidebar() {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const { items, isOpen, closeCart, removeItem, updateQuantity, totalPrice } =
     useCartStore();
   const { getById: getSpecialDateById, fetch: fetchSpecialDates } = useSpecialDatesStore();
 
-  // Prevent hydration mismatch
+  // Fetch special dates once after mount
   useEffect(() => {
-    setMounted(true);
     fetchSpecialDates();
   }, [fetchSpecialDates]);
 
@@ -103,7 +103,7 @@ export function CartSidebar() {
             <>
               {mixWarning && (
                 <div className="mx-4 mt-3 sm:mx-6 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                   <p className="text-xs text-amber-800">{mixWarning}</p>
                 </div>
               )}
@@ -117,7 +117,7 @@ export function CartSidebar() {
                       className="flex gap-3 sm:gap-4 p-2 sm:p-3 bg-warm-white rounded-lg"
                     >
                       {/* Image */}
-                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden bg-secondary flex-shrink-0">
+                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden bg-secondary shrink-0">
                         {item.product.image ? (
                           <SafeImage
                             src={item.product.image}

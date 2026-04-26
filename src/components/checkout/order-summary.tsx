@@ -3,18 +3,10 @@
 import { useState } from "react";
 import { SafeImage } from "@/components/ui/safe-image";
 import Link from "next/link";
-import { ChevronDown, ChevronUp, ShoppingBag, Loader2, Clock } from "lucide-react";
+import { ChevronDown, ChevronUp, ShoppingBag, Loader2 } from "lucide-react";
 import { cn, formatPrice } from "@/lib/utils";
 import type { CartItem } from "@/types";
 import type { OrderPreview } from "@/lib/api";
-
-function formatTime(minutes: number): string {
-  if (minutes < 60) return `${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  const remaining = minutes % 60;
-  if (remaining === 0) return `${hours}h`;
-  return `${hours}h ${remaining} min`;
-}
 
 interface OrderSummaryProps {
   items: CartItem[];
@@ -97,7 +89,7 @@ export function OrderSummary({
             return (
               <div key={item.product.id} className="flex gap-3">
                 {/* Image */}
-                <div className="relative w-16 h-16 rounded-md overflow-hidden bg-secondary flex-shrink-0">
+                <div className="relative w-16 h-16 rounded-md overflow-hidden bg-secondary shrink-0">
                   {item.product.image ? (
                     <SafeImage
                       src={item.product.image}

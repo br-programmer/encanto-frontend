@@ -33,11 +33,6 @@ interface MapPickerProps {
   disableZoneValidation?: boolean;
 }
 
-// City centers for quick navigation
-const CITY_CENTERS: Record<string, [number, number]> = {
-  Manta: [-0.95, -80.73],
-};
-
 export function MapPicker({ latitude, longitude, onLocationChange, zones = [], selectedZoneId, className, disableZoneValidation = false }: MapPickerProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -319,7 +314,7 @@ export function MapPicker({ latitude, longitude, onLocationChange, zones = [], s
 
       <div
         ref={mapContainerRef}
-        className="relative z-0 w-full h-[300px] rounded-lg border border-border overflow-hidden [&_.leaflet-tile-pane]:hue-rotate-[330deg] [&_.leaflet-tile-pane]:saturate-[0.3] [&_.leaflet-tile-pane]:brightness-[1.02]"
+        className="relative z-0 w-full h-[300px] rounded-lg border border-border overflow-hidden [&_.leaflet-tile-pane]:hue-rotate-330 [&_.leaflet-tile-pane]:saturate-[0.3] [&_.leaflet-tile-pane]:brightness-[1.02]"
       />
 
       <p className="text-xs text-foreground-secondary">
@@ -335,7 +330,7 @@ export function MapPicker({ latitude, longitude, onLocationChange, zones = [], s
       ) : noPolygon ? (
         <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
           <div className="flex items-start gap-2">
-            <MapPin className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <MapPin className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
             <p className="text-sm text-amber-800">
               Esta zona aún no tiene cobertura de mapa disponible. Puedes continuar con tu pedido, nuestro equipo coordinará la entrega contigo.
             </p>
@@ -344,7 +339,7 @@ export function MapPicker({ latitude, longitude, onLocationChange, zones = [], s
       ) : zoneResult === "not_found" && hasInteracted ? (
         <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
           <div className="flex items-start gap-2">
-            <MapPin className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <MapPin className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
             <p className="text-sm text-amber-800">
               Esta ubicación no está dentro de ninguna zona de entrega disponible. Selecciona otra ubicación.
             </p>
@@ -354,7 +349,7 @@ export function MapPicker({ latitude, longitude, onLocationChange, zones = [], s
         <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-green-600 flex-shrink-0" />
+              <MapPin className="h-4 w-4 text-green-600 shrink-0" />
               <span className="text-sm font-normal text-green-800">{zoneResult.zoneName}</span>
             </div>
             <span className="text-sm font-medium text-green-800">

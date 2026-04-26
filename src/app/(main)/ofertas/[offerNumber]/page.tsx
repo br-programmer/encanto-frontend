@@ -417,7 +417,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
 
           <div className="bg-secondary/30 border border-border rounded-lg p-4 text-left mb-6">
             <div className="flex items-start gap-3">
-              <Mail className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+              <Mail className="h-5 w-5 text-primary shrink-0 mt-0.5" />
               <div className="text-sm">
                 <p className="font-normal mb-1">Revisa tu correo</p>
                 <p className="text-foreground-secondary">
@@ -482,7 +482,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
           "rounded-xl p-4 mb-6 flex items-start gap-3",
           isExpired ? "bg-red-50 border border-red-200" : "bg-amber-50 border border-amber-200"
         )}>
-          <Clock className={cn("h-5 w-5 flex-shrink-0 mt-0.5", isExpired ? "text-red-600" : "text-amber-600")} />
+          <Clock className={cn("h-5 w-5 shrink-0 mt-0.5", isExpired ? "text-red-600" : "text-amber-600")} />
           <p className={cn("text-sm", isExpired ? "text-red-800" : "text-amber-800")}>
             {isExpired
               ? "Esta propuesta ha expirado."
@@ -525,7 +525,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
                   {item.quantity} x {formatPrice(item.unitPriceCents)}
                 </p>
               </div>
-              <p className="font-normal flex-shrink-0">{formatPrice(item.totalPriceCents)}</p>
+              <p className="font-normal shrink-0">{formatPrice(item.totalPriceCents)}</p>
             </div>
           ))}
         </div>

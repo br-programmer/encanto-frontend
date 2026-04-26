@@ -15,7 +15,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
     >
       {/* Image with polaroid-style padding */}
       <div className="p-2.5 pb-0 sm:p-3 sm:pb-0">
-        <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
+        <div className="relative aspect-4/3 overflow-hidden bg-secondary">
           {category.imageUrl ? (
             <SafeImage
               src={category.imageUrl}
@@ -27,7 +27,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
               iconSize="lg"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-secondary to-accent flex items-center justify-center">
+            <div className="w-full h-full bg-linear-to-br from-secondary to-accent flex items-center justify-center">
               <Flower2 className="h-12 w-12 text-foreground-muted" />
             </div>
           )}

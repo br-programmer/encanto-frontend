@@ -1,19 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/stores/cart-store";
 import { useScrollTopStore } from "@/stores/scroll-top-store";
+import { useIsMounted } from "@/hooks/use-is-mounted";
 import { cn } from "@/lib/utils";
 
 export function FloatingCartButton() {
   const { totalItems, openCart, isOpen } = useCartStore();
   const { isVisible: scrollTopVisible } = useScrollTopStore();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsMounted();
 
   const count = mounted ? totalItems() : 0;
 

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { MapPin, Phone, Clock, MessageCircle, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ContactForm } from "@/components/contact-form";
@@ -33,7 +32,7 @@ export default function ContactoPage() {
           <div className="lg:col-span-1 space-y-8">
             {/* Location */}
             <div className="flex gap-4">
-              <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center shrink-0">
                 <MapPin className="h-6 w-6 text-primary" />
               </div>
               <div>
@@ -52,7 +51,7 @@ export default function ContactoPage() {
 
             {/* Phone */}
             <div className="flex gap-4">
-              <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center shrink-0">
                 <Phone className="h-6 w-6 text-primary" />
               </div>
               <div>
@@ -68,7 +67,7 @@ export default function ContactoPage() {
 
             {/* Instagram */}
             <div className="flex gap-4">
-              <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center shrink-0">
                 <Instagram className="h-6 w-6 text-primary" />
               </div>
               <div>
@@ -86,7 +85,7 @@ export default function ContactoPage() {
 
             {/* Hours */}
             <div className="flex gap-4">
-              <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center shrink-0">
                 <Clock className="h-6 w-6 text-primary" />
               </div>
               <div>
@@ -133,7 +132,7 @@ export default function ContactoPage() {
       <section className="bg-secondary/30 py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl font-serif mb-6 text-center">Encuéntranos</h2>
-          <div className="aspect-video md:aspect-[21/9] bg-secondary rounded-xl overflow-hidden">
+          <div className="aspect-video md:aspect-21/9 bg-secondary rounded-xl overflow-hidden">
             <iframe
               src={BUSINESS.maps.embedUrl}
               width="100%"

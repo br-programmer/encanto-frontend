@@ -88,7 +88,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm text-foreground-secondary hover:text-primary transition-colors"
                 >
-                  <MapPin className="h-4 w-4 flex-shrink-0" />
+                  <MapPin className="h-4 w-4 shrink-0" />
                   <span>{BUSINESS.address.full}</span>
                 </a>
               </li>
@@ -97,7 +97,7 @@ export function Footer() {
                   href={`tel:${BUSINESS.phone.raw}`}
                   className="flex items-center gap-2 text-sm text-foreground-secondary hover:text-primary transition-colors"
                 >
-                  <Phone className="h-4 w-4 flex-shrink-0" />
+                  <Phone className="h-4 w-4 shrink-0" />
                   <span>{BUSINESS.phone.display}</span>
                 </a>
               </li>
@@ -108,7 +108,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm text-foreground-secondary hover:text-primary transition-colors"
                 >
-                  <Instagram className="h-4 w-4 flex-shrink-0" />
+                  <Instagram className="h-4 w-4 shrink-0" />
                   <span>{BUSINESS.social.instagram.handle}</span>
                 </a>
               </li>

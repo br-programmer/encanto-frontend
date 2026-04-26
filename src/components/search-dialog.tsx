@@ -156,7 +156,7 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                       onClick={() => handleProductClick(product.slug)}
                       className="w-full flex items-center gap-3 sm:gap-4 p-2 sm:p-3 rounded-lg hover:bg-secondary/50 active:bg-secondary transition-colors text-left"
                     >
-                      <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
+                      <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-secondary shrink-0">
                         {primaryImage ? (
                           <SafeImage
                             src={primaryImage.url}
@@ -179,7 +179,7 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                           {product.category?.name || "Sin categoría"}
                         </p>
                       </div>
-                      <div className="text-right flex-shrink-0">
+                      <div className="text-right shrink-0">
                         <p className="font-medium text-sm sm:text-base text-primary">
                           {formatPrice(product.priceCents)}
                         </p>

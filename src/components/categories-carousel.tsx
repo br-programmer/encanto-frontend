@@ -109,7 +109,7 @@ export function CategoriesCarousel({ categories }: CategoriesCarouselProps) {
         {categories.map((category) => (
           <div
             key={category.id}
-            className="flex-shrink-0 w-[60%] sm:w-[40%] lg:w-[30%]"
+            className="shrink-0 w-[60%] sm:w-[40%] lg:w-[30%]"
           >
             <CategoryCard category={category} />
           </div>

@@ -11,6 +11,7 @@ import { SearchDialog } from "@/components/search-dialog";
 import { AuthModal } from "@/components/auth-modal";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { useIsMounted } from "@/hooks/use-is-mounted";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -27,18 +28,13 @@ export function Header() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<"login" | "register">("login");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const { totalItems, openCart } = useCartStore();
   const { user, logout } = useAuthStore();
 
   useScrollLock(mobileMenuOpen);
-
-  // Prevent hydration mismatch by only showing cart count after mount
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -94,7 +90,7 @@ export function Header() {
         <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <Link href="/" className="flex items-center">
                 <Image
                   src="/logo.svg"
@@ -169,7 +165,7 @@ export function Header() {
                     {userMenuOpen && (
                       <div className="absolute right-0 mt-2 w-56 bg-background rounded-lg shadow-lg border border-border py-1 z-50">
                         <div className="px-4 py-3 border-b border-border flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
                             {displayUser.avatarUrl ? (
                               <Image
                                 src={displayUser.avatarUrl}
@@ -285,7 +281,7 @@ export function Header() {
       {/* Mobile Sidebar Overlay */}
       <div
         className={cn(
-          "fixed inset-0 z-[60] bg-black/50 transition-opacity duration-300 md:hidden",
+          "fixed inset-0 z-60 bg-black/50 transition-opacity duration-300 md:hidden",
           mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={() => setMobileMenuOpen(false)}
@@ -294,12 +290,12 @@ export function Header() {
       {/* Mobile Sidebar */}
       <div
         className={cn(
-          "fixed top-0 left-0 z-[60] h-dvh w-[280px] bg-background shadow-xl transition-transform duration-300 ease-in-out md:hidden flex flex-col",
+          "fixed top-0 left-0 z-60 h-dvh w-[280px] bg-background shadow-xl transition-transform duration-300 ease-in-out md:hidden flex flex-col",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between px-4 h-16 border-b border-border flex-shrink-0">
+        <div className="flex items-center justify-between px-4 h-16 border-b border-border shrink-0">
           <Link href="/" onClick={() => setMobileMenuOpen(false)}>
             <Image
               src="/logo.svg"
@@ -400,9 +396,9 @@ export function Header() {
 
         {/* Sidebar Footer */}
         {displayUser && (
-          <div className="px-4 py-4 border-t border-border flex-shrink-0">
+          <div className="px-4 py-4 border-t border-border shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
                 {displayUser.avatarUrl ? (
                   <Image
                     src={displayUser.avatarUrl}

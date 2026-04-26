@@ -2,16 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useCartStore } from "@/stores/cart-store";
+import { useIsMounted } from "@/hooks/use-is-mounted";
 import { BUSINESS } from "@/lib/constants";
 
 export function FloatingWhatsAppButton() {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const [scrolledDown, setScrolledDown] = useState(false);
   const { totalItems, isOpen } = useCartStore();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {

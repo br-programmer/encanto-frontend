@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { useIsMounted } from "@/hooks/use-is-mounted";
 
 interface ModalProps {
   isOpen: boolean;
@@ -34,11 +35,7 @@ export function Modal({
   footer,
   closeOnOverlayClick = true,
 }: ModalProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsMounted();
 
   useScrollLock(isOpen);
 
@@ -77,7 +74,7 @@ export function Modal({
           </button>
 
           {(title || description) && (
-            <div className="px-6 pt-6 pb-4 border-b border-border flex-shrink-0">
+            <div className="px-6 pt-6 pb-4 border-b border-border shrink-0">
               {title && <h2 className="text-lg font-medium pr-8">{title}</h2>}
               {description && (
                 <p className="text-sm text-foreground-secondary mt-1 pr-8">
@@ -90,7 +87,7 @@ export function Modal({
           <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
 
           {footer && (
-            <div className="px-6 py-4 border-t border-border flex-shrink-0">
+            <div className="px-6 py-4 border-t border-border shrink-0">
               {footer}
             </div>
           )}

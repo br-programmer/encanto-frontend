@@ -150,7 +150,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {service.highlights.map((highlight, i) => (
                 <div key={i} className="flex items-start gap-3 p-4 bg-background rounded-xl">
-                  <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                  <div className="shrink-0 w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
                     {highlight.icon ? (
                       <span className="text-lg">{highlight.icon}</span>
                     ) : (

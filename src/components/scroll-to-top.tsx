@@ -1,19 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { ArrowUp } from "lucide-react";
 import { useCartStore } from "@/stores/cart-store";
 import { useScrollTopStore } from "@/stores/scroll-top-store";
 import { cn } from "@/lib/utils";
+import { useIsMounted } from "@/hooks/use-is-mounted";
 
 export function ScrollToTop() {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const { isOpen } = useCartStore();
   const { isVisible, setIsVisible } = useScrollTopStore();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const toggleVisibility = () => {
@@ -22,7 +19,7 @@ export function ScrollToTop() {
 
     window.addEventListener("scroll", toggleVisibility);
     return () => window.removeEventListener("scroll", toggleVisibility);
-  }, []);
+  }, [setIsVisible]);
 
   const scrollToTop = () => {
     window.scrollTo({

@@ -88,12 +88,12 @@ export function StepPayment({
                 )}
               >
                 <div className={cn(
-                  "h-5 w-5 rounded-full border-2 flex items-center justify-center flex-shrink-0",
+                  "h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0",
                   isSelected ? "border-primary" : "border-foreground-muted"
                 )}>
                   {isSelected && <div className="h-2.5 w-2.5 rounded-full bg-primary" />}
                 </div>
-                <method.icon className={cn("h-5 w-5 flex-shrink-0", isSelected ? "text-primary" : "text-foreground-secondary")} />
+                <method.icon className={cn("h-5 w-5 shrink-0", isSelected ? "text-primary" : "text-foreground-secondary")} />
                 <div className="flex-1">
                   <span className="font-normal">{method.label}</span>
                   {isTransfer && orderSettings && (
