@@ -81,9 +81,16 @@ export function Footer() {
               Contacto
             </h3>
             <ul className="space-y-3">
-              <li className="flex items-center gap-2 text-sm text-foreground-secondary">
-                <MapPin className="h-4 w-4 flex-shrink-0" />
-                <span>{BUSINESS.address.full}</span>
+              <li>
+                <a
+                  href={BUSINESS.maps.placeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-foreground-secondary hover:text-primary transition-colors"
+                >
+                  <MapPin className="h-4 w-4 flex-shrink-0" />
+                  <span>{BUSINESS.address.full}</span>
+                </a>
               </li>
               <li>
                 <a

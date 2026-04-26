@@ -38,10 +38,15 @@ export default function ContactoPage() {
               </div>
               <div>
                 <h3 className="font-medium mb-1">Ubicación</h3>
-                <p className="text-foreground-secondary text-sm">
+                <a
+                  href={BUSINESS.maps.placeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-foreground-secondary text-sm hover:text-primary transition-colors"
+                >
                   {BUSINESS.address.street}<br />
                   {BUSINESS.address.city}, {BUSINESS.address.country}
-                </p>
+                </a>
               </div>
             </div>
 
@@ -130,7 +135,7 @@ export default function ContactoPage() {
           <h2 className="text-2xl font-serif mb-6 text-center">Encuéntranos</h2>
           <div className="aspect-video md:aspect-[21/9] bg-secondary rounded-xl overflow-hidden">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.273933566872!2d-80.73479297503488!3d-0.9464981990443535!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x902be1006b41f90d%3A0x7175ee3a3556255e!2sFlorister%C3%ADa%20Encanto!5e0!3m2!1ses!2sec!4v1769298087116!5m2!1ses!2sec"
+              src={BUSINESS.maps.embedUrl}
               width="100%"
               height="100%"
               style={{ border: 0 }}
@@ -141,18 +146,9 @@ export default function ContactoPage() {
               className="w-full h-full"
             />
           </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-4">
+          <div className="flex justify-center mt-4">
             <a
-              href="https://maps.app.goo.gl/nwEFRDSK7xDvEgwF6"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-primary hover:underline"
-            >
-              <MapPin className="h-4 w-4" />
-              Ver en Google Maps
-            </a>
-            <a
-              href="https://www.google.com/maps/dir/?api=1&destination=-0.9464981990443535,-80.73479297503488&destination_place_id=ChIJDfm1C2a_Ag0RXiVVNTruVXE"
+              href={BUSINESS.maps.directionsUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
