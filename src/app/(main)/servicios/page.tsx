@@ -43,7 +43,7 @@ export default async function ServiciosPage() {
                   className="group bg-background border border-border overflow-hidden hover:shadow-lg transition-all duration-300"
                 >
                   {/* Image */}
-                  <div className="relative aspect-[4/3] overflow-hidden">
+                  <div className="relative aspect-4/3 overflow-hidden">
                     {primaryImage ? (
                       <SafeImage
                         src={primaryImage.url}

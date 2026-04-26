@@ -35,7 +35,7 @@ export function FaqAccordion({ questions }: FaqAccordionProps) {
             <span className="font-normal pr-4">{item.question}</span>
             <ChevronDown
               className={cn(
-                "h-5 w-5 flex-shrink-0 text-foreground-muted transition-transform duration-200",
+                "h-5 w-5 shrink-0 text-foreground-muted transition-transform duration-200",
                 openIndex === index && "rotate-180"
               )}
             />

@@ -214,20 +214,20 @@ export default function PerfilPage() {
 
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-foreground-muted flex-shrink-0" />
+                <Mail className="h-5 w-5 text-foreground-muted shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-foreground-secondary">Correo</p>
                   <p className="truncate text-sm sm:text-base">{user.email}</p>
                 </div>
                 {user.emailVerified ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
+                  <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
                 ) : (
-                  <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0" />
+                  <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
                 )}
               </div>
 
               <div className="flex items-center gap-3">
-                <Phone className="h-5 w-5 text-foreground-muted flex-shrink-0" />
+                <Phone className="h-5 w-5 text-foreground-muted shrink-0" />
                 <div className="min-w-0">
                   <p className="text-sm text-foreground-secondary">Teléfono</p>
                   <p className="text-sm sm:text-base">{formatPhone(user.phone)}</p>

@@ -102,7 +102,7 @@ export function ProductFilters({
   const hasActiveFilters =
     selectedCategorySlugs.length > 0 || minPrice || maxPrice || inStock || search;
 
-  const FiltersContent = () => (
+  const filtersContent = (
     <div className="space-y-6">
       {/* Search */}
       <div>
@@ -279,14 +279,14 @@ export function ProductFilters({
                 <X className="h-5 w-5" />
               </Button>
             </div>
-            <FiltersContent />
+            {filtersContent}
           </div>
         </div>
       )}
 
       {/* Desktop Filters */}
       <div className="hidden lg:block sticky top-24">
-        <FiltersContent />
+        {filtersContent}
       </div>
     </>
   );

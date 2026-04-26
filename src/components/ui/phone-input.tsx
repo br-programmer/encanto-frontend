@@ -14,6 +14,25 @@ interface PhoneInputProps {
   defaultCountry?: string;
 }
 
+// Parse a phone value into {country, localNumber} synchronously so we can
+// initialize state lazily and avoid syncing state in an effect.
+function parsePhone(value: string, defaultCountry: string): { country: Country; localNumber: string } {
+  const fallback = COUNTRIES.find((c) => c.code === defaultCountry) || COUNTRIES[0];
+  if (!value) return { country: fallback, localNumber: "" };
+
+  if (value.startsWith("+")) {
+    const match = COUNTRIES.find((c) => value.startsWith(c.dialCode));
+    if (match) {
+      return { country: match, localNumber: value.slice(match.dialCode.length) };
+    }
+  }
+  const digits = value.replace(/\D/g, "");
+  return {
+    country: fallback,
+    localNumber: digits.startsWith("0") ? digits.slice(1) : digits,
+  };
+}
+
 export function PhoneInput({
   value,
   onChange,
@@ -23,31 +42,16 @@ export function PhoneInput({
   defaultCountry = "EC",
 }: PhoneInputProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState<Country>(
-    () => COUNTRIES.find((c) => c.code === defaultCountry) || COUNTRIES[0]
+  const [{ country: selectedCountry, localNumber }, setPhoneState] = useState(
+    () => parsePhone(value, defaultCountry)
   );
-  const [localNumber, setLocalNumber] = useState("");
+  const setSelectedCountry = (country: Country) =>
+    setPhoneState((s) => ({ ...s, country }));
+  const setLocalNumber = (localNumber: string) =>
+    setPhoneState((s) => ({ ...s, localNumber }));
   const [touched, setTouched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const initialized = useRef(false);
-
-  // Parse initial value to extract country code and local number
-  useEffect(() => {
-    if (initialized.current || !value) return;
-    initialized.current = true;
-
-    if (value.startsWith("+")) {
-      const match = COUNTRIES.find((c) => value.startsWith(c.dialCode));
-      if (match) {
-        setSelectedCountry(match);
-        setLocalNumber(value.slice(match.dialCode.length));
-        return;
-      }
-    }
-    const digits = value.replace(/\D/g, "");
-    setLocalNumber(digits.startsWith("0") ? digits.slice(1) : digits);
-  }, [value]);
 
   // Close dropdown on outside click
   useEffect(() => {

@@ -103,7 +103,7 @@ export function SpecialDatesCarousel({
         <div className="absolute left-8 md:left-16 lg:left-24 top-1/2 -translate-y-1/2 pointer-events-none select-none">
           <span
             className={cn(
-              "text-[150px] md:text-[200px] lg:text-[280px] font-semibold text-white/[0.08] leading-none transition-all duration-500",
+              "text-[150px] md:text-[200px] lg:text-[280px] font-semibold text-white/8 leading-none transition-all duration-500",
               isTransitioning && "opacity-0 -translate-y-4"
             )}
           >
@@ -188,7 +188,7 @@ export function SpecialDatesCarousel({
                   <div className="flex-1 relative">
                     <div
                       className={cn(
-                        "relative aspect-[4/5] md:aspect-[4/5] rounded-lg overflow-hidden transition-all duration-500",
+                        "relative aspect-4/5 md:aspect-4/5 rounded-lg overflow-hidden transition-all duration-500",
                         isTransitioning && "scale-95 opacity-0 -translate-x-8"
                       )}
                     >
@@ -208,7 +208,7 @@ export function SpecialDatesCarousel({
                     <div className="hidden md:block w-1/3 relative">
                       <div
                         className={cn(
-                          "relative aspect-[4/5] rounded-lg overflow-hidden opacity-40 transition-all duration-500",
+                          "relative aspect-4/5 rounded-lg overflow-hidden opacity-40 transition-all duration-500",
                           isTransitioning && "opacity-100 scale-105"
                         )}
                       >

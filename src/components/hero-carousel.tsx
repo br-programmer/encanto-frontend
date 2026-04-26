@@ -110,7 +110,7 @@ export function HeroCarousel({
       >
       {/* Slides Container */}
       <div
-        className="relative aspect-[4/3] sm:aspect-[16/7] md:aspect-[16/6] lg:aspect-[16/6] overflow-hidden touch-pan-y"
+        className="relative aspect-4/3 sm:aspect-16/7 md:aspect-16/6 lg:aspect-16/6 overflow-hidden touch-pan-y"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onMouseDown={handleTouchStart}

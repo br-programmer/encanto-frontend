@@ -187,7 +187,7 @@ export function InvoiceProfilesSection({
     <div className="bg-background rounded-xl border border-border p-4 sm:p-6">
       <div className="flex items-start sm:items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center shrink-0">
             <FileText className="h-5 w-5 text-primary" />
           </div>
           <div>
@@ -199,7 +199,7 @@ export function InvoiceProfilesSection({
             </p>
           </div>
         </div>
-        <Button size="sm" onClick={handleAdd} className="flex-shrink-0">
+        <Button size="sm" onClick={handleAdd} className="shrink-0">
           <Plus className="h-4 w-4 sm:mr-2" />
           <span className="hidden sm:inline">Agregar</span>
         </Button>

@@ -209,7 +209,7 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
                   onClick={() => !isSelected && handleToggleAddOn(addOn)}
                 >
                   {addOn.imageUrl ? (
-                    <div className="relative w-12 h-12 rounded-md overflow-hidden bg-secondary flex-shrink-0">
+                    <div className="relative w-12 h-12 rounded-md overflow-hidden bg-secondary shrink-0">
                       <SafeImage
                         src={addOn.imageUrl}
                         alt={addOn.name}
@@ -221,7 +221,7 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
                       />
                     </div>
                   ) : (
-                    <div className="w-12 h-12 rounded-md bg-secondary flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 rounded-md bg-secondary flex items-center justify-center shrink-0">
                       <Package className="h-5 w-5 text-foreground-muted" />
                     </div>
                   )}
@@ -232,7 +232,7 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
                     </p>
                   </div>
                   {isSelected ? (
-                    <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         onClick={() => handleAddOnQuantity(addOn.id, -1)}
@@ -250,7 +250,7 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
                       </button>
                     </div>
                   ) : (
-                    <div className="w-5 h-5 rounded border border-border flex-shrink-0" />
+                    <div className="w-5 h-5 rounded border border-border shrink-0" />
                   )}
                 </div>
               );
@@ -369,7 +369,7 @@ export function ProductInfo({ product, addOnCategories = [], addOns = [] }: Prod
       {/* Shipping Info */}
       <div className="mt-8 p-4 bg-secondary/50 rounded-lg">
         <div className="flex items-start gap-3">
-          <Truck className="h-6 w-6 text-primary mt-0.5 flex-shrink-0" />
+          <Truck className="h-6 w-6 text-primary mt-0.5 shrink-0" />
           <div>
             <p className="font-normal text-sm">Entrega programada</p>
             <p className="text-sm text-foreground-secondary mt-1">

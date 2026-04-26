@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { X, Star, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { useIsMounted } from "@/hooks/use-is-mounted";
 import { cn } from "@/lib/utils";
 import type { PendingReviewOrder, CreateReviewRequest } from "@/lib/api";
 
@@ -16,16 +17,12 @@ interface ReviewPromptModalProps {
 }
 
 export function ReviewPromptModal({ isOpen, onClose, order, onSubmit }: ReviewPromptModalProps) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -93,7 +90,7 @@ export function ReviewPromptModal({ isOpen, onClose, order, onSubmit }: ReviewPr
   };
 
   const modalContent = (
-    <div className="fixed inset-0 z-[100]">
+    <div className="fixed inset-0 z-100">
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/50" onClick={handleDismiss} />
 
@@ -218,16 +215,12 @@ interface GuestReviewModalProps {
 }
 
 export function GuestReviewModal({ isOpen, onClose, orderNumber, onSubmit }: GuestReviewModalProps) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -297,7 +290,7 @@ export function GuestReviewModal({ isOpen, onClose, orderNumber, onSubmit }: Gue
   };
 
   const modalContent = (
-    <div className="fixed inset-0 z-[100]">
+    <div className="fixed inset-0 z-100">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
       <div className="absolute inset-0 flex items-center justify-center p-4 overflow-y-auto">

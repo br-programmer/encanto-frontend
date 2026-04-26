@@ -130,7 +130,7 @@ export function StepReview({
             const previewItem = preview?.items.find((p) => p.productId === item.product.id);
             return (
               <div key={item.product.id} className="flex gap-3">
-                <div className="w-12 h-12 rounded overflow-hidden bg-secondary flex-shrink-0">
+                <div className="w-12 h-12 rounded overflow-hidden bg-secondary shrink-0">
                   {item.product.image ? (
                     <SafeImage src={item.product.image} alt={item.product.name} width={48} height={48} className="w-full h-full object-cover" />
                   ) : (
@@ -149,7 +149,7 @@ export function StepReview({
                   )}
                   {item.cardMessage && <p className="text-xs text-foreground-muted italic mt-0.5">&ldquo;{item.cardMessage}&rdquo;</p>}
                 </div>
-                <p className="text-sm font-normal flex-shrink-0">
+                <p className="text-sm font-normal shrink-0">
                   {formatPrice(previewItem?.lineTotalCents ?? item.product.priceCents * item.quantity)}
                 </p>
               </div>

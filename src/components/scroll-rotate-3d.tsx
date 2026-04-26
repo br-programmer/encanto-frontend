@@ -124,7 +124,7 @@ export function ScrollRotate3D({
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-[300vh] bg-gradient-to-b from-background via-secondary/20 to-background"
+      className="relative min-h-[300vh] bg-linear-to-b from-background via-secondary/20 to-background"
     >
       {/* Sticky Container */}
       <div className="sticky top-0 h-screen overflow-hidden flex items-center justify-center">

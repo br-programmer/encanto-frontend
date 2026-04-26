@@ -45,7 +45,7 @@ export function ProductCard({ product, hideFeaturedBadge = false, showBorder = f
     >
       {/* Polaroid photo area */}
       <div className="p-2.5 pb-0 sm:p-3 sm:pb-0">
-        <Link href={`/productos/${product.slug}`} className="block relative aspect-[4/5] overflow-hidden bg-secondary">
+        <Link href={`/productos/${product.slug}`} className="block relative aspect-4/5 overflow-hidden bg-secondary">
           {primaryImage ? (
             <SafeImage
               src={primaryImage.url}

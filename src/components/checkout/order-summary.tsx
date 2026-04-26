@@ -89,7 +89,7 @@ export function OrderSummary({
             return (
               <div key={item.product.id} className="flex gap-3">
                 {/* Image */}
-                <div className="relative w-16 h-16 rounded-md overflow-hidden bg-secondary flex-shrink-0">
+                <div className="relative w-16 h-16 rounded-md overflow-hidden bg-secondary shrink-0">
                   {item.product.image ? (
                     <SafeImage
                       src={item.product.image}

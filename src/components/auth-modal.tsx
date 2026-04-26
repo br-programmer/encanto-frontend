@@ -6,6 +6,7 @@ import { X, User, Mail, Lock, Phone, Loader2, LogIn, UserPlus, CheckCircle2, Mai
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth-store";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { useIsMounted } from "@/hooks/use-is-mounted";
 import { cn } from "@/lib/utils";
 
 interface AuthModalProps {
@@ -17,7 +18,7 @@ interface AuthModalProps {
 export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalProps) {
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [error, setError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const [showVerificationReminder, setShowVerificationReminder] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
   const { login, register, isLoading } = useAuthStore();
@@ -35,13 +36,12 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
     confirmPassword: "",
   });
 
-  // Mount check for portal
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Reset form when modal opens/closes or mode changes
-  useEffect(() => {
+  // Reset form when modal opens. Adjusting state during render (instead of in
+  // an effect) avoids the cascading-render lint and is the React-recommended
+  // pattern for syncing state to a prop change.
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
       setMode(initialMode);
       setError(null);
@@ -57,7 +57,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
         confirmPassword: "",
       });
     }
-  }, [isOpen, initialMode]);
+  }
 
   useScrollLock(isOpen);
 
@@ -140,7 +140,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
   if (!mounted || !isOpen) return null;
 
   const modalContent = (
-    <div className="fixed inset-0 z-[100]">
+    <div className="fixed inset-0 z-100">
       {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/50"

@@ -71,7 +71,7 @@ export function FeaturedShowcase({ items = SHOWCASE_ITEMS, autoplayDelay = 6000 
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[400px] sm:min-h-[500px]">
         {/* Image */}
-        <div className="relative aspect-[4/5] sm:aspect-auto overflow-hidden">
+        <div className="relative aspect-4/5 sm:aspect-auto overflow-hidden">
           {items.map((item, i) => (
             <div
               key={item.id}

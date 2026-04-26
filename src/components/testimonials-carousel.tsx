@@ -141,11 +141,11 @@ export function TestimonialsCarousel({ testimonials = MOCK_TESTIMONIALS }: Testi
         {testimonials.map((testimonial) => (
           <div
             key={testimonial.id}
-            className="flex-shrink-0 w-[85%] sm:w-[45%] lg:w-[30%]"
+            className="shrink-0 w-[85%] sm:w-[45%] lg:w-[30%]"
           >
             <div className="bg-white dark:bg-stone-900 border border-border p-5 sm:p-6 h-full flex flex-col">
               {/* Quote icon */}
-              <Quote className="h-6 w-6 text-primary/30 mb-3 flex-shrink-0" />
+              <Quote className="h-6 w-6 text-primary/30 mb-3 shrink-0" />
 
               {/* Comment */}
               <p className="text-sm text-foreground-secondary leading-relaxed flex-1 line-clamp-4">
@@ -185,7 +185,7 @@ export function TestimonialsCarousel({ testimonials = MOCK_TESTIMONIALS }: Testi
                 {/* Author with avatar */}
                 <div className="flex items-center gap-2.5">
                   {testimonial.avatarUrl ? (
-                    <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                    <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0">
                       <SafeImage
                         src={testimonial.avatarUrl}
                         alt={testimonial.name}
@@ -195,7 +195,7 @@ export function TestimonialsCarousel({ testimonials = MOCK_TESTIMONIALS }: Testi
                       />
                     </div>
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
                       <span className="text-xs font-medium text-primary">
                         {testimonial.name.charAt(0).toUpperCase()}
                       </span>

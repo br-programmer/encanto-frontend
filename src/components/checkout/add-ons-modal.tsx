@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { SafeImage } from "@/components/ui/safe-image";
 import { X, Minus, Plus, Package, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useScrollLock } from "@/hooks/use-scroll-lock";
+import { useIsMounted } from "@/hooks/use-is-mounted";
 import { cn, formatPrice } from "@/lib/utils";
 import type { AddOn, AddOnCategory } from "@/lib/api";
 import type { CartItemAddOn } from "@/types";
@@ -35,7 +36,7 @@ export function AddOnsModal({
   currentAddOns = [],
   onSave,
 }: AddOnsModalProps) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
 
   // Initialize selection from current add-ons
   const [selected, setSelected] = useState<Map<string, SelectedAddOn>>(() => {
@@ -53,23 +54,15 @@ export function AddOnsModal({
   );
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Reset state ONLY on the open transition (false → true). Reading the
-  // latest props through a ref prevents re-running this effect every render
-  // when `currentAddOns` defaults to a fresh `[]` for items without add-ons.
-  const latestPropsRef = useRef({ currentAddOns, addOns, addOnCategories });
-  useEffect(() => {
-    latestPropsRef.current = { currentAddOns, addOns, addOnCategories };
-  });
-  useEffect(() => {
-    if (!isOpen) return;
-    const { currentAddOns: ca, addOns: ao, addOnCategories: aoc } = latestPropsRef.current;
+  // Reset state on the open transition (false → true). Adjusting state during
+  // render (instead of in an effect) avoids the cascading-render lint and is
+  // the React-recommended pattern for syncing state to a prop change.
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen && !prevIsOpen) {
+    setPrevIsOpen(isOpen);
     const map = new Map<string, SelectedAddOn>();
-    ca.forEach((item) => {
-      const addOn = ao.find((a) => a.id === item.addOnId);
+    currentAddOns.forEach((item) => {
+      const addOn = addOns.find((a) => a.id === item.addOnId);
       if (addOn) {
         map.set(addOn.id, { addOn, quantity: item.quantity });
       }
@@ -77,9 +70,11 @@ export function AddOnsModal({
     setSelected(map);
     setSearch("");
     setExpandedCategories(
-      new Set(aoc.length > 0 ? [aoc[0].id] : [])
+      new Set(addOnCategories.length > 0 ? [addOnCategories[0].id] : [])
     );
-  }, [isOpen]);
+  } else if (!isOpen && prevIsOpen) {
+    setPrevIsOpen(isOpen);
+  }
 
   useScrollLock(isOpen);
 
@@ -176,7 +171,7 @@ export function AddOnsModal({
       {/* Overlay */}
       <div
         className={cn(
-          "fixed inset-0 bg-black/50 z-[100] transition-opacity duration-300",
+          "fixed inset-0 bg-black/50 z-100 transition-opacity duration-300",
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={onClose}
@@ -185,13 +180,13 @@ export function AddOnsModal({
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed right-0 top-0 h-full w-full sm:max-w-md bg-background z-[100] shadow-xl transition-transform duration-300 ease-in-out",
+          "fixed right-0 top-0 h-full w-full sm:max-w-md bg-background z-100 shadow-xl transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
             <div className="min-w-0 flex-1 mr-3">
               <h3 className="font-medium text-lg">Complementos</h3>
               <p className="text-sm text-foreground-secondary truncate">
@@ -200,14 +195,14 @@ export function AddOnsModal({
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-foreground-secondary hover:text-foreground transition-colors rounded-lg hover:bg-secondary/50 flex-shrink-0"
+              className="p-2 text-foreground-secondary hover:text-foreground transition-colors rounded-lg hover:bg-secondary/50 shrink-0"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
 
           {/* Search */}
-          <div className="px-5 py-3 border-b border-border flex-shrink-0">
+          <div className="px-5 py-3 border-b border-border shrink-0">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted" />
               <input
@@ -279,7 +274,7 @@ export function AddOnsModal({
                             >
                               {/* Image */}
                               {addOn.imageUrl ? (
-                                <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
+                                <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-secondary shrink-0">
                                   <SafeImage
                                     src={addOn.imageUrl}
                                     alt={addOn.name}
@@ -291,7 +286,7 @@ export function AddOnsModal({
                                   />
                                 </div>
                               ) : (
-                                <div className="w-14 h-14 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
+                                <div className="w-14 h-14 rounded-lg bg-secondary flex items-center justify-center shrink-0">
                                   <Package className="h-5 w-5 text-foreground-muted" />
                                 </div>
                               )}
@@ -307,7 +302,7 @@ export function AddOnsModal({
                               {/* Quantity or checkbox */}
                               {isSelected ? (
                                 <div
-                                  className="flex items-center gap-1.5 flex-shrink-0"
+                                  className="flex items-center gap-1.5 shrink-0"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <button
@@ -329,7 +324,7 @@ export function AddOnsModal({
                                   </button>
                                 </div>
                               ) : (
-                                <div className="w-5 h-5 rounded border-2 border-border flex-shrink-0" />
+                                <div className="w-5 h-5 rounded border-2 border-border shrink-0" />
                               )}
                             </div>
                           );
@@ -343,7 +338,7 @@ export function AddOnsModal({
           </ScrollArea>
 
           {/* Footer */}
-          <div className="border-t border-border px-5 py-4 space-y-3 flex-shrink-0">
+          <div className="border-t border-border px-5 py-4 space-y-3 shrink-0">
             {selectedTotal > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-foreground-secondary">

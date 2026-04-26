@@ -169,14 +169,14 @@ export default function MisPedidosPage() {
                   {/* Top: order number + status */}
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <p className="font-normal text-sm sm:text-base">{order.orderNumber}</p>
-                    <span className={cn("text-xs px-2 py-0.5 rounded-full flex-shrink-0", status.color)}>
+                    <span className={cn("text-xs px-2 py-0.5 rounded-full shrink-0", status.color)}>
                       {status.label}
                     </span>
                   </div>
 
                   {/* Middle: summary */}
                   <div className="flex items-center gap-2 text-sm text-foreground-secondary mb-1.5">
-                    <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+                    <Icon className="h-3.5 w-3.5 shrink-0" />
                     <p className="truncate">{summary}</p>
                   </div>
 

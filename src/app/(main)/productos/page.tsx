@@ -87,7 +87,7 @@ export default async function ProductosPage({ searchParams }: ProductosPageProps
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
-          <aside className="w-full lg:w-64 flex-shrink-0">
+          <aside className="w-full lg:w-64 shrink-0">
             <ProductFilters
               categories={categories}
               selectedCategorySlugs={selectedSlugs}

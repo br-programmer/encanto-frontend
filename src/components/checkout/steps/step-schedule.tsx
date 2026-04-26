@@ -120,14 +120,14 @@ export function StepSchedule({
 
         {specialDateWarning && (
           <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
             <p className="text-sm text-amber-800">{specialDateWarning}</p>
           </div>
         )}
 
         {blockingCampaign && invalidCartItemIds && invalidCartItemIds.size > 0 && (
           <div className="mt-4 p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3">
-            <Ban className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+            <Ban className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
             <div className="text-sm space-y-2 flex-1">
               <p className="text-destructive font-normal">
                 {blockingCampaign.kind === "blocking"
@@ -257,7 +257,7 @@ export function StepSchedule({
             <label className="flex items-center gap-3 cursor-pointer">
               <Checkbox checked={formData.isSurprise} onCheckedChange={(c) => onFormChange({ isSurprise: c === true })} />
               <div className="flex items-center gap-2">
-                <Gift className="h-5 w-5 text-primary flex-shrink-0" />
+                <Gift className="h-5 w-5 text-primary shrink-0" />
                 <div>
                   <span className="text-sm font-normal">Es una entrega sorpresa</span>
                   <p className="text-xs text-foreground-secondary">No contactaremos al destinatario antes de la entrega</p>
@@ -267,7 +267,7 @@ export function StepSchedule({
             <label className="flex items-center gap-3 cursor-pointer">
               <Checkbox checked={formData.isAnonymous} onCheckedChange={(c) => onFormChange({ isAnonymous: c === true })} />
               <div className="flex items-center gap-2">
-                <EyeOff className="h-5 w-5 text-primary flex-shrink-0" />
+                <EyeOff className="h-5 w-5 text-primary shrink-0" />
                 <div>
                   <span className="text-sm font-normal">Envío anónimo</span>
                   <p className="text-xs text-foreground-secondary">El destinatario no sabrá quién le envió el pedido</p>
@@ -281,7 +281,7 @@ export function StepSchedule({
           <label className="flex items-center gap-3 cursor-pointer">
             <Checkbox checked={formData.differentBuyer} onCheckedChange={(c) => onFormChange({ differentBuyer: c === true })} />
             <div className="flex items-center gap-2">
-              <User className="h-5 w-5 text-primary flex-shrink-0" />
+              <User className="h-5 w-5 text-primary shrink-0" />
               <div>
                 <span className="text-sm font-normal">El comprador es diferente al usuario de la cuenta</span>
                 <p className="text-xs text-foreground-secondary">Agrega los datos del comprador</p>

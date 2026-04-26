@@ -115,7 +115,7 @@ export function ScrollRevealSection({ services = [], banners = [] }: ScrollRevea
                       01
                     </span>
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-4 sm:p-6 pt-16 sm:pt-20">
+                  <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 via-black/30 to-transparent p-4 sm:p-6 pt-16 sm:pt-20">
                     <h3 className="text-white font-serif text-lg sm:text-xl md:text-2xl flex items-center gap-2">
                       {service1.name}
                       <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform" />
@@ -248,7 +248,7 @@ export function ScrollRevealSection({ services = [], banners = [] }: ScrollRevea
                       02
                     </span>
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-4 sm:p-6 pt-16 sm:pt-20">
+                  <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 via-black/30 to-transparent p-4 sm:p-6 pt-16 sm:pt-20">
                     <h3 className="text-white font-serif text-lg sm:text-xl md:text-2xl flex items-center gap-2">
                       {service2.name}
                       <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform" />

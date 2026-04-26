@@ -184,7 +184,7 @@ export default async function Home() {
             ].map((item, i) => (
               <div key={item.step} className="flex items-start flex-1">
                 <div className="flex flex-col items-center text-center w-full">
-                  <div className="w-12 h-12 rounded-full border-2 border-primary bg-background flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 rounded-full border-2 border-primary bg-background flex items-center justify-center shrink-0">
                     <item.icon className="h-5 w-5 text-primary" />
                   </div>
                   <p className="text-xs text-primary font-normal mt-3">Paso {item.step}</p>
@@ -194,7 +194,7 @@ export default async function Home() {
                   </p>
                 </div>
                 {i < 3 && (
-                  <div className="h-px flex-shrink-0 w-10 lg:w-16 bg-border mt-6" />
+                  <div className="h-px shrink-0 w-10 lg:w-16 bg-border mt-6" />
                 )}
               </div>
             ))}

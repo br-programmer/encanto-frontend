@@ -157,7 +157,7 @@ export function ProductGallery({ images, productName, rounded = true }: ProductG
                 key={image.id}
                 onClick={() => setSelectedIndex(index)}
                 className={cn(
-                  "relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 overflow-hidden border-2 transition-colors",
+                  "relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 overflow-hidden border-2 transition-colors",
                   rounded && "rounded-lg",
                   index === selectedIndex
                     ? "border-primary"

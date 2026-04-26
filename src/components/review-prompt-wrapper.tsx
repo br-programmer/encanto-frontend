@@ -18,10 +18,15 @@ export function ReviewPromptWrapper() {
   const [showReviewPrompt, setShowReviewPrompt] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<PendingReviewOrder | null>(null);
 
-  // Guest review state
-  const [showGuestReview, setShowGuestReview] = useState(false);
-  const [guestReviewToken, setGuestReviewToken] = useState<string | null>(null);
-  const [guestOrderNumber, setGuestOrderNumber] = useState("");
+  // Guest review state derived from URL. We track the token the user has
+  // dismissed so closing the modal hides it without us having to sync state in
+  // an effect (which would trip react-hooks/set-state-in-effect).
+  const [dismissedGuestToken, setDismissedGuestToken] = useState<string | null>(null);
+  const guestReviewToken = searchParams.get("reviewToken");
+  const guestOrderNumber = searchParams.get("order") ?? "";
+  const showGuestReview =
+    Boolean(guestReviewToken && guestOrderNumber) &&
+    guestReviewToken !== dismissedGuestToken;
 
   // Check for pending reviews (authenticated users)
   useEffect(() => {
@@ -37,18 +42,6 @@ export function ReviewPromptWrapper() {
       })
       .catch(() => {});
   }, [user, tokens?.accessToken]);
-
-  // Check for guest review token in query params
-  useEffect(() => {
-    const reviewToken = searchParams.get("reviewToken");
-    const orderNumber = searchParams.get("order");
-
-    if (reviewToken && orderNumber) {
-      setGuestReviewToken(reviewToken);
-      setGuestOrderNumber(orderNumber);
-      setShowGuestReview(true);
-    }
-  }, [searchParams]);
 
   const handleAuthenticatedReview = async (orderId: string, data: CreateReviewRequest) => {
     if (!tokens?.accessToken) return;
@@ -79,7 +72,7 @@ export function ReviewPromptWrapper() {
       <GuestReviewModal
         isOpen={showGuestReview}
         onClose={() => {
-          setShowGuestReview(false);
+          setDismissedGuestToken(guestReviewToken);
           const url = new URL(window.location.href);
           url.searchParams.delete("reviewToken");
           url.searchParams.delete("order");

@@ -64,7 +64,7 @@ export default async function SpecialDatePage({ params, searchParams }: SpecialD
       />
 
       {/* Hero Banner 16:9 */}
-      <section className="relative w-full aspect-[16/9] max-h-[70vh] bg-section-dark overflow-hidden">
+      <section className="relative w-full aspect-16/9 max-h-[70vh] bg-section-dark overflow-hidden">
         {specialDate.bannerUrl ? (
           <Image
             src={specialDate.bannerUrl}
@@ -75,9 +75,9 @@ export default async function SpecialDatePage({ params, searchParams }: SpecialD
             className="object-cover object-center"
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-section-dark" />
+          <div className="absolute inset-0 bg-linear-to-br from-primary/40 to-section-dark" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent" />
 
         <div className="absolute inset-0 flex items-end">
           <div className="mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12 lg:pb-16">
@@ -98,7 +98,7 @@ export default async function SpecialDatePage({ params, searchParams }: SpecialD
       {specialDate.warningMessage && (
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6">
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
             <div className="text-sm text-amber-800">
               <p>{specialDate.warningMessage}</p>
               {specialDate.requiresAdvanceDays > 0 && (

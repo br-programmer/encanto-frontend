@@ -76,7 +76,7 @@ function ProductsRow({ products, direction = "right", speed = 3500 }: ProductsRo
         {products.map((product) => (
           <div
             key={product.id}
-            className="flex-shrink-0 w-[45%] sm:w-[30%] lg:w-[23%]"
+            className="shrink-0 w-[45%] sm:w-[30%] lg:w-[23%]"
           >
             <ProductCard product={product} hideFeaturedBadge showBorder />
           </div>
