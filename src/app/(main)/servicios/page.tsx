@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { api } from "@/lib/api";
 import { SafeImage } from "@/components/ui/safe-image";
+import { Badge } from "@/components/ui/badge";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { Button } from "@/components/ui/button";
 
@@ -32,7 +33,7 @@ export default async function ServiciosPage() {
       {/* Services Grid */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16">
         {services.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {services.map((service) => {
               const primaryImage = service.images.find((img) => img.isPrimary) || service.images[0];
 
@@ -40,44 +41,44 @@ export default async function ServiciosPage() {
                 <Link
                   key={service.id}
                   href={`/servicios/${service.slug}`}
-                  className="group bg-background border border-border overflow-hidden hover:shadow-lg transition-all duration-300"
+                  className="group block bg-white dark:bg-stone-900 shadow-md border border-secondary hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                 >
-                  {/* Image */}
-                  <div className="relative aspect-4/3 overflow-hidden">
-                    {primaryImage ? (
-                      <SafeImage
-                        src={primaryImage.url}
-                        alt={service.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-secondary flex items-center justify-center">
-                        <Sparkles className="h-10 w-10 text-foreground-muted" />
-                      </div>
-                    )}
-                    {service.isFeatured && (
-                      <div className="absolute top-3 left-3 bg-primary/90 text-white text-xs px-2.5 py-1 rounded-full font-medium">
-                        Destacado
-                      </div>
-                    )}
+                  {/* Polaroid photo area */}
+                  <div className="p-2.5 pb-0 sm:p-3 sm:pb-0">
+                    <div className="relative aspect-4/3 overflow-hidden bg-secondary">
+                      {primaryImage ? (
+                        <SafeImage
+                          src={primaryImage.url}
+                          alt={service.name}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          fallbackClassName="w-full h-full"
+                          iconSize="lg"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Sparkles className="h-10 w-10 text-foreground-muted" />
+                        </div>
+                      )}
+                      {service.isFeatured && (
+                        <div className="absolute top-2 right-2">
+                          <Badge variant="default" className="text-xs">Destacado</Badge>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Content */}
-                  <div className="p-5">
-                    <h2 className="text-lg font-medium mb-2 group-hover:text-primary transition-colors">
+                  {/* Polaroid caption */}
+                  <div className="p-3 sm:p-4 pt-2.5 sm:pt-3 text-center">
+                    <h2 className="font-serif text-base sm:text-lg text-foreground group-hover:text-primary transition-colors">
                       {service.name}
                     </h2>
                     {service.shortDescription && (
-                      <p className="text-sm text-foreground-secondary line-clamp-3 mb-4">
+                      <p className="text-xs sm:text-sm text-foreground-secondary mt-1 line-clamp-2">
                         {service.shortDescription}
                       </p>
                     )}
-                    <span className="inline-flex items-center text-sm text-primary font-medium">
-                      Ver más
-                      <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                    </span>
                   </div>
                 </Link>
               );
