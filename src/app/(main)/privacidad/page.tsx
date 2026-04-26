@@ -73,9 +73,27 @@ export default function PrivacidadPage() {
               personal, puedes contactarnos a través de:
             </p>
             <ul className="list-disc pl-6 text-foreground-secondary space-y-2">
-              <li>Teléfono: {BUSINESS.phone.display}</li>
+              <li>
+                Teléfono:{" "}
+                <a
+                  href={`tel:${BUSINESS.phone.raw}`}
+                  className="text-primary hover:underline"
+                >
+                  {BUSINESS.phone.display}
+                </a>
+              </li>
               <li>Instagram: <a href={BUSINESS.social.instagram.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{BUSINESS.social.instagram.handle}</a></li>
-              <li>Dirección: {BUSINESS.address.full}</li>
+              <li>
+                Dirección:{" "}
+                <a
+                  href={BUSINESS.maps.placeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  {BUSINESS.address.full}
+                </a>
+              </li>
             </ul>
           </section>
         </div>
