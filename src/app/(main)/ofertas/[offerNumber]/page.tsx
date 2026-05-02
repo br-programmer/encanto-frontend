@@ -19,6 +19,7 @@ import {
 import { getInvoiceProfilesAction } from "@/actions/invoice-profile-actions";
 import { api } from "@/lib/api";
 import { formatPrice, cn } from "@/lib/utils";
+import { formatDate } from "@/lib/date";
 import { BUSINESS } from "@/lib/constants";
 import { useAuthStore } from "@/stores/auth-store";
 import {
@@ -486,7 +487,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
           <p className={cn("text-sm", isExpired ? "text-red-800" : "text-amber-800")}>
             {isExpired
               ? "Esta propuesta ha expirado."
-              : `Válida hasta el ${new Date(offer.validUntil).toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" })}`}
+              : `Válida hasta el ${formatDate(offer.validUntil, "long")}`}
           </p>
         </div>
       )}
@@ -503,12 +504,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ offerNum
         <div className="bg-background rounded-xl border border-border p-6 mb-6">
           <h2 className="font-medium mb-2">Fecha del evento</h2>
           <p className="text-sm text-foreground-secondary">
-            {new Date(offer.eventDate + "T00:00:00").toLocaleDateString("es-EC", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
+            {formatDate(offer.eventDate, "full")}
           </p>
         </div>
       )}

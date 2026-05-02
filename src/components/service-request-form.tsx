@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuthStore } from "@/stores/auth-store";
 import { submitServiceRequestAction } from "@/actions/service-request-actions";
 import type { ServiceCatalog } from "@/lib/api";
+import { toDateString } from "@/lib/date";
 
 interface FormData {
   fullName: string;
@@ -244,7 +245,7 @@ export function ServiceRequestForm({ services }: ServiceRequestFormProps) {
             onChange={(date) => {
               setFormData((prev) => ({
                 ...prev,
-                eventDate: date ? date.toISOString().split("T")[0] : "",
+                eventDate: date ? toDateString(date) : "",
               }));
               setError(null);
             }}

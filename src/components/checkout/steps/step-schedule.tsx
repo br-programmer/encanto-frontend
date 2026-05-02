@@ -10,6 +10,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PhoneInput } from "@/components/ui/phone-input";
 import type { DeliveryTimeSlot, Occasion } from "@/lib/api";
+import { toDateString } from "@/lib/date";
 import type { CartItem } from "@/types";
 import type { AddOn } from "@/lib/api";
 import { useSpecialDatesStore } from "@/stores/special-dates-store";
@@ -93,7 +94,7 @@ export function StepSchedule({
             <DatePicker
               value={formData.deliveryDate ? new Date(formData.deliveryDate + "T00:00:00") : undefined}
               onChange={(date) => {
-                const dateStr = date ? date.toISOString().split("T")[0] : "";
+                const dateStr = date ? toDateString(date) : "";
                 onSelectChange("deliveryDate", dateStr);
               }}
               minDate={new Date(minDeliveryDate + "T00:00:00")}

@@ -42,6 +42,7 @@ import type {
 } from "@/lib/api";
 import { validateDocumentByType } from "@/lib/ecuadorian-document";
 import { formatPrice } from "@/lib/utils";
+import { todayInTz, daysBetween, addDays } from "@/lib/date";
 
 interface FormData {
   fulfillmentType: FulfillmentType;
@@ -379,21 +380,15 @@ export function CheckoutForm() {
     const campaign = getSpecialDateById(onlyId);
     if (!campaign) return;
 
-    const today = new Date(); today.setHours(0, 0, 0, 0);
     const minAdvanceDays = Math.max(
       orderSettings?.minAdvanceDays ?? 2,
       campaign.requiresAdvanceDays ?? 0
     );
-    const earliestByAdvance = new Date(today);
-    earliestByAdvance.setDate(earliestByAdvance.getDate() + minAdvanceDays);
+    const earliestByAdvance = addDays(todayInTz(), minAdvanceDays);
+    const target = earliestByAdvance > campaign.startDate ? earliestByAdvance : campaign.startDate;
+    if (target > campaign.endDate) return; // no valid day left in campaign
 
-    const campaignStart = new Date(campaign.startDate + "T00:00:00");
-    const campaignEnd = new Date(campaign.endDate + "T00:00:00");
-    const target = earliestByAdvance > campaignStart ? earliestByAdvance : campaignStart;
-    if (target > campaignEnd) return; // no valid day left in campaign
-
-    const iso = target.toISOString().split("T")[0];
-    setFormData((p) => ({ ...p, deliveryDate: iso }));
+    setFormData((p) => ({ ...p, deliveryDate: target }));
   }, [mounted, items, formData.deliveryDate, getSpecialDateById, orderSettings?.minAdvanceDays]);
 
   // Special date check (by range)
@@ -405,11 +400,7 @@ export function CheckoutForm() {
     const match = getSpecialDateMatch(formData.deliveryDate);
     setSpecialDateWarning(match.warningMessage);
     if (match.maxRequiresAdvanceDays > 0) {
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      const deliveryDate = new Date(formData.deliveryDate + "T00:00:00");
-      const diffDays = Math.ceil(
-        (deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-      );
+      const diffDays = daysBetween(todayInTz(), formData.deliveryDate);
       if (diffDays < match.maxRequiresAdvanceDays) {
         const name = match.matching[0]?.name ?? "esta fecha especial";
         setError(
@@ -504,11 +495,9 @@ export function CheckoutForm() {
     const campaignAdvance = cartCampaign?.requiresAdvanceDays ?? 0;
     const baseMin = allQuickDelivery ? 1 : (orderSettings?.minAdvanceDays ?? 2);
     const minDays = Math.max(baseMin, campaignAdvance);
-    const date = new Date();
-    date.setDate(date.getDate() + minDays);
-    const iso = date.toISOString().split("T")[0];
-    if (cartCampaign && iso < cartCampaign.startDate) return cartCampaign.startDate;
-    return iso;
+    const min = addDays(todayInTz(), minDays);
+    if (cartCampaign && min < cartCampaign.startDate) return cartCampaign.startDate;
+    return min;
   };
 
   const getMaxDeliveryDate = (): string | undefined => cartCampaign?.endDate;
@@ -544,9 +533,7 @@ export function CheckoutForm() {
       }
       const match = getSpecialDateMatch(formData.deliveryDate);
       if (match.maxRequiresAdvanceDays > 0) {
-        const today = new Date(); today.setHours(0, 0, 0, 0);
-        const dd = new Date(formData.deliveryDate + "T00:00:00");
-        if (Math.ceil((dd.getTime() - today.getTime()) / 86400000) < match.maxRequiresAdvanceDays) {
+        if (daysBetween(todayInTz(), formData.deliveryDate) < match.maxRequiresAdvanceDays) {
           const sdName = match.matching[0]?.name ?? "esta fecha especial";
           setError(`Para ${sdName} se requiere ${match.maxRequiresAdvanceDays} días de anticipación`); return false;
         }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check, Package, ArrowRight, Upload, Loader2, Building2, Copy, CheckCircle2, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice, formatPhone } from "@/lib/utils";
+import { formatDate } from "@/lib/date";
 import { BUSINESS } from "@/lib/constants";
 import { uploadTransferProofAction } from "@/actions/order-actions";
 import type { Order, BankAccount, DeliveryTimeSlot } from "@/lib/api";
@@ -159,12 +160,7 @@ export function CheckoutSuccess({
                   {order.fulfillmentType === "pickup" ? "Fecha de retiro" : "Fecha de entrega"}
                 </p>
                 <p className="font-normal">
-                  {new Date(order.deliveryDate + "T00:00:00").toLocaleDateString("es-EC", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
+                  {formatDate(order.deliveryDate, "full")}
                 </p>
               </div>
               <div>

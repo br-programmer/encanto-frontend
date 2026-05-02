@@ -6,6 +6,7 @@ import { SafeImage } from "@/components/ui/safe-image";
 import type { OrderPreview } from "@/lib/api";
 import type { CartItem } from "@/types";
 import { formatPrice, formatPhone } from "@/lib/utils";
+import { formatDate } from "@/lib/date";
 
 interface StepReviewProps {
   formData: {
@@ -100,7 +101,7 @@ export function StepReview({
           </button>
         </div>
         <div className="text-sm text-foreground-secondary space-y-1">
-          <p>{formData.deliveryDate ? new Date(formData.deliveryDate + "T00:00:00").toLocaleDateString("es-EC", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : "—"}</p>
+          <p>{formData.deliveryDate ? formatDate(formData.deliveryDate, "full") : "—"}</p>
           <p>{timeSlotLabel || "—"}</p>
         </div>
       </div>

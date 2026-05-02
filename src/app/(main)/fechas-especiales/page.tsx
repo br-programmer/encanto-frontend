@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { getActiveSpecialDatesAction } from "@/actions/special-date-actions";
 import type { SpecialDate } from "@/lib/api";
+import { formatDayMonth, todayInTz, daysBetween } from "@/lib/date";
 
 export const revalidate = 300;
 
@@ -15,23 +16,16 @@ export const metadata = {
 };
 
 function formatDateRange(startDate: string, endDate: string): string {
-  const start = new Date(startDate + "T00:00:00");
-  const end = new Date(endDate + "T00:00:00");
-  const fmt = (d: Date) =>
-    d.toLocaleDateString("es-EC", { day: "numeric", month: "long" });
-  if (start.getTime() === end.getTime()) return fmt(start);
-  return `${fmt(start)} – ${fmt(end)}`;
+  if (startDate === endDate) return formatDayMonth(startDate);
+  return `${formatDayMonth(startDate)} – ${formatDayMonth(endDate)}`;
 }
 
 function getStatus(sd: SpecialDate): { label: string; isActive: boolean; daysUntil: number } {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const start = new Date(sd.startDate + "T00:00:00");
-  const end = new Date(sd.endDate + "T00:00:00");
-  if (start <= today && today <= end) {
+  const today = todayInTz();
+  if (sd.startDate <= today && today <= sd.endDate) {
     return { label: "Disponible ahora", isActive: true, daysUntil: 0 };
   }
-  const diff = Math.ceil((start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const diff = daysBetween(today, sd.startDate);
   return {
     label: `Faltan ${diff} ${diff === 1 ? "día" : "días"}`,
     isActive: false,
@@ -40,19 +34,13 @@ function getStatus(sd: SpecialDate): { label: string; isActive: boolean; daysUnt
 }
 
 function sortByRelevance(dates: SpecialDate[]): SpecialDate[] {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = todayInTz();
   return [...dates].sort((a, b) => {
-    const aStart = new Date(a.startDate + "T00:00:00").getTime();
-    const bStart = new Date(b.startDate + "T00:00:00").getTime();
-    const aEnd = new Date(a.endDate + "T00:00:00").getTime();
-    const bEnd = new Date(b.endDate + "T00:00:00").getTime();
-    const t = today.getTime();
-    const aActive = aStart <= t && t <= aEnd;
-    const bActive = bStart <= t && t <= bEnd;
+    const aActive = a.startDate <= today && today <= a.endDate;
+    const bActive = b.startDate <= today && today <= b.endDate;
     if (aActive && !bActive) return -1;
     if (!aActive && bActive) return 1;
-    return aStart - bStart;
+    return a.startDate.localeCompare(b.startDate);
   });
 }
 
