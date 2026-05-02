@@ -15,6 +15,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice, formatPhone, cn } from "@/lib/utils";
 import type { Order, BankAccount, DeliveryTimeSlot } from "@/lib/api";
+import { formatDate, formatDateTime } from "@/lib/date";
 
 const STATUS_COLOR = "bg-primary/10 text-primary";
 const ORDER_STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -489,13 +490,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               <h1 className="text-2xl font-semibold">{order.orderNumber}</h1>
             </div>
             <p className="text-sm text-foreground-secondary">
-              Creado el {new Date(order.createdAt).toLocaleDateString("es-EC", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              Creado el {formatDateTime(order.createdAt, "long")}
             </p>
           </div>
           <span className={cn("text-sm px-3 py-1.5 rounded-full font-normal", statusInfo.color)}>
@@ -705,12 +700,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ orderNum
               <p className="text-foreground-secondary">
                 {isPickup ? "Fecha de retiro" : "Fecha"}</p>
               <p className="font-normal">
-                {new Date(order.deliveryDate + "T00:00:00").toLocaleDateString("es-EC", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
+                {formatDate(order.deliveryDate, "full")}
               </p>
             </div>
             <div>

@@ -7,6 +7,7 @@ import { Breadcrumb } from "@/components/breadcrumb";
 import { ProductCard } from "@/components/product-card";
 import { Pagination } from "@/components/pagination";
 import { getSpecialDateBySlugAction } from "@/actions/special-date-actions";
+import { formatDayMonth } from "@/lib/date";
 
 export const revalidate = 300;
 
@@ -16,12 +17,8 @@ interface SpecialDatePageProps {
 }
 
 function formatDateRange(startDate: string, endDate: string): string {
-  const start = new Date(startDate + "T00:00:00");
-  const end = new Date(endDate + "T00:00:00");
-  const fmt = (d: Date) =>
-    d.toLocaleDateString("es-EC", { day: "numeric", month: "long" });
-  if (start.getTime() === end.getTime()) return fmt(start);
-  return `${fmt(start)} – ${fmt(end)}`;
+  if (startDate === endDate) return formatDayMonth(startDate);
+  return `${formatDayMonth(startDate)} – ${formatDayMonth(endDate)}`;
 }
 
 export async function generateMetadata({ params }: SpecialDatePageProps) {

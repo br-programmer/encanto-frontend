@@ -5,11 +5,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CalendarHeart, ArrowRight } from "lucide-react";
 import type { SpecialDate } from "@/lib/api";
+import { formatDayMonth, todayInTz, daysBetween } from "@/lib/date";
 
 interface SpecialDateDisplay {
   name: string;
-  startDate: Date;
-  endDate: Date;
+  startDate: string;
+  endDate: string;
   imageUrl: string;
   link: string;
   message: string;
@@ -18,8 +19,8 @@ interface SpecialDateDisplay {
 function apiToDisplay(sd: SpecialDate): SpecialDateDisplay {
   return {
     name: sd.name,
-    startDate: new Date(sd.startDate + "T00:00:00"),
-    endDate: new Date(sd.endDate + "T00:00:00"),
+    startDate: sd.startDate,
+    endDate: sd.endDate,
     imageUrl: sd.bannerUrl || "",
     link: `/fechas-especiales/${sd.slug}`,
     message: sd.warningMessage || `Prepara tu regalo para ${sd.name}`,
@@ -27,29 +28,15 @@ function apiToDisplay(sd: SpecialDate): SpecialDateDisplay {
 }
 
 function getUpcomingOrCurrent(dates: SpecialDateDisplay[]): SpecialDateDisplay | null {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  // Sort by startDate asc; prefer currently active, then next upcoming
-  const sorted = [...dates].sort(
-    (a, b) => a.startDate.getTime() - b.startDate.getTime()
-  );
-  const current = sorted.find((d) => d.startDate <= now && now <= d.endDate);
+  const today = todayInTz();
+  const sorted = [...dates].sort((a, b) => a.startDate.localeCompare(b.startDate));
+  const current = sorted.find((d) => d.startDate <= today && today <= d.endDate);
   if (current) return current;
-  return sorted.find((d) => d.startDate > now) || null;
+  return sorted.find((d) => d.startDate > today) || null;
 }
 
-function getDaysUntil(date: Date): number {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  const diffTime = date.getTime() - now.getTime();
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-}
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("es-EC", {
-    day: "numeric",
-    month: "long",
-  });
+function getDaysUntil(startDate: string): number {
+  return daysBetween(todayInTz(), startDate);
 }
 
 interface NextSpecialDateProps {
@@ -127,9 +114,9 @@ export function NextSpecialDate({ specialDates }: NextSpecialDateProps) {
 
             {/* Date */}
             <p className="text-white/70 text-lg sm:text-xl mb-4">
-              {formatDate(specialDate.startDate)}
-              {specialDate.endDate.getTime() !== specialDate.startDate.getTime() &&
-                ` – ${formatDate(specialDate.endDate)}`}
+              {formatDayMonth(specialDate.startDate)}
+              {specialDate.endDate !== specialDate.startDate &&
+                ` – ${formatDayMonth(specialDate.endDate)}`}
             </p>
 
             {/* Message */}

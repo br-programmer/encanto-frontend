@@ -11,6 +11,7 @@ import { getMyOrdersAction } from "@/actions/order-actions";
 import { formatPrice } from "@/lib/utils";
 import type { OrderListItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/date";
 
 const STATUS_COLOR = "bg-primary/10 text-primary";
 const STATUS_SUCCESS = "bg-green-100 text-green-800";
@@ -146,17 +147,7 @@ export default function MisPedidosPage() {
 
               // Date line (bottom): prefer deliveryDate, fall back to createdAt
               // for orders without a delivery date (services).
-              const dateIso = order.deliveryDate
-                ? `${order.deliveryDate}T00:00:00`
-                : order.createdAt;
-              const parsed = new Date(dateIso);
-              const dateLabel = !isNaN(parsed.getTime())
-                ? parsed.toLocaleDateString("es-EC", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })
-                : "";
+              const dateLabel = formatDate(order.deliveryDate || order.createdAt, "long");
 
               const Icon = isService ? Sparkles : isPickup ? Store : Truck;
 
